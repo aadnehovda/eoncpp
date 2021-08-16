@@ -39,7 +39,10 @@ namespace eon
 		inline vector( const vector& other ) { Elements = other.Elements; }
 		inline vector( vector&& other ) noexcept { Elements = std::move( other.Elements ); }
 		inline vector( std::initializer_list<T> elements ) { Elements.assign( elements ); }
-		inline vector( size_t count, const_reference init_elm ) { Elements.assign( size, init_elm ); }
+		inline vector( size_t count, const_reference init_elm )
+		{
+			Elements.assign( size, init_elm );
+		}
 		template<class InputIt>
 		inline vector( InputIt beg, InputIt end ) { Elements.assign( beg, end ); }
 
