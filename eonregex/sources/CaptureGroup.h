@@ -45,6 +45,9 @@ namespace eon
 			inline bool _equal( const Node& other, cmpflag flags ) const noexcept override {
 				return NodeGroup::_equal( other, flags ) && Name == dynamic_cast<const CaptureGroup*>( &other )->Name; }
 
+			inline Node* _removeSuperfluousGroups() noexcept override {
+				if( Next ) Next = Next->_removeSuperfluousGroups(); return this; }
+
 		private:
 			name_t Name{ no_name };
 		};

@@ -147,5 +147,6 @@ namespace eon
 	private:
 		rx::Graph Graph;
 		string Raw, Flags;
+		int Marker{ 0 };
 	};
 }

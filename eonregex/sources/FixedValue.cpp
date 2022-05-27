@@ -19,5 +19,19 @@ namespace eon
 			data = std::move( param_b );
 			return true;
 		}
+
+		Node* FixedValue::_exposeLiterals()
+		{
+			if( Quant.minQ() == 1 && Quant.maxQ() == SIZE_MAX )
+			{
+				auto exposed = copy();
+				exposed->resetQuantifier();
+				Quant = Quantifier( 0, SIZE_MAX, Quant.greedy() );
+				exposed->Next = this;
+				return exposed;
+			}
+			else
+				return this;
+		}
 	}
 }

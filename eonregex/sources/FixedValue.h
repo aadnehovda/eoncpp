@@ -35,6 +35,8 @@ namespace eon
 			inline FixedValue& operator=( FixedValue&& other ) noexcept {
 				*static_cast<Node*>( this ) = std::move( other ); Value = std::move( other.Value ); return *this; }
 
+			inline const string& value() const noexcept { return Value; }
+
 		private:
 			bool _match( RxData& data, size_t steps ) override;
 
@@ -44,6 +46,7 @@ namespace eon
 				return Value == dynamic_cast<const FixedValue*>( &other )->Value; }
 			inline size_t _countMinCharsRemaining() noexcept override {
 				return MinCharsRemaining = Value.numChars() * Quant.minQ() + ( Next ? Next->_countMinCharsRemaining() : 0 ); }
+			Node* _exposeLiterals() override;
 
 		private:
 			string Value;

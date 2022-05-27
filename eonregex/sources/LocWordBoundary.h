@@ -3,21 +3,19 @@
 #include "../Node.h"
 
 
-/******************************************************************************
-  The 'eon' namespace encloses all public functionality
-******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//
+// The 'eon' namespace encloses all public functionality
+//
 namespace eon
 {
-	/**************************************************************************
-	  The 'eon::rx' namespace enclosed special elements for Eon regular
-	  expressions
-	**************************************************************************/
+	///////////////////////////////////////////////////////////////////////////
+	// The 'eon::rx' namespace enclosed special elements for Eon regular
+	// expressions
+	//
 	namespace rx
 	{
-		/*
-		* Location node
-		* Matches start of word
-		*/
+/*		// Location node - Matches start of word
 		class LocWordStart : public Node
 		{
 		public:
@@ -39,12 +37,9 @@ namespace eon
 			inline string _strStruct() const override { return "\\b"; }
 			inline size_t _countMinCharsRemaining() noexcept override {
 				return MinCharsRemaining = Next ? Next->_countMinCharsRemaining() : 0; }
-		};
+		};*/
 
-		/*
-		* Value node
-		* Matches end of word
-		*/
+		// Location end - Matches end of word
 		class LocWordEnd : public Node
 		{
 		public:

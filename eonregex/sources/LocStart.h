@@ -1,23 +1,23 @@
-#pragma once
+/*#pragma once
 
 #include "../Node.h"
 
 
 /******************************************************************************
   The 'eon' namespace encloses all public functionality
-******************************************************************************/
+****************************************************************************** /
 namespace eon
 {
 	/**************************************************************************
 	  The 'eon::rx' namespace enclosed special elements for Eon regular
 	  expressions
-	**************************************************************************/
+	************************************************************************** /
 	namespace rx
 	{
 		/*
 		* Location node
 		* Matches only if at start of string or start of line if line mode
-		*/
+		* /
 		class LocStart : public Node
 		{
 		public:
@@ -41,3 +41,4 @@ namespace eon
 		};
 	}
 }
+*/

@@ -25,6 +25,7 @@ namespace eon
 			Quantifier() = default;
 			inline Quantifier( Quantifier& other ) noexcept { *this = other; };
 			inline Quantifier( Quantifier&& other ) noexcept { *this = other; };
+			inline Quantifier( size_t min, size_t max, bool greedy ) { Min = min; Max = max; Greedy = greedy; Set = true; }
 			virtual ~Quantifier() = default;
 
 			inline Quantifier& operator=( const Quantifier& other ) {
@@ -66,6 +67,7 @@ namespace eon
 
 			friend class Graph;
 			friend class Node;
+			friend class NodeGroup;
 		};
 	}
 }

@@ -39,6 +39,8 @@ namespace eon
 			inline string _strStruct() const override {
 				string s; for( auto& opt : Optionals ) { if( !s.empty() ) s += "|"; s += opt->strStruct(); } return s; }
 			size_t _countMinCharsRemaining() noexcept override;
+			Node* _removeSuperfluousGroups() noexcept override;
+			void _failFastFixedEnd( Node& head ) override;
 
 		private:
 			std::vector<Node*> Optionals;

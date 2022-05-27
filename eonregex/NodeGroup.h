@@ -51,6 +51,8 @@ namespace eon
 			inline size_t _countMinCharsRemaining() noexcept override {
 				return MinCharsRemaining = ( Head ? Head->_countMinCharsRemaining() * Quant.minQ() : 0 )
 					+ ( Next ? Next->_countMinCharsRemaining() : 0 ); }
+			virtual Node* _removeSuperfluousGroups() noexcept override;
+			void _failFastFixedEnd( Node& head ) override;
 
 			void _append( Node* node ) noexcept;
 			inline bool _locked() const noexcept { return _Cur == nullptr; }
