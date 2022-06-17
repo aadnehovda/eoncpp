@@ -3,22 +3,22 @@
 #include "RxDefs.h"
 
 
-/******************************************************************************
-  The 'eon' namespace encloses all public functionality
-******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//
+// The 'eon' namespace encloses all public functionality
+//
 namespace eon
 {
-	/**************************************************************************
-	  The 'eon::rx' namespace enclosed special elements for Eon regular
-	  expressions
-	**************************************************************************/
+	///////////////////////////////////////////////////////////////////////////
+	//
+	// The 'eon::rx' namespace enclosed special elements for Eon regular
+	// expressions
+	//
 	namespace rx
 	{
-		/*
-		* Quantifier objects are attributes to Node objects
-		* They specify how many times the node must or can match, minimum/
-		* maximum
-		*/
+		// Quantifier objects are attributes to Node objects
+		// They specify how many times the node must or can match, minimum/
+		// maximum
 		class Quantifier
 		{
 		public:

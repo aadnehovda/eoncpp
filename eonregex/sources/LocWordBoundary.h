@@ -10,6 +10,7 @@
 namespace eon
 {
 	///////////////////////////////////////////////////////////////////////////
+	//
 	// The 'eon::rx' namespace enclosed special elements for Eon regular
 	// expressions
 	//

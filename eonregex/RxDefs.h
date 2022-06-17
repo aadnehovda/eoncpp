@@ -86,9 +86,10 @@ namespace eon
 		};
 
 
-		/**********************************************************************
-		  Exception used when a regular expression is badly formatted
-		**********************************************************************/
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Exception used when a regular expression is badly formatted
+		//
 		EONEXCEPT( InvalidExpression );
 	}
 }

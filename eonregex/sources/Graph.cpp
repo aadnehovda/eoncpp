@@ -53,7 +53,6 @@ namespace eon
 					_exposeLiterals();
 				if( !(MyFlags & Flag::lines ) && ( MyFlags & Flag::failfast_fixed_end ) )
 					_failFastFixedEnd();
-				// _exposeAnchors();
 				_countMinCharsRemaining();
 			}
 		}
@@ -198,7 +197,6 @@ namespace eon
 						param.advance();
 						param.preAnchor( MyFlags & Flag::lines ? Anchor::line : Anchor::input );
 						break;
-//						return new LocStart( substring( start, param.pos() ) );
 					}
 					case '$':
 					{
@@ -306,10 +304,6 @@ namespace eon
 						{
 							delete value;
 							throw InvalidExpression();
-/*							throw InvalidExpression(  "At position "
-								+ string( param.pos() - Source.begin() )
-								+ ": Detected '!' on a character group with"
-								" quantifier - use '[^...' instead" );*/
 						}
 					}
 					return new OpNot( value, substring( start, param.pos() ) );
