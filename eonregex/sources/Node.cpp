@@ -138,7 +138,6 @@ namespace eon
 
 			// Match as many as possible from the start
 			auto matches = _stack();
-//			matches.push( data );
 			matchMax( data, matches, steps );
 			if( matches.size() < Quant.Min )
 				return false;
@@ -150,15 +149,11 @@ namespace eon
 			if( Next == nullptr )
 				return noNext( data, matches );
 
-			// Make sure that zero match is included
-//			if( matches.empty() )
-//				matches.push( data );
-
 			// Now make sure the rest matches, or move down the stack
 			// (backgrack) until they do
 			return nextMatches( data, matches );
 		}
-		void Node::matchMax( RxData data, stack& matches, size_t steps )
+		void Node::matchMax( RxData data, Stack& matches, size_t steps )
 		{
 			// Some special cases can be processed faster
 			if( _matchSpecialCase( data, matches ) )
@@ -167,17 +162,11 @@ namespace eon
 			while( matches.size() < Quant.maxQ() )
 			{
 				if( !_match( matches.empty() ? data : matches.top(), steps ) )
-//				{
-//					if( Next == nullptr && !matches.empty() && matches.top().pos() == start )
-//						matches.pop();
-//					if( Next == nullptr )
-//						matches.pop();
 					break;
-//				}
 				matches.push( matches.empty() ? data : matches.top() );
 			}
 		}
-		bool Node::_matchSpecialCase( RxData& data, stack& matches )
+		bool Node::_matchSpecialCase( RxData& data, Stack& matches )
 		{
 			switch( Type )
 			{
@@ -188,7 +177,7 @@ namespace eon
 					return false;
 			}
 		}
-		void Node::_matchAny( RxData& data, stack& matches )
+		void Node::_matchAny( RxData& data, Stack& matches )
 		{
 			// Goble as much as we can
 			int gobbled{ 0 };
@@ -202,10 +191,8 @@ namespace eon
 					&& ( matches.top().remaining() == 0 || matches.top().remaining() < MinCharsRemaining - gobbled ) )
 					return;
 			}
-//			if( Next == nullptr )
-//				matches.pop();
 		}
-		bool Node::noNext( RxData& data, stack& matches )
+		bool Node::noNext( RxData& data, Stack& matches )
 		{
 			if( matches.size() >= Quant.minQ() )
 			{
@@ -215,17 +202,14 @@ namespace eon
 			}
 			return false;
 		}
-		bool Node::nextMatches( RxData& data, stack& matches )
+		bool Node::nextMatches( RxData& data, Stack& matches )
 		{
 			size_t next_steps = data.speedOnly() ? 1 : data.accuracyOnly() ? SIZE_MAX : 6;
 			while( matches.size() >= Quant.minQ() )
 			{
-				if( Next->match( matches.empty() ? data : matches.top(), next_steps ) ) // && ( !Name || eon::validName( substring( matches.size() < 2
-//					? data.pos() : matches.at( 1 ).pos(), matches.top().pos() ) ) ) )
+				if( Next->match( matches.empty() ? data : matches.top(), next_steps ) )
 				{
 					// Got a match?
-//					if( matches.empty() )
-//						return false;
 					if( !matches.empty() )
 						data = std::move( matches.top() );
 					return true;
@@ -246,7 +230,6 @@ namespace eon
 					}
 				}
 			}
-//			size_t next_steps = data.speedOnly() ? 1 : data.accuracyOnly() ? SIZE_MAX : 6;
 			if( Next && Next->match( data, next_steps ) )
 				return true;
 			return false;

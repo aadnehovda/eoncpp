@@ -71,10 +71,10 @@ namespace eon
 		void Graph::parseFlags( substring flags )
 		{
 			std::vector<string> invalid;
-			bool not = false;
+			bool _not_ = false;
 			for( auto c : flags )
 			{
-				if( !not )
+				if( !_not_ )
 				{
 					switch( c )
 					{
@@ -88,7 +88,7 @@ namespace eon
 							MyFlags |= Flag::failfast_fixed_end;
 							break;
 						case '!':
-							not = true;
+							_not_ = true;
 							break;
 
 						case 's':

@@ -79,8 +79,8 @@ namespace eon
 			virtual bool _equal( const Node& other, cmpflag flags ) const noexcept { return true; }
 			virtual void _removeDuplicates( std::set<Node*>& removed ) {}
 
-			using stack = stack<RxData>;
-			inline stack _stack() { stack data; data.reserve( 53 ); return data; }
+			using Stack = stack<RxData>;
+			inline Stack _stack() { Stack data; data.reserve( 53 ); return data; }
 
 		public:
 			virtual size_t _countMinCharsRemaining() noexcept = 0;
@@ -94,11 +94,11 @@ namespace eon
 			bool matchSingle( RxData& data, size_t steps );
 			bool matchOneOrZero( RxData& data, size_t steps );
 			bool matchRangeGreedy( RxData& data, size_t steps );
-			void matchMax( RxData data, stack& matches, size_t steps );
-			bool _matchSpecialCase( RxData& data, stack& matches );
-			void _matchAny( RxData& data, stack& matches );
-			bool noNext( RxData& data, stack& matches );
-			bool nextMatches( RxData& data, stack& matches );
+			void matchMax( RxData data, Stack& matches, size_t steps );
+			bool _matchSpecialCase( RxData& data, Stack& matches );
+			void _matchAny( RxData& data, Stack& matches );
+			bool noNext( RxData& data, Stack& matches );
+			bool nextMatches( RxData& data, Stack& matches );
 			bool matchRangeNongreedy( RxData& data, size_t steps );
 
 			bool matchNext( RxData& data, size_t steps );
