@@ -20,6 +20,20 @@ namespace eon
 			return true;
 		}
 
+		string FixedValue::_strStruct() const
+		{
+			static const string special{ R"(|!{}?*+()^$[]\".@)" };
+			string s;
+			for( auto c : Value )
+			{
+				if( special.contains( c ) )
+					s << "\\" << c;
+				else
+					s << c;
+			}
+			return s;
+		}
+
 		Node* FixedValue::_exposeLiterals()
 		{
 			if( Quant.minQ() == 1 && Quant.maxQ() == SIZE_MAX )

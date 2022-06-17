@@ -595,7 +595,7 @@ namespace eon
 #endif
 		std::chrono::steady_clock clock;
 		string e_pattern{ R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (alpha|beta){1,2} \s*\.$)" };
-		std::string s_pattern{ R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (alpha|beta){1,2} \s*\.$)" };
+		std::string s_pattern{ R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (?:alpha|beta){1,2} \s*\.$)" };
 		std::vector<eon::regex> e_list;
 		std::vector<std::regex> s_list;
 
@@ -629,8 +629,9 @@ namespace eon
 	{
 		eon::regex erx;
 		REQUIRE_NO_EXCEPT( erx = R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (alpha|beta){1,2} \s*\.$)" ) << "Failed to parse Eon regex";
+		eon::term << "Optimized Eon regex: " << erx.strStruct() << "\n";
 		std::regex srx;
-		REQUIRE_NO_EXCEPT( srx = std::regex( R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (alpha|beta){1,2} \s*\.$)" ) )
+		REQUIRE_NO_EXCEPT( srx = std::regex( R"(^\w{2,6}: \d\d?:\d\d?:\d\d? (?:alpha|beta){1,2} \s*\.$)" ) )
 			<< "Failed to parse std regex";
 		size_t count = 5000;
 #ifdef _DEBUG

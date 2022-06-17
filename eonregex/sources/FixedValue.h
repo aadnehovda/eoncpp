@@ -40,7 +40,7 @@ namespace eon
 		private:
 			bool _match( RxData& data, size_t steps ) override;
 
-			inline string _strStruct() const override { return Value; }
+			string _strStruct() const override;
 
 			inline bool _equal( const Node& other, cmpflag flags ) const noexcept override {
 				return Value == dynamic_cast<const FixedValue*>( &other )->Value; }

@@ -313,7 +313,12 @@ namespace eon
 
 		string Node::strStruct() const
 		{
-			auto s = _strStruct() + Quant.str();
+			string s;
+			if( PreAnchoring & Anchor::input )
+				s += "^";
+			else if( PreAnchoring & Anchor::word )
+				s += "\\b";
+			s += _strStruct() + Quant.str();
 			if( Next )
 				return s + Next->strStruct();
 			else
