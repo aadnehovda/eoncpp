@@ -35,12 +35,8 @@ namespace eon
 			{
 				auto node = Head; Head = nullptr;
 				node->Next = Next; Next = nullptr;
-				if( Quant.Min > 1 )
-					node->Quant.Min += ( Quant.Min - 1 );
-				if( Quant.Max == SIZE_MAX )
-					node->Quant.Max = SIZE_MAX;
-				else if( node->Quant.Max != SIZE_MAX && Quant.Max > 1 )
-					node->Quant.Max += ( Quant.Max - 1 );
+				node->Quant.Min *= Quant.Min;
+				node->Quant.Max = Quant.Max == SIZE_MAX || node->Quant.Max == SIZE_MAX ? SIZE_MAX : Quant.Max * node->Quant.Max;
 				node->Name = Name;
 				node->Open = Open;
 				node->PreAnchoring |= PreAnchoring;

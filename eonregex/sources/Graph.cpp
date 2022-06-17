@@ -84,17 +84,18 @@ namespace eon
 						case 'l':
 							MyFlags |= Flag::lines;
 							break;
-						case 's':
-							MyFlags |= Flag::speed;
-							break;
-						case 'S':
-							MyFlags |= Flag::accuracy;
-							break;
 						case 'f':
 							MyFlags |= Flag::failfast_fixed_end;
 							break;
 						case '!':
 							not = true;
+							break;
+
+						case 's':
+							MyFlags |= Flag::speed;
+							break;
+						case 'a':
+							MyFlags |= Flag::accuracy;
 							break;
 						default:
 							invalid.push_back( string( c ) );
@@ -112,7 +113,7 @@ namespace eon
 							MyFlags |= Flag::no_exposing;
 							break;
 						default:
-							invalid.push_back( string( "1" ) << c );
+							invalid.push_back( string( "!" ) << c );
 							break;
 					}
 				}

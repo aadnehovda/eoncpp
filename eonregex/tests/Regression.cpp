@@ -30,24 +30,24 @@ namespace eon
 	{
 		regex ex{ R"(a+a+)" };
 		WANT_EQ( "a{2,}", ex.strStruct().stdstr() );
-		ex = regex{ R"(a+a*)", "e" };
-		WANT_EQ( "a+", ex.strStruct().stdstr() );
-		ex = regex{ R"(a*a+)", "e" };
-		WANT_EQ( "a+", ex.strStruct().stdstr() );
+		ex = regex{ R"(a+a*)" };
+		WANT_EQ( "aa*", ex.strStruct().stdstr() );
+		ex = regex{ R"(a*a+)" };
+		WANT_EQ( "aa*", ex.strStruct().stdstr() );
 		ex = regex{ R"(a+a+?)" };
 		WANT_EQ( "a{2,}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a+?a+)" };
 		WANT_EQ( "a{2,}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a+?a+?)" };
 		WANT_EQ( "a{2,}?", ex.strStruct().stdstr() );
-		ex = regex{ R"((a+a+))", "g" };
-		WANT_EQ( "(a{2,})", ex.strStruct().stdstr() );
+		ex = regex{ R"((a+a+))" };
+		WANT_EQ( "a{2,}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a+a+a+a+)" };
 		WANT_EQ( "a{4,}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a+?a+?a+?a+?)" };
 		WANT_EQ( "a{4,}?", ex.strStruct().stdstr() );
-		ex = regex{ R"((a+a+)(a+a+))", "g" };
-		WANT_EQ( "(a{2,}){2}", ex.strStruct().stdstr() );
+		ex = regex{ R"((a+a+)(a+a+))" };
+		WANT_EQ( "a{4,}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a{1,5}a{1,5})" };
 		WANT_EQ( "a{2,10}", ex.strStruct().stdstr() );
 		ex = regex{ R"(a{1,5}a{2,6})" };
@@ -56,10 +56,10 @@ namespace eon
 		WANT_EQ( "a{3,10}", ex.strStruct().stdstr() );
 		ex = regex{ R"(\d\d+:)" };
 		WANT_EQ( "\\d{2,}:", ex.strStruct().stdstr() );
-		ex = regex{ R"((x+x+)+y)", "g" };
-		WANT_EQ( "(x{2,})+y", ex.strStruct().stdstr() );
-		ex = regex{ R"((x+?x+?)+?y)", "g" };
-		WANT_EQ( "(x{2,}?)+?y", ex.strStruct().stdstr() );
+		ex = regex{ R"((x+x+)+y)" };
+		WANT_EQ( "x{2,}y", ex.strStruct().stdstr() );
+		ex = regex{ R"((x+?x+?)+?y)" };
+		WANT_EQ( "x{2,}?y", ex.strStruct().stdstr() );
 	}
 
 
