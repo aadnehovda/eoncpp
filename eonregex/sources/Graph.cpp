@@ -1,5 +1,4 @@
 #include "../Graph.h"
-#include "LocStart.h"
 #include "LocEnd.h"
 #include "OpNot.h"
 #include "../OpOr.h"
