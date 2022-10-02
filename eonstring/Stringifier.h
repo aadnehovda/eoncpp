@@ -39,10 +39,12 @@ namespace eon
 		//
 		// Adding Elements
 		//
-		// If the "before" argument is included then if element is to be added
-		// just after a "before" element, add it before. If multiple elements
-		// match the "before" type specified, move before them as well.
-		// This will ignore hard line-feeds.
+		// NOTE about "before" argument:
+		//   Use this when you add an element B after element A, but you want B
+		//   to appear before A in output. (Name 'A' as "before" argument.)
+		//   If there are multiple elements of type A in a row, then B will be
+		//   moved before all of them, not just the last one added.
+		//   This will ignore hard line-feeds.
 		//
 	public:
 
