@@ -270,10 +270,10 @@ namespace eon
 		{
 			switch( t1 )
 			{
-				case 'B':
+				case 'b':
 					act_type = *pos == '!' ? name_bool : *pos == '+' ? name_bits : no_name;
 					break;
-				case 'b':
+				case 'B':
 					act_type = *pos == '!' ? name_byte : *pos == '+' ? name_bytes : no_name;
 					break;
 				case 'c':

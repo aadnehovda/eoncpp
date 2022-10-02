@@ -27,8 +27,10 @@ namespace eon
 
 		std::uint32_t Value{ 0 };
 	};
+	inline size_t hash( name_t name ) noexcept { return static_cast<size_t>( name.Value ); }
 #else
 	using name_t = std::uint32_t;
+	inline size_t hash( name_t name ) noexcept { return static_cast<size_t>( name ); }
 #endif
 
 	//* The null name

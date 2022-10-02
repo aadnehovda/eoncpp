@@ -47,9 +47,11 @@ namespace eon
 		    1. Name + Combo [+ Exclude]
 			2. Name + PrefixCombo [+ Exclude]
 			3. Name + Sequence [+ Exclude]
-			4. Name + Enclose
-			5. Name + LineStart
-			6. Name + Remove
+			4. Name + LiteralName
+			5. Name + Regex
+			6. Name + Enclose
+			7. Name + LineStart
+			8. Name + Remove
 		  Combo:
 			A list of names for which token types must match. All consecutive
 			tokens for which the type is in the list will be included in the
@@ -57,10 +59,20 @@ namespace eon
 			if it matches the Exclude regex.
 		  PrefixCombo:
 		    Same as Combo, but the first token must match a specific string
+		  Alternating:
+		    Two names (A, B) for which the following tokens must match.
+			Matching can stop on first failed match of A or of B. The longest
+			possible sequence will be included in the match.
+		  PrefixAlternating:
+		    Same as Alternating, but the first token must match a specific string.
 		  Sequence:
 			A list of names for which tokens must match in corresponding
 			sequence. A match can be negated if it also matches the Exclude
 			regex.
+		  LiteralName:
+		    A list of names for which the next token must match one.
+		  Regex:
+		    A regex for which the next token must match.
 		  Enclose:
 			A start token and an end token encloses the tokens inbetween into
 			a single token. Start and end tokens are not part of the new token,
@@ -152,16 +164,57 @@ namespace eon
 		private:
 			string Prefix;
 		};
+		class AlternatingRule : public RuleDef
+		{
+		public:
+			inline AlternatingRule( name_t name, name_t a, name_t b, bool end_on_a = true ) : RuleDef( name ) {
+				A = a; B = b; EndOnA = end_on_a; }
+			virtual ~AlternatingRule() = default;
+			virtual bool match( TokenParser& parser, std::vector<Token>& output ) const noexcept override;
+		protected:
+			bool _match( size_t initial, Token matched, TokenParser& parser, std::vector<Token>& output ) const noexcept;
+			name_t A{ no_name }, B{ no_name };
+			bool EndOnA{ true };
+		};
+		class PrefixAlternatingRule : public AlternatingRule
+		{
+		public:
+			inline PrefixAlternatingRule( name_t name, string prefix, name_t a, name_t b, bool end_on_a = true )
+				: AlternatingRule( name, a, b, end_on_a ) { Prefix = prefix; }
+			virtual ~PrefixAlternatingRule() = default;
+			virtual bool match( TokenParser& parser, std::vector<Token>& output ) const noexcept override;
+		private:
+			string Prefix;
+		};
 		class SequenceRule : public RuleDef
 		{
 		public:
-			inline SequenceRule( name_t name, std::vector<name_t>&& sequence, regex&& exclude = regex() ) : RuleDef( name ) {
-				Sequence = std::move( sequence ); Exclude = std::move( exclude ); }
+			inline SequenceRule( name_t name, std::vector<name_t>&& sequence, regex&& exclude = regex() )
+				: RuleDef( name ) { Sequence = std::move( sequence ); Exclude = std::move( exclude ); }
 			virtual ~SequenceRule() = default;
 			bool match( TokenParser& parser, std::vector<Token>& output ) const noexcept override;
 		private:
 			std::vector<name_t> Sequence;
 			regex Exclude;
+		};
+		class LiteralNameRule : public RuleDef
+		{
+		public:
+			inline LiteralNameRule( name_t name, std::set<string>&& names ) : RuleDef( name ) {
+				Names = std::move( names ); }
+			virtual ~LiteralNameRule() = default;
+			bool match( TokenParser& parser, std::vector<Token>& output ) const noexcept override;
+		private:
+			std::set<string> Names;
+		};
+		class RegexRule : public RuleDef
+		{
+		public:
+			inline RegexRule( name_t name, regex&& pattern ) : RuleDef( name ) { Pattern = std::move( pattern ); }
+			virtual ~RegexRule() = default;
+			bool match( TokenParser& parser, std::vector<Token>& output ) const noexcept override;
+		private:
+			regex Pattern;
 		};
 		class LinestartRule : public RuleDef
 		{
@@ -177,46 +230,6 @@ namespace eon
 
 		//* Check if there are any rules present
 		inline operator bool() const noexcept { return !Rules.empty(); }
-
-		
-		//* Add a combo rule		
-//		inline void addComboRule( name_t name, std::set<name_t>&& combo, regex&& exclude = regex() ) {
-//			Rules.push_back( new ComboRule( name, std::move( combo ), std::move( exclude ) ) ); }
-		
-		//* Add a sequence rule
-//		inline void addSequenceRule( name_t name, std::vector<name_t>&& sequence, regex&& exclude = regex() ) {
-//			Rules.push_back( new SequenceRule( name, std::move( sequence ), std::move( exclude ) ) ); }
-		
-
-		//* Add an enclose rule using same character as start and end, with an
-		//* optional escape token
-//		inline void addSimpleEncloseRule( name_t name, name_t enclose_char, name_t escape = no_name ) {
-//			Rules.push_back( new EncloseRule( name, enclose_char, escape ) ); }
-
-		//* Add an enclose rule with explicit start and end, optionally with
-		//* escape token.
-//		inline void addStartEndEncloseRule( name_t name, name_t enclose_start, name_t enclose_end, name_t escape = no_name ) {
-//			Rules.push_back( new EncloseRule( name, enclose_start, enclose_end, escape ) ); }
-
-		//* Add an enclose rule with explicit start and end, optionally with
-		//* escape token.
-		//* Any occurrence of an additional start token before the end token
-		//* will increase a nesting counter. End tokens will decrease it and
-		//* end the enclosure only when the counter reaches zero.
-//		inline void addNestedEncloseRule( name_t name, name_t enclose_start, name_t enclose_end, name_t escape = no_name ) {
-//			Rules.push_back( new EncloseRule( name, enclose_start, enclose_end, true ) ); }
-		
-
-		//* Add a line-start token - token that must occur at the beginning of
-		//* the line to be matched
-//		inline void addLinestart( name_t name, name_t linestart ) {
-//			Rules.push_back( new LinestartRule( name, linestart ) ); }
-		
-		//* Add a remove rule - remove tokens with type matching one in the set
-//		inline void addRemoveRule( std::set<name_t>&& remove ) { Rules.push_back( new RemoveRule( std::move( remove ) ) ); }
-
-		//* Add a custom rule
-//		inline void addCustomRule( RuleDef* rule ) { Rules.push_back( rule ); }
 
 		//* Add a rule
 		inline void addRule( RuleDef* rule ) { Rules.push_back( rule ); }

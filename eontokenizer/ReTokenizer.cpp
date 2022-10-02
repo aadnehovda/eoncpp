@@ -98,7 +98,7 @@ namespace eon
 	bool ReTokenizer::ComboRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
 	{
 		auto initial = parser.pos();
-		Token matched;
+		Token matched( parser.current().source(), Name );
 		return _match( initial, matched, parser, output );
 	}
 	bool ReTokenizer::ComboRule::_match( size_t initial, Token matched, TokenParser& parser, std::vector<Token>& output ) const noexcept
@@ -130,10 +130,63 @@ namespace eon
 		parser.forward();
 		return _match( initial, matched, parser, output );
 	}
+	bool ReTokenizer::AlternatingRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		auto initial = parser.pos();
+		Token matched( parser.current().source(), Name );
+		return _match( initial, matched, parser, output );
+	}
+	bool ReTokenizer::AlternatingRule::_match( size_t initial, Token matched, TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		if( parser.current().is( A ) )
+		{
+			parser.forward();
+			while( true )
+			{
+				if( !parser )
+				{
+					if( !EndOnA )
+						break;
+					matched.extend( parser.last().source().end() );
+					output.push_back( std::move( matched ) );
+					return true;
+				}
+				if( !parser.current().is( B ) )
+				{
+					if( !EndOnA )
+						break;
+					matched.extend( parser.prior().source().end() );
+					output.push_back( std::move( matched ) );
+					return true;
+				}
+				parser.forward();
+				if( !parser.current().is( A ) )
+				{
+					if( EndOnA )
+						break;
+					matched.extend( parser.prior().source().end() );
+					output.push_back( std::move( matched ) );
+					return true;
+				}
+				parser.forward();
+			}
+		}
+		parser.pos( initial );
+		return false;
+	}
+	bool ReTokenizer::PrefixAlternatingRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		if( !parser || parser.current().str() != Prefix )
+			return false;
+		auto initial = parser.pos();
+		auto matched = Token( parser.current().source(), Name );
+		parser.forward();
+		return _match( initial, matched, parser, output );
+	}
 	bool ReTokenizer::SequenceRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
 	{
 		auto initial = parser.pos();
-		Token matched;
+		Token matched( parser.current().source(), Name );
 		for( auto name : Sequence )
 		{
 			if( parser && parser.current().type() == name )
@@ -161,6 +214,31 @@ namespace eon
 		}
 		parser.pos( initial );
 		return false;
+	}
+	bool ReTokenizer::LiteralNameRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		if( parser && parser.current().is( name_name ) && Names.find( parser.current().str() ) != Names.end() )
+		{
+			auto matched = Token( parser.current().source(), Name );
+			parser.forward();
+			output.push_back( std::move( matched ) );
+			return true;
+		}
+		else
+			return false;
+	}
+	bool ReTokenizer::RegexRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		if( parser && parser.current().is( name_name ) && Pattern.match( parser.current().str() ) )
+		{
+			auto source = parser.current().source();
+			source.pullEnd();
+			output.push_back( Token( source, Name ) );
+			parser.forward();
+			return true;
+		}
+		else
+			return false;
 	}
 	bool ReTokenizer::LinestartRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
 	{
