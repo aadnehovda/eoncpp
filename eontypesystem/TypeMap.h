@@ -27,7 +27,6 @@ namespace eon
 			bits,	// The type should be one of b8, b16, b32, or b64.
 			byte,	// On some platforms, byte_t and b8 can be the same.
 			index,	// On some platforms, index_t and b32 or b64 can be the same.
-			name	// On some platforms, index_t and name_t can be the same.
 		};
 
 		// Map from C++ type to name_t

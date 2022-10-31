@@ -27,7 +27,7 @@ namespace eon
 		Tuple& package( name_t package_name );
 
 		// Create a new normal scope
-		Tuple& normal( std::initializer_list<AttributePair> attributes );
+		Tuple normal( Tuple& parent_scope, std::initializer_list<AttributePair> attributes );
 	}
 
 
@@ -85,9 +85,14 @@ namespace eon
 	//
 	namespace tuple
 	{
-		// Create a plain tuple
+		// Create a static tuple
 		// Once created, attributes can be modified but not added or removed!
-		inline Tuple plain( std::initializer_list<AttributePair> attributes ) { return Tuple( name_plain, attributes ); }
+		inline Tuple statc( std::initializer_list<AttributePair> attributes ) { return Tuple( name_static, attributes ); }
+
+		// Create an optional tuple
+		// Fixed number and type of attributes, but attributes can be without value.
+		// Requires the 'access' construct/operator to access attributes.
+		inline Tuple optional( TypeTuple optional_tuple_attributes ) { return Tuple( optional_tuple_attributes ); }
 
 		// Create a dynamic tuple
 		// Once created, attributes can be modified, added, and removed!

@@ -9,11 +9,11 @@ namespace eon
 	const string string::Empty;
 
 
-	string::string( const char* buffer, index_t size, string substitute_for_bad_utf8 ) noexcept
+	string::string( const char* input, index_t input_length, string non_utf8_substitution ) noexcept
 	{
 		eon::char_t codepoint{ 0 }, state{ 0 };
 		unsigned char bytes[ 4 ]{ 0, 0, 0, 0 };
-		auto c = buffer, end = buffer + size;
+		auto c = input, end = input + input_length;
 		while( c < end )
 		{
 			int i = 0;
@@ -23,7 +23,7 @@ namespace eon
 					goto valid;
 				bytes[ i ] = static_cast<unsigned char>( *c );
 			}
-			*this += substitute_for_bad_utf8;
+			*this += non_utf8_substitution;
 			continue;
 		valid:
 			*this += codepoint;
@@ -32,28 +32,28 @@ namespace eon
 	}
 
 
-	string& string::assign( const char_t* codepoints, index_t size )
+	string& string::assign( const char_t* input, index_t input_length )
 	{
 		clear();
-		reserve( size );
-		for( index_t i = 0; i < size; ++i )
-			*this += codepoints[ i ];
+		reserve( input_length );
+		for( index_t i = 0; i < input_length; ++i )
+			*this += input[ i ];
 		return *this;
 	}
-	string& string::assign( const char* chars, index_t size )
+	string& string::assign( const char* input, index_t input_length )
 	{
-		iterator i( chars, size );	// Using iterator to scan the raw string for us!
+		iterator i( input, input_length );	// Using iterator to scan the raw string for us!
 		if( !i.validUTF8() )
 			throw InvalidUTF8();
 		NumChars = i.numChars();
-		Bytes.assign( chars, size );
+		Bytes.assign( input, input_length );
 		return *this;
 	}
 
-	string& string::assign( index_t copies, char_t cp )
+	string& string::assign( index_t copies, char_t input )
 	{
 		uint32_t bytes;
-		auto size = iterator::unicodeToBytes( cp, bytes );
+		auto size = iterator::unicodeToBytes( input, bytes );
 		Bytes.reserve( size * copies );
 		for( index_t i = 0; i < copies; ++i )
 			Bytes.append( (const char*)&bytes, size );
@@ -74,130 +74,100 @@ namespace eon
 		else
 			return assign( copies, string( other ) );
 	}
-	string& string::assign( index_t copies, const std::string& stdstr )
+	string& string::assign( index_t copies, const std::string& input )
 	{
 		// Make sure 'other' is not our own buffer!
-		if( &stdstr != &Bytes )
+		if( &input != &Bytes )
 		{
-			iterator i( stdstr );
+			iterator i( input );
 			if( !i.validUTF8() )
 				throw InvalidUTF8();
-			Bytes.reserve( stdstr.size() * copies );
+			Bytes.reserve( input.size() * copies );
 			for( index_t i = 0; i < copies; ++i )
-				Bytes.append( stdstr );
+				Bytes.append( input );
 			NumChars = i.numChar() * copies;
 			return *this;
 		}
 		else
-			return assign( copies, std::string( stdstr ) );
+			return assign( copies, std::string( input ) );
 	}
-	string& string::assign( index_t copies, const substring& sub )
+	string& string::assign( index_t copies, const substring& input )
 	{
-		// Make sure 'sub' is not from 'this'!
-		if( !sub.sameBuffer( Bytes.c_str() ) )
+		// Make sure 'input' is not from 'this'!
+		if( !input.sameBuffer( Bytes.c_str() ) )
 		{
-			if( !sub.begin().validUTF8() )
+			if( !input.begin().validUTF8() )
 				throw InvalidUTF8();
 			clear();
-			Bytes.reserve( sub.toSize() * copies );
+			Bytes.reserve( input.toSize() * copies );
 			for( index_t i = 0; i < copies; ++i )
-				*this += sub;
+				*this += input;
 			return *this;
 		}
 		else
-			return assign( copies, string( sub ) );
+			return assign( copies, string( input ) );
 	}
 
-	string& string::operator=( const substring& sub )
+	string& string::operator=( const substring& input )
 	{
-		if( !sub.validUTF8() )
+		if( !input.validUTF8() )
 			throw InvalidUTF8();
-		if( sub.isHighToLow() )
+		if( input.isHighToLow() )
 		{
 			clear();
-			for( auto i = sub.begin(); i != sub.end(); --i )
+			for( auto i = input.begin(); i != input.end(); --i )
 				*this += *i;
 		}
 		else
 		{
-			NumChars = sub.numChars();
-			Bytes.assign( sub.begin().byteData(), sub.numBytes() );
+			NumChars = input.numChars();
+			Bytes.assign( input.begin().byteData(), input.numBytes() );
 		}
 		return *this;
 	}
 
-	string& string::operator=( std::string&& stdstr )
+	string& string::operator=( std::string&& input )
 	{
-		substring sub( stdstr );
+		substring sub( input );
 		if( !sub.validUTF8() )
 			throw InvalidUTF8();
 
 		NumChars = sub.numChars();
-		Bytes = std::move( stdstr );
+		Bytes = std::move( input );
 		return *this;
 	}
 
-	string& string::operator=( const std::initializer_list<char_t>& codepoints )
+	string& string::operator=( const std::initializer_list<char_t>& input )
 	{
 		clear();
-		reserve( codepoints.size() );
-		for( auto& c : codepoints )
+		reserve( input.size() );
+		for( auto& c : input )
 			*this += c;
 		return *this;
 	}
-	string& string::operator=( const std::vector<char_t>& codepoints )
+	string& string::operator=( const std::vector<char_t>& input )
 	{
 		clear();
-		reserve( codepoints.size() );
-		for( auto& c : codepoints )
+		reserve( input.size() );
+		for( auto& c : input )
 			*this += c;
 		return *this;
 	}
-	string& string::operator=( const std::initializer_list<char>& chars )
+	string& string::operator=( const std::initializer_list<char>& input )
 	{
 		clear();
-		reserve( chars.size() );
-		for( auto& chr : chars )
+		reserve( input.size() );
+		for( auto& chr : input )
 			*this += static_cast<byte_t>( chr );
 		return *this;
 	}
-	string& string::operator=( const std::initializer_list<unsigned char>& chars )
+	string& string::operator=( const std::initializer_list<unsigned char>& input )
 	{
 		clear();
-		reserve( chars.size() );
-		for( auto& chr : chars )
+		reserve( input.size() );
+		for( auto& chr : input )
 			*this += static_cast<byte_t>( chr );
 		return *this;
-	}
-
-
-
-
-	string::iterator string::decodeIterator( const string& encoded_iterator )
-	{
-		std::regex pattern{ R"(^(\d+):(\d+)$)" };
-		std::smatch match;
-		if( std::regex_match( encoded_iterator.stdstr(), match, pattern ) )
-		{
-			return iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str() + std::atoi( match[ 1 ].str().c_str() ),
-				std::atoi( match[ 2 ].str().c_str() ) );
-		}
-		else
-			return end();
-	}
-	substring string::decodeSubstring( const string& encode_substring )
-	{
-		std::regex pattern{ R"(^(\d+):(\d+)\-(\d+):(\d+)$)" };
-		std::smatch match;
-		if( std::regex_match( encode_substring.stdstr(), match, pattern ) )
-		{
-			return substring( iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str()
-					+ std::atoi( match[ 1 ].str().c_str() ), std::atoi( match[ 2 ].str().c_str() ) ),
-				iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str()
-					+ std::atoi( match[ 3 ].str().c_str() ), std::atoi( match[ 4 ].str().c_str() ) ) );
-		}
-		else
-			return substring( end() );
 	}
 
 
@@ -224,27 +194,74 @@ namespace eon
 		return start;
 	}
 
-	string::iterator string::rebase( const iterator& other ) const noexcept
+	string::iterator string::rebase( const iterator& pos_from_other_string ) const noexcept
 	{
-		if( other && other.numByte() < numBytes() && other.numChar() < NumChars )
+		if( pos_from_other_string
+			&& pos_from_other_string.numByte() < numBytes()
+			&& pos_from_other_string.numChar() < NumChars )
 		{
 			// The iterator is inside of our range
-			return iterator( Bytes.c_str(), numBytes(), NumChars,
-				Bytes.c_str() + other.numByte() );
+			return iterator(
+				Bytes.c_str(), numBytes(), NumChars, Bytes.c_str() + pos_from_other_string.numByte() );
 		}
 		return end();
 	}
 
-	string::iterator string::rebaseMoved( const iterator& other ) const noexcept
+	string::iterator string::rebaseMoved( const iterator& pos_from_other_string ) const noexcept
 	{
-		if( other )
-			return iterator( Bytes.c_str(), numBytes(), NumChars, Bytes.c_str() + other.numByte(), other.numChar() );
+		if( pos_from_other_string )
+			return iterator(
+				Bytes.c_str(),
+				numBytes(),
+				NumChars,
+				Bytes.c_str() + pos_from_other_string.numByte(),
+				pos_from_other_string.numChar() );
 		else
 			return end();
 	}
 
 
+	string::iterator string::decodeIterator( const string& encoded_iterator )
+	{
+		std::regex pattern{ R"(^(\d+):(\d+)$)" };
+		std::smatch match;
+		if( std::regex_match( encoded_iterator.stdstr(), match, pattern ) )
+		{
+			return iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str() + std::atoi( match[ 1 ].str().c_str() ),
+				std::atoi( match[ 2 ].str().c_str() ) );
+		}
+		else
+			return end();
+	}
+	substring string::decodeSubstring( const string& encode_substring )
+	{
+		std::regex pattern{ R"(^(\d+):(\d+)\-(\d+):(\d+)$)" };
+		std::smatch match;
+		if( std::regex_match( encode_substring.stdstr(), match, pattern ) )
+		{
+			return substring( iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str()
+				+ std::atoi( match[ 1 ].str().c_str() ), std::atoi( match[ 2 ].str().c_str() ) ),
+				iterator( Bytes.c_str(), Bytes.size(), NumChars, Bytes.c_str()
+					+ std::atoi( match[ 3 ].str().c_str() ), std::atoi( match[ 4 ].str().c_str() ) ) );
+		}
+		else
+			return substring( end() );
+	}
 
+
+
+
+	string& string::operator+=( const substring& input )
+	{
+		if( input.validUTF8() )
+		{
+			Bytes.append( input.begin().byteData(), input.numBytes() );
+			NumChars += input.numChars();
+			return *this;
+		}
+		else
+			return *this += string( input );
+	}
 
 	string::iterator string::insert( const iterator& pos, const string& substr )
 	{
@@ -416,7 +433,7 @@ namespace eon
 
 		string result;
 		if( found.begin() != begin() )
-			result = substr( begin(), found.begin() );
+			result += substr( begin(), found.begin() );
 		else if( sub.begin() > begin() )
 			result += substr( begin(), sub.begin() );
 		auto pos = end();
@@ -444,6 +461,52 @@ namespace eon
 		{
 			if( *i == find )
 				result += replacement;
+			else
+				result += *i;
+		}
+		if( area.end() != end() )
+			result += substr( area.end() );
+		return result;
+	}
+
+	string string::replace( const std::map<string, string>& find_replace, const substring& sub ) const
+	{
+		if( sub.empty() )
+			return *this;
+		
+		string result;
+		if( sub.begin() != begin() )
+			result += substr( begin(), sub.begin() );
+		for( iterator i = sub.begin(); i != sub.end(); ++i )
+		{
+			for( auto& elm : find_replace )
+			{
+				if( substr( i, sub.end() ).compare( elm.first.substr(), elm.first.numChars() ) == 0 )
+				{
+					result += elm.second;
+					i += elm.first.numChars() - 1;
+					goto done;
+				}
+			}
+			result += *i;
+		done:
+			;
+		}
+		return result;
+	}
+	string string::replace( const std::map<char_t, char_t>& find_replace, const substring& sub ) const
+	{
+		if( sub.empty() )
+			return *this;
+		auto area = sub.lowToHigh();
+		string result;
+		if( area.begin() > begin() )
+			result += substr( begin(), area.begin() );
+		for( auto i = area.begin(); i != area.end(); ++i )
+		{
+			auto found = find_replace.find( *i );
+			if( found != find_replace.end() )
+				result += found->second;
 			else
 				result += *i;
 		}

@@ -332,7 +332,9 @@ namespace eon
 				size_t new_size = Elements.numElements() < SIZE_MAX / 2 ? Elements.numElements() * 2 : SIZE_MAX;
 				if( new_size == Elements.numElements() )
 					throw std::length_error( "Cannot grow eon::vector - max size reached!" );
-				Storage new_elements( std::move( Elements ), new_size - Elements.numElements() );
+				Storage new_elements( new_size, sizeof( T ) );
+				for( size_t i = 0; i < NumElements; ++i )
+					new ( (void*)new_elements.get( i ) ) T( std::move( at( i ) ) );
 				Elements = std::move( new_elements );
 			}
 		}

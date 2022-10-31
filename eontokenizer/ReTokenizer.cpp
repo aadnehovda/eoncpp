@@ -98,7 +98,9 @@ namespace eon
 	bool ReTokenizer::ComboRule::match( TokenParser& parser, std::vector<Token>& output ) const noexcept
 	{
 		auto initial = parser.pos();
-		Token matched( parser.current().source(), Name );
+		source::Ref src{ parser.current().source() };
+		src.end( src.start() );
+		Token matched( src, Name );
 		return _match( initial, matched, parser, output );
 	}
 	bool ReTokenizer::ComboRule::_match( size_t initial, Token matched, TokenParser& parser, std::vector<Token>& output ) const noexcept
@@ -262,16 +264,25 @@ namespace eon
 		std::vector<Token> output;
 		while( parser )
 		{
-			for( auto rule : Rules )
+			if( !_matchARule( parser, output ) )
 			{
-				if( rule->match( parser, output ) )
-					goto ok;
+				output.push_back( parser.current() );
+				parser.forward();
 			}
-			output.push_back( parser.current() );
-			parser.forward();
-		ok:
-			;
 		}
 		return output;
+	}
+
+
+
+
+	bool ReTokenizer::_matchARule( TokenParser& parser, std::vector<Token>& output ) const noexcept
+	{
+		for( auto rule : Rules )
+		{
+			if( rule->match( parser, output ) )
+				return true;
+		}
+		return false;
 	}
 }

@@ -5,12 +5,12 @@ namespace eon
 {
 	void serializer::_encode( bool value, std::string& bytes )
 	{
-		bytes += "B!";
+		bytes += "b!";
 		bytes += ( value ? "1" : "0" );
 	}
 	void serializer::_encode( byte_t value, std::string& bytes )
 	{
-		bytes += "b!";
+		bytes += "B!";
 		bytes += hex::toHex( value ).stdstr();
 	}
 	void serializer::_encode( char_t value, std::string& bytes )
@@ -69,7 +69,7 @@ namespace eon
 	}
 	void serializer::_encode( const std::string& value, std::string& bytes )
 	{
-		bytes += "b+";
+		bytes += "B+";
 		for( auto c : value )
 		{
 			if( c == '\\' )
@@ -97,7 +97,7 @@ namespace eon
 	}
 	void serializer::_encode( const char* value, std::string& bytes )
 	{
-		bytes += "b+";
+		bytes += "B+";
 		for( auto c = value; *c != '\0'; ++c )
 		{
 			if( *c == '\\' )

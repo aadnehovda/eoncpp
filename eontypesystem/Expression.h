@@ -3,6 +3,9 @@
 #include "Definitions.h"
 #include "Action.h"
 #include "Operators.h"
+#include "Tuple.h"
+#include "ExpressionNode.h"
+#include "DirectConversion.h"
 #include <eonsource/File.h>
 #include <eonsource/String.h>
 #include <eonsource/SourceRef.h>
@@ -132,7 +135,6 @@ namespace eon
 			source::Ref Source;
 		};
 
-		class Node;
 
 		class ParseData
 		{
@@ -149,11 +151,11 @@ namespace eon
 			inline void error() noexcept { Errors = true; }
 			inline bool errors() const noexcept { return Errors; }
 			
-			inline stack<Node>& operands() noexcept { return Operands; }
+			inline stack<expression::Node>& operands() noexcept { return Operands; }
 			inline stack<Operator>& operators() noexcept { return Operators; }
 
-			inline void lastSeenOperand() noexcept { LastSeen = Seen::_operand; }
-			inline void lastSeenOperator() noexcept { LastSeen = Seen::_operator; }
+			inline void recordOperandAsLastSeen() noexcept { LastSeen = Seen::_operand; }
+			inline void recordOperatorAsLastSeen() noexcept { LastSeen = Seen::_operator; }
 			inline Seen lastSeen() const noexcept { return LastSeen; }
 
 			inline bool terminateOn( string type ) const noexcept { return TerminateOn.find( type ) != TerminateOn.end(); }
@@ -163,57 +165,12 @@ namespace eon
 			source::Reporter* Reporter{ nullptr };
 			Seen LastSeen{ Seen::_operator };
 			std::set<string> TerminateOn;
-			stack<Node> Operands;
+			stack<expression::Node> Operands;
 			stack<Operator> Operators;
 			bool Errors{ false };
-		};
 
-		class Node
-		{
 		public:
-			Node() = default;
-			inline Node( Attribute&& value, source::Ref source ) { Value = std::move( value ); Source = source; }
-			inline Node( name_t op_name, source::Ref source = source::Ref() ) { OpName = op_name; Source = source; }
-			inline Node( const type::Action& action, source::Ref call_source ) {
-				OpName = name_call; Operator = &action; Source = Source;
-				OpReturnType = action.signature().at( name_return ); }
-			inline Node( const Node& other ) { *this = other; }
-			inline Node( Node&& other ) noexcept { *this = std::move( other ); }
-			~Node() = default;
-
-			inline Node& operator=( const Node& other ) {
-				OpName = other.OpName; OpReturnType = other.OpReturnType; Value = other.Value; Source = other.Source;
-				Operator = other.Operator; Children = other.Children; return *this; }
-			inline Node& operator=( Node&& other ) noexcept {
-				OpName = other.OpName; other.OpName = no_name; OpReturnType = std::move( other.OpReturnType );
-				Value = std::move( other.Value ); Source = other.Source;
-				Operator = other.Operator; other.Operator = nullptr; Children = std::move( other.Children ); return *this; }
-
-			inline operator bool() const noexcept { return OpName || Value.type(); }
-			inline bool isOperator() const noexcept { return OpName != no_name && OpName != name_call; }
-			inline bool isCall() const noexcept { return OpName == name_call; }
-			inline bool isValue() const noexcept { return ( OpName == no_name || OpName == name_call ) && Value.type(); }
-
-			inline name_t opName() const noexcept { return OpName; }
-			inline TypeTuple opReturnType() const noexcept { return OpReturnType; }
-			inline Attribute& value() noexcept { return Value; }
-			inline const source::Ref& source() const noexcept { return Source; }
-
-			inline void addOperand( Node&& opr ) { Children.push_front( std::move( opr ) ); }
-
-			bool findOperator( Tuple& scope, source::Reporter& reporter );
-
-			Attribute evaluate();
-
-			void str( Stringifier& strf ) const;
-
-		private:
-			name_t OpName{ no_name };
-			TypeTuple OpReturnType;
-			Attribute Value;
-			source::Ref Source;
-			const type::Action* Operator{ nullptr };
-			std::list<Node> Children;
+			expression::DirectConversion Converter;
 		};
 
 
@@ -228,34 +185,116 @@ namespace eon
 		void _prepTokenizer( Tokenizer& tokenizer );
 		void _prepReTokenizer( ReTokenizer& retokenizer );
 
-		void _runParse( ParseData& data );
+		void _parseLargeExpression( ParseData& data );
+		void _parseSmallExpression( ParseData& data );
+		bool _parseExpressionDetails( ParseData& data );
+		inline bool _endOfLargeExpression( ParseData& data ) {
+			return !data.parser() || data.terminateOn( data.parser().current().str() ); }
+		inline bool _endOfSmallExpression( ParseData& data ) {
+			return _endOfLargeExpression( data ) || data.parser().current().is( symbol_semicolon ); }
 
-		bool _parse( ParseData& data );
+		void _reportUnknownElementError( ParseData& data );
+
+		bool _parseDetails( ParseData& data );
 
 		bool _parseLiteral( ParseData& data );
+		bool _parseBoolLiteral( ParseData& data );
+		bool _parseByteLiteral( ParseData& data );
+		bool _parseCharLiteral( ParseData& data );
+		bool _parseIntLiteral( ParseData& data );
+		bool _parseFloatLiteral( ParseData& data );
+		bool _parseBytesLiteral( ParseData& data );
+		bool _parseStringLiteral( ParseData& data );
+		bool _parseRegexLiteral( ParseData& data );
+		bool _parseNamepathLiteral( ParseData& data );
+		bool _parsePathLiteral( ParseData& data );
 
 		bool _parseOperator( ParseData& data );
 		bool _processOperator( ParseData& data );
+		bool _processOperatorName( ParseData& data, name_t name );
 		bool _processOperator( ParseData& data, name_t op_name, source::Ref op_source );
-		bool _processClose( ParseData& data );
-		bool _processPlainOperator( ParseData& data, name_t op_name, source::Ref new_op_source );
-		bool _processNamedOperator( ParseData& data, name_t op_name );
+		bool _processEndOfSmallExpression( ParseData& data );
+		bool _processCloseParen( ParseData& data );
+		bool _processPlainOperator( ParseData& data, name_t new_op_name, source::Ref new_op_source );
+		bool _canBindOperator( ParseData& data, name_t new_op_name );
+
+		void _finishExpressionDetails( ParseData& data );
+
 		void _bindOperator( ParseData& data );
+		void _bindAssign( ParseData& data );
+		void _bindNormal( ParseData& data );
+		void _bindOperands( ParseData& data, expression::Node& op );
+		void _bindOperatorAction( ParseData& data, expression::Node& op );
+		bool _getOperands( ParseData& data, std::initializer_list<expression::Node*> operands );
+		bool _isLvalue( ParseData& data, const expression::Node& operand ) const;
+		void _assignDirect( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const;
+		TypeTuple _findAction( ParseData& data, name_t name, name_t classification, name_t type, TypeTuple args ) const;
+		void _directAssignNotSupportedError( ParseData& data, name_t type ) const;
+		void _directAssignMultipleOptionsError(
+			ParseData& data, name_t name, name_t type, TypeTuple args, const std::set<TypeTuple>& action_types ) const;
+		void _bindAction( ParseData& data, expression::Node& lhs, expression::Node& rhs, TypeTuple action_signature ) const;
+		void _assignDirectByConversion( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const;
+		void _assignTuple( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const;
+		void _incompatibleTupleError( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const;
+		void _assignByConstructor( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const;
+		bool _canConvertDirectly( ParseData& data, const TypeTuple& lhs, const expression::Node& rhs ) const noexcept;
+		void _resolveOperatorSequence( ParseData& data, name_t new_op_name, source::Ref new_op_source );
 		name_t _resolveOperator( ParseData& data, name_t op_name );
-		name_t _findSolidOpName( ParseData& data, const std::vector<name_t>& options, name_t op_name, index_t op_no );
+		inline bool _singleOptionNoSequence( const std::vector<name_t>& all_options ) const noexcept {
+			return all_options.size() == 1 && type::Operators::sequence( all_options[ 0 ] ).size() == 1 ; }
+		name_t _resolveNonTrivalOperator( std::vector<name_t>& all_options, ParseData& data, name_t op_name );
+		name_t _resolveNonTrivalOperator(
+			std::vector<name_t>& all_options,
+			ParseData& data,
+			name_t op_name,
+			std::vector<expression::Node>& operands,
+			index_t seq_no );
+		name_t _identifySingularOperator(
+			ParseData& data, const std::vector<name_t>& options, name_t op_name, index_t op_no );
 		std::vector<name_t> _discardPrefixOperatorOptions( const std::vector<name_t>& options, index_t op_no );
+		name_t _operatorMissingElementSyntaxError( ParseData& data, std::vector<name_t>& all_options, index_t seq_no );
 		std::set<string> _findStopOn( const std::vector<name_t>& options, index_t op_no );
-		std::vector<name_t> _matchNextSequenceOperator( ParseData& data, const std::vector<name_t>& options, index_t op_no );
-		name_t _processSequenceOperator( ParseData& data, name_t op_name, std::vector<Node>&& operands );
+		std::vector<name_t> _matchNextSequenceOperator(
+			ParseData& data, const std::vector<name_t>& options, index_t op_no );
+		name_t _processSequenceOperator( ParseData& data, name_t op_name, std::vector<expression::Node>&& operands );
+		void _parseNextNonTrivalOperatorOperand(
+			ParseData& data, const std::vector<name_t>& options, std::vector<expression::Node>& operands, index_t seq_no );
+		name_t _incompleteOperatorError( ParseData& data, source::Ref orig_source );
 
 		bool _parseTuple( ParseData& data );
 		bool _parseTuple( ParseData& data, name_t tupletype );
+		bool _badTupleInExpressionError( ParseData& data, name_t tupletype );
+		std::vector<AttributePair> _parseTupleAttributes( ParseData& data );
+		void _parseTupleAttribute( ParseData& data, std::vector<AttributePair>& attributes );
+		name_t _parseTupleAttributeName( ParseData& data );
+
+		template<typename T>
+		T _operandNotProperlyEndedError( ParseData& data, string name, source::Ref source, T return_value )
+		{
+			data.error();
+			data.reporter().error( name + " is not properly ended!", source );
+			return return_value;
+		}
+
 		bool _parseTypeTuple( ParseData& data );
-		TypeTuple _processTypeTuple( ParseData& data );
+		TypeTuple _parseTypeTupleDetails( ParseData& data );
+		void _parseTypeTupleAttributes( ParseData& data, TypeTuple& ttuple );
+		void _parseTypeTupleAttributeValue( ParseData& data, name_t attrib_name, TypeTuple& ttuple );
+		void _parseTypeTupleTupleAttributeValue( ParseData& data, name_t attrib_name, TypeTuple& ttuple );
 
 		bool _parseName( ParseData& data );
+		bool _parseNameLiteral( ParseData& data, name_t name = no_name );
+		bool _misspelledPrefixError( ParseData& data, name_t prefix );
+		bool _processVariable( ParseData& data, Attribute& variable, name_t name );
 
 		bool _parseActionCall( ParseData& data, name_t action_name );
+		struct CallArgs
+		{
+			std::vector<expression::Node> Args;
+			TypeTuple ArgTypes;
+		};
+		CallArgs _parseActionCallArgs( ParseData& data );
+		bool _processConstructorCall( ParseData& data, name_t action_name, CallArgs& args, source::Ref source );
 
 		bool _parseExpression( ParseData& data );
 
@@ -269,6 +308,6 @@ namespace eon
 	private:
 
 		Tuple* Scope{ nullptr };
-		std::list<Node> Roots;
+		std::list<expression::Node> Roots;
 	};
 }

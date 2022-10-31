@@ -10,8 +10,7 @@ namespace eon
 		for( auto c : binary_data )
 		{
 			auto digits = toHex( c );
-			Value += static_cast<char>( digits.first );
-			Value += static_cast<char>( digits.second );
+			digits.appendToHex( Value );
 		}
 		return *this;
 	}
@@ -21,33 +20,18 @@ namespace eon
 		for( auto c = binary_data; *c != '\0'; ++c )
 		{
 			auto digits = toHex( *c );
-			Value += static_cast<char>( digits.first );
-			Value += static_cast<char>( digits.second );
+			digits.appendToHex( Value );
 		}
 		return *this;
 	}
 
 	void hex::setHex( const std::string& hex )
 	{
-		if( hex.size() % 2 == 1 )
-			throw Invalid( "Odd number of digits" );
+		_disallowOddNumberOfDigits( hex );
 		if( hex.size() == 0 )
-		{
 			clear();
-			return;
-		}
-		std::string value;
-		digits hx;
-		for( auto c = hex.c_str(), end = c + hex.size(); c != end; c += 2 )
-		{
-			hx.first = *c;
-			hx.second = *( c + 1 );
-			if( !isDigit( hx.first ) || !isDigit( hx.second ) )
-				throw Invalid( "Contains non-hex digits" );
-			value += static_cast<char>( hx.first );
-			value += static_cast<char>( hx.second );
-		}
-		Value = std::move( value );
+		else
+			_setConfirmedHexDigits( hex );
 	}
 
 
@@ -56,11 +40,9 @@ namespace eon
 	std::string hex::binary() const noexcept
 	{
 		std::string bin;
-		digits hx;
 		for( auto c = Value.c_str(), end = c + Value.size(); c != end; c += 2 )
 		{
-			hx.first = *c;
-			hx.second = *( c + 1 );
+			digits hx( *c, *( c + 1 ) );
 			bin += static_cast<char>( toByte( hx ) );
 		}
 		return bin;
@@ -69,19 +51,18 @@ namespace eon
 
 
 
-	hex::digits hex::toHex( byte_t byte ) noexcept
+	void hex::_setConfirmedHexDigits( const std::string& hex )
 	{
-		digits hex;
-		hex.first = byte / 16;
-		hex.second = byte % 16;
-		hex.first += hex.first < 10 ? 0x30 : 0x37;
-		hex.second += hex.second < 10 ? 0x30 : 0x37;
-		return hex;
+		std::string hex_output;
+		for( auto c = hex.c_str(), end = c + hex.size(); c != end; c += 2 )
+			_appendToHex( c, hex_output );
+		Value = std::move( hex_output );
 	}
-	byte_t hex::toByte( digits hex ) noexcept
+	void hex::_appendToHex( const char* c, std::string& hex_output ) const
 	{
-		hex.first -= hex.first >= 0x41 ? 0x37 : 0x30;
-		hex.second -= hex.second >= 0x41 ? 0x37 : 0x30;
-		return hex.first * 16 + hex.second;
+		digits hx( *c, *( c + 1 ) );
+		if( !isDigit( hx.first() ) || !isDigit( hx.second() ) )
+			throw Invalid( "Contains non-hex digits" );
+		hx.appendToHex( hex_output );
 	}
 }

@@ -41,7 +41,7 @@ namespace eon
 		// The other storage will be left empty after this!
 		// Throws:
 		//   - eon::SizeOverflow : The total size is more than maximum!
-		Storage( Storage&& other, size_t additional_elements );
+//		Storage( Storage&& other, size_t additional_elements );
 
 		// Cannot copy!
 		Storage( const Storage& ) = delete;

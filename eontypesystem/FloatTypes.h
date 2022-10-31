@@ -18,281 +18,479 @@ namespace eon
 	namespace type
 	{
 		template<typename T>
+		struct FloatCopy : public Action {
+			FloatCopy() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_copy,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					TypeTuple::args( { type::mapCppType( CPPTYPE( T ) ) } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().at( 1 ).value<T>() = args.values().top().value<T>();
+				args.values().pop();
+				return sig_t::norm; } };
+
+		template<typename T>
+		struct FloatTake : public Action {
+			FloatTake() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_take,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					TypeTuple::args( { type::mapCppType( CPPTYPE( T ) ) } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().at( 1 ).value<T>() = args.values().top().value<T>();
+				args.values().pop();
+				return sig_t::norm; } };
+
+		template<typename T>
 		struct FloatConstruct : public Action {
-			inline FloatConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ) ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				values.push( Attribute::newImplicit( static_cast<T>( 0 ) ) ); return sig_t::norm; } };
+			FloatConstruct() : Action(
+				TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().push( Attribute::newImplicit( static_cast<T>( 0 ), type::Qualifier::none ) );
+				return sig_t::norm; } };
 		 
 		template<typename T>
 		struct FloatCopyConstruct : public Action {
-			inline FloatCopyConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, type::mapCppType(
-					CPPTYPE( T ) ) } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				const auto a1 = values.top().value<T>(); values.pop(); values.push( Attribute::newImplicit( a1 ) );
+			FloatCopyConstruct() : Action(
+				TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				const auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatBoolConstruct : public Action {
-			inline FloatBoolConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_bool } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<bool>(); values.pop(); values.push(
-					Attribute::newImplicit( static_cast<T>( a1 ? 1.0 : 0.0 ) ) ); return sig_t::norm; } };
+			FloatBoolConstruct() : Action(
+				TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_bool } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<bool>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( static_cast<T>( a1 ? 1.0 : 0.0 ), type::Qualifier::none ) );
+				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatByteConstruct : public Action {
-			inline FloatByteConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_byte } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<byte_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatByteConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_byte } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<byte_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatCharConstruct : public Action {
-			inline FloatCharConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_char } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<char_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatCharConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_char } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<char_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatIntConstruct : public Action {
-			inline FloatIntConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_int } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<int_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatIntConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_int } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<int_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatShortConstruct : public Action {
-			inline FloatShortConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_short } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<short_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatShortConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_short } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<short_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatLongConstruct : public Action {
-			inline FloatLongConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_long } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<long_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatLongConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_long } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<long_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		struct FloatLowConstruct : public Action {
-			inline FloatLowConstruct() : Action( TypeTuple::action( name_float, name_constructor, name_operator,
-				name_float, { { no_name, name_low } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<low_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (flt_t)a1, name_float ) ); return sig_t::norm; } };
+			FloatLowConstruct() : Action(
+				TypeTuple::action(
+					name_float,
+					name_constructor,
+					name_constructor,
+					name_float,
+					{ { no_name, name_low } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<low_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (flt_t)a1, name_float, type::Qualifier::none ) );
+				return sig_t::norm; } };
 		struct FloatHighConstruct : public Action {
-			inline FloatHighConstruct() : Action( TypeTuple::action( name_float, name_constructor, name_operator,
-				name_float, { { no_name, name_high } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<high_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (flt_t)a1, name_float ) ); return sig_t::norm; } };
+			FloatHighConstruct() : Action(
+				TypeTuple::action(
+					name_float, name_constructor, name_constructor, name_float, { { no_name, name_high } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<high_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (flt_t)a1, name_float, type::Qualifier::none ) );
+				return sig_t::norm; } };
 		struct LowFloatConstruct : public Action {
-			inline LowFloatConstruct() : Action( TypeTuple::action( name_low, name_constructor, name_operator, name_low, {
-				{ no_name, name_float } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<flt_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (low_t)a1, name_low ) ); return sig_t::norm; } };
+			LowFloatConstruct() : Action(
+				TypeTuple::action(
+					name_low, name_constructor, name_constructor, name_low, { { no_name, name_float } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<flt_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (low_t)a1, name_low, type::Qualifier::none ) );
+				return sig_t::norm; } };
 		struct LowHighConstruct : public Action {
-			inline LowHighConstruct() : Action( TypeTuple::action( name_low, name_constructor, name_operator, name_low, {
-				{ no_name, name_high } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<high_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (low_t)a1, name_low ) ); return sig_t::norm; } };
+			LowHighConstruct() : Action(
+				TypeTuple::action(
+					name_low, name_constructor, name_constructor, name_low, { { no_name, name_high } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<high_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (low_t)a1, name_low, type::Qualifier::none ) );
+				return sig_t::norm; } };
 		struct HighFloatConstruct : public Action {
-			inline HighFloatConstruct() : Action( TypeTuple::action( name_high, name_constructor, name_operator, name_high,
-				{ { no_name, name_float } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<flt_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (high_t)a1, name_high ) ); return sig_t::norm; } };
+			HighFloatConstruct() : Action(
+				TypeTuple::action(
+					name_high, name_constructor, name_constructor, name_high, { { no_name, name_float } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<flt_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (high_t)a1, name_high, type::Qualifier::none ) );
+				return sig_t::norm; } };
 		struct HighLowConstruct : public Action {
-			inline HighLowConstruct() : Action( TypeTuple::action( name_high, name_constructor, name_operator, name_high,
-				{ { no_name, name_low } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<low_t>(); values.pop(); values.push(
-					Attribute::newExplicit( (high_t)a1, name_high ) ); return sig_t::norm; } };
+			HighLowConstruct() : Action(
+				TypeTuple::action(
+					name_high, name_constructor, name_constructor, name_high, { { no_name, name_low } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<low_t>();
+				args.values().pop();
+				args.values().push( Attribute::newExplicit( (high_t)a1, name_high, type::Qualifier::none ) );
+				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatIndexConstruct : public Action {
-			inline FloatIndexConstruct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ), { { no_name, name_index } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<index_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatIndexConstruct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_index } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<index_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatB8Construct : public Action {
-			inline FloatB8Construct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ),
-				{ { no_name, name_b8 } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<b8_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatB8Construct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ), { { no_name, name_b8 } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<b8_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; }
 		};
 		template<typename T>
 		struct FloatB16Construct : public Action {
-			inline FloatB16Construct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ),
-				{ { no_name, name_b16 } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<b16_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatB16Construct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_b16 } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<b16_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; }
 		};
 		template<typename T>
 		struct FloatB32Construct : public Action {
-			inline FloatB32Construct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ),
-				{ { no_name, name_b32 } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<b32_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatB32Construct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_b32 } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<b32_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; }
 		};
 		template<typename T>
 		struct FloatB64Construct : public Action {
-			inline FloatB64Construct() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_constructor, name_operator, type::mapCppType( CPPTYPE( T ) ),
-				{ { no_name, name_b64 } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<b64_t>(); values.pop(); values.push( Attribute::newImplicit( (T)a1 ) );
+			FloatB64Construct() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_constructor,
+					name_constructor,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, name_b64 } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<b64_t>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( (T)a1, type::Qualifier::none ) );
 				return sig_t::norm; }
 		};
 
 		template<typename T>
 		struct FloatCompare : public Action {
-			inline FloatCompare() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_cmp, name_operator, name_int, { { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto a1 = values.top().value<T>(); values.pop();
-				values.push( Attribute::newImplicit( static_cast<int_t>( a1 < a2 ? -1 : a2 < a1 ? 1 : 0 ) ) );
+			FloatCompare() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_cmp,
+					name_operator,
+					name_int,
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push(
+					Attribute::newImplicit( static_cast<int_t>( a1 < a2 ? -1 : a2 < a1 ? 1 : 0 ), type::Qualifier::none ) );
 				return sig_t::norm; } };
 		
 
 		template<typename T>
 		struct FloatUnaryMinus : public Action {
-			inline FloatUnaryMinus() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_unary_minus, name_operator, type::mapCppType( CPPTYPE( T ) ), {} ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<T>(); values.pop(); values.push( Attribute::newImplicit( -a1 ) );
+			FloatUnaryMinus() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_unary_minus,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ), {} ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( -a1, type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 
 		template<typename T>
 		struct FloatPlusAssign : public Action {
-			inline FloatPlusAssign() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_plus_assign, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto& a1 = values.top();
+			FloatPlusAssign() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_plus_assign,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto& a1 = args.values().top();
 				a1.value<T>() += a2;
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatMinusAssign : public Action {
-			inline FloatMinusAssign() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_minus_assign, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto& a1 = values.top();
+			FloatMinusAssign() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_minus_assign,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto& a1 = args.values().top();
 				a1.value<T>() -= a2;
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatMultiplyAssign : public Action {
-			inline FloatMultiplyAssign() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_multiply_assign, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto& a1 = values.top();
+			FloatMultiplyAssign() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_multiply_assign,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto& a1 = args.values().top();
 				a1.value<T>() *= a2;
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatDivideAssign : public Action {
-			inline FloatDivideAssign() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_divide_assign, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
+			FloatDivideAssign() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_divide_assign,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
 				if( a2 == 0.0 )
 				{
-					values.push( Attribute::newExplicit( name( "division_by_zero" ), name_name ) );
+					args.values().push(
+						Attribute::newExplicit( name( "division_by_zero" ), name_name, type::Qualifier::none ) );
 					return sig_t::raise;
 				}
-				auto& a1 = values.top();
+				auto& a1 = args.values().top();
 				a1.value<T>() /= a2;
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatPlus : public Action {
-			inline FloatPlus() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_plus, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto a1 = values.top().value<T>(); values.pop();
-				values.push( Attribute::newImplicit( static_cast<T>( a1 + a2 ) ) );
+			FloatPlus() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_plus,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( static_cast<T>( a1 + a2 ), type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatMinus : public Action {
-			inline FloatMinus() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_minus, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto a1 = values.top().value<T>(); values.pop();
-				values.push( Attribute::newImplicit( static_cast<T>( a1 - a2 ) ) );
+			FloatMinus() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_minus,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( static_cast<T>( a1 - a2 ), type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatMultiply : public Action {
-			inline FloatMultiply() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_multiply, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
-				auto a1 = values.top().value<T>(); values.pop();
-				values.push( Attribute::newImplicit( static_cast<T>( a1 * a2 ) ) );
+			FloatMultiply() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_multiply,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( static_cast<T>( a1 * a2 ), type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatDivide : public Action {
-			inline FloatDivide() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				symbol_divide, name_operator, type::mapCppType( CPPTYPE( T ) ), {
-					{ no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto a2 = values.top().value<T>(); values.pop();
+			FloatDivide() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					symbol_divide,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ),
+					{ { no_name, type::mapCppType( CPPTYPE( T ) ) } } ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto a2 = args.values().top().value<T>();
+				args.values().pop();
 				if( a2 == 0.0 )
 				{
-					values.push( Attribute::newExplicit( name( "division_by_zero" ), name_name ) );
+					args.values().push(
+						Attribute::newExplicit( name( "division_by_zero" ), name_name, type::Qualifier::none ) );
 					return sig_t::raise;
 				}
-				auto a1 = values.top().value<T>(); values.pop();
-				values.push( Attribute::newImplicit( static_cast<T>( a1 / a2 ) ) );
+				auto a1 = args.values().top().value<T>();
+				args.values().pop();
+				args.values().push( Attribute::newImplicit( static_cast<T>( a1 / a2 ), type::Qualifier::none ) );
 				return sig_t::norm; } };
 
 		template<typename T>
 		struct FloatReset : public Action {
-			inline FloatReset() : Action( TypeTuple::action( type::mapCppType( CPPTYPE( T ) ),
-				name_reset, name_operator, type::mapCppType( CPPTYPE( T ) ), {} ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto& a1 = values.top().value<T>(); a1 = 0.0; return sig_t::norm; } };
+			FloatReset() : Action(
+				TypeTuple::action(
+					type::mapCppType( CPPTYPE( T ) ),
+					name_reset,
+					name_operator,
+					type::mapCppType( CPPTYPE( T ) ), {} ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				auto& a1 = args.values().top().value<T>();
+				a1 = 0.0;
+				return sig_t::norm; } };
 
 
 		template<typename T>
 		void registerFloat()
 		{
 			scope::global().registerType( type::mapCppType( CPPTYPE( T ) ) );
+			scope::global().registerAction( new FloatCopy<T>() );
+			scope::global().registerAction( new FloatTake<T>() );
 			scope::global().registerAction( new FloatConstruct<T>() );
 			scope::global().registerAction( new FloatCopyConstruct<T>() );
 			scope::global().registerAction( new FloatBoolConstruct<T>() );

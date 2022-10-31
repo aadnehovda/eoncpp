@@ -24,6 +24,40 @@ namespace eon
 		EONEXCEPT( WrongType );
 		EONEXCEPT( NotFound );
 		EONEXCEPT( DuplicateName );
+
+		EON_NAME( system );
+		EON_NAME( copy );
+		EON_NAME( variable );
+		EON_NAME( attribute );
+
+		enum class Qualifier : uint8_t
+		{
+			none = 0x00,
+			literl = 0x01,	// This is also an rvalue
+			rvalue = 0x02,
+			reference = 0x04,
+			link = 0x08,
+			optional = 0x10
+		};
+		inline Qualifier operator|( Qualifier a, Qualifier b ) noexcept {
+			return static_cast<Qualifier>( static_cast<int>( a ) | static_cast<int>( b ) ); }
+		inline Qualifier& operator|=( Qualifier& a, Qualifier b ) noexcept {
+			return a = static_cast<Qualifier>( static_cast<int>( a ) | static_cast<int>( b ) ); }
+		inline bool operator&( Qualifier a, Qualifier b ) noexcept {
+			return static_cast<bool>( static_cast<int>( a ) & static_cast<int>( b ) ); }
+
+#define EON_SHORT_MIN INT16_MIN
+#define EON_SHORT_MAX INT16_MAX
+#define EON_INT_MIN INT_MIN
+#define EON_INT_MAX INT_MAX
+#define EON_LONG_MIN INT64_MIN
+#define EON_LONG_MAX INT64_MAX
+#define EON_LOW_MIN std::numeric_limits<low_t>::min()
+#define EON_LOW_MAX std::numeric_limits<low_t>::max()
+#define EON_FLOAT_MIN std::numeric_limits<flt_t>::min()
+#define EON_FLOAT_MAX std::numeric_limits<flt_t>::max()
+#define EON_HIGH_MIN std::numeric_limits<high_t>::min()
+#define EON_HIGH_MAX std::numeric_limits<high_t>::max()
 	}
 
 #define ptr_t void*

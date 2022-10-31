@@ -3,11 +3,18 @@
 #include <eontest/Test.h>
 #include <eontypesystem/TupleFactory.h>
 #include <eontypesystem/Expression.h>
-#include <eontypesystem/PrimitiveTypes.h>
+#include <eontypesystem/Bool.h>
+#include <eontypesystem/Byte.h>
+#include <eontypesystem/Char.h>
 #include <eontypesystem/IntTypes.h>
 #include <eontypesystem/FloatTypes.h>
+#include <eontypesystem/Index.h>
+#include <eontypesystem/Name.h>
+#include <eontypesystem/Handle.h>
+#include <eontypesystem/BytesActions.h>
 #include <eontypesystem/StringActions.h>
 #include <eontypesystem/BitsTypes.h>
+#include <eontypesystem/TupleActions.h>
 
 
 namespace eon
@@ -36,7 +43,9 @@ namespace eon
 			type::registerBits<b16_t>();
 			type::registerBits<b32_t>();
 			type::registerBits<b64_t>();
+			type::registerBytes();
 			type::registerString();
+			type::registerTupleActions();
 		}
 
 		bool validateResult( const std::vector<Attribute>& result, std::initializer_list<name_t> args, string& error )

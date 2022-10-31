@@ -11,20 +11,43 @@ namespace eon
 	std::unordered_map<name_t, Attribute::TypeHandlerPtr> Attribute::TypeHandlers;
 
 
-
-	/*Attribute::Attribute( Tuple&& value )
-	{
-		_prep();
-		Type = value.type();
-		Value = new Tuple( std::move( value ) );
-		Owned = true;
-	}*/
-	Attribute Attribute::newTuple( Tuple&& value )
+	Attribute Attribute::newTuple( Tuple&& value, type::Qualifier qualifier, source::Ref source )
 	{
 		Attribute a;
-		a.Type = value.type();
+		a.Type = value.type(); a.Type.qualifier( qualifier );
 		a.Value = new Tuple( std::move( value ) );
+		a.Source = source;
 		return a;		
+	}
+
+	Attribute Attribute::newName( name_t value, type::Qualifier qualifier, source::Ref source )
+	{
+		Attribute a;
+		a.Type = name_name;
+		a.Type.qualifier( qualifier );
+		a.Value = new name_t( value );
+		a.Source = source;
+		return a;
+	}
+
+	Attribute Attribute::newTypeTuple( TypeTuple&& value, type::Qualifier qualifier, source::Ref source )
+	{
+		Attribute a;
+		a.Type = name_typetuple;
+		a.Type.qualifier( qualifier );
+		a.Value = new TypeTuple( std::move( value ) );
+		a.Source = source;
+		return a;
+	}
+
+	Attribute Attribute::newTypeTuple( const TypeTuple& value, type::Qualifier qualifier, source::Ref source )
+	{
+		Attribute a;
+		a.Type = name_typetuple;
+		a.Type.qualifier( qualifier );
+		a.Value = new TypeTuple( value );
+		a.Source = source;
+		return a;
 	}
 
 
@@ -40,6 +63,7 @@ namespace eon
 			Value = handler->second->copy( other.Value );
 			Owned = true;
 		}
+		Source = other.Source;
 		return *this;
 	}
 	Attribute& Attribute::operator=( Attribute& other )
@@ -47,7 +71,19 @@ namespace eon
 		_clear();
 		Type = other.Type;
 		Value = other.Value;
+		Source = other.Source;
 		Owned = false;
+		return *this;
+	}
+	Attribute& Attribute::operator=( Attribute&& other ) noexcept
+	{
+		_clear();
+		Type = std::move( other.Type );
+		Value = other.Value;
+		other.Value = nullptr;
+		Owned = other.Owned;
+		other.Owned = true;
+		Source = other.Source;
 		return *this;
 	}
 

@@ -782,6 +782,26 @@ namespace eon
 			return i == End && other_i == other.End ? 0 : i != End ? pos : -pos;
 		}
 	}
+
+	int substring::compare( const substring& other, index_t num_chars ) const noexcept
+	{
+		if( !*this )
+			return other ? -1 : 0;
+		else if( !other )
+			return 1;
+
+		auto i = Beg, other_i = other.Beg;
+		int pos = 1;
+		for( ; i != End && other_i != other.end() && pos <= num_chars; ++i, ++other_i, ++pos )
+		{
+			if( *i < *other_i )
+				return -pos;
+			else if( *other_i < *i )
+				return pos;
+		}
+		return pos - 1 == num_chars ? 0 : i != End ? pos : -pos;
+	}
+
 	int substring::iCompare( const substring& other ) const noexcept
 	{
 		auto i = Beg, other_i = other.Beg;
