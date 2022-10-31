@@ -3,9 +3,10 @@
 #include "NameDefs.h"
 
 
-/******************************************************************************
-  The 'eon' namespace encloses all public functionality
-******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//
+// The 'eon' namespace encloses all public functionality
+//
 namespace eon
 {
 	// This is a no-name value that is different from no_name in that it has an
@@ -66,7 +67,8 @@ namespace eon
 	// Tuples
 	extern const name_t name_tuple;
 	extern const name_t name_basic;
-	extern const name_t name_plain;
+	extern const name_t name_static;
+	extern const name_t name_optional;
 	extern const name_t name_dynamic;
 	extern const name_t name_data;
 	extern const name_t name_category;
@@ -192,6 +194,7 @@ namespace eon
 	extern const name_t name_newline;
 	extern const name_t name_literal;
 	extern const name_t name_comment;
+	extern const name_t name_define;
 
 	/*
 	extern const name_t name_condition;

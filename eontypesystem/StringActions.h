@@ -19,114 +19,174 @@ namespace eon
 	//
 	namespace type
 	{
+		struct StringCopy : public Action {
+			StringCopy() : Action(
+				TypeTuple::action(
+					name_string, name_copy, name_operator, name_string, TypeTuple::args( { name_string } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().at( 1 ).value<string>() = args.values().top().value<string>();
+				args.values().pop();
+				return sig_t::norm; } };
+
+		struct StringTake : public Action {
+			StringTake() : Action(
+				TypeTuple::action(
+					name_string, name_take, name_operator, name_string, TypeTuple::args( { name_string } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().at( 1 ).value<string>() = std::move( args.values().top().value<string>() );
+				args.values().pop();
+				return sig_t::norm; } };
+
+
 		struct StringConstruct : public Action {
-			inline StringConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				values.push( Attribute::newExplicit( string(), name_string ) ); return sig_t::norm; }
-		};
+			StringConstruct() : Action(
+				TypeTuple::action( name_string, name_constructor, name_constructor, name_string ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override {
+				args.values().push( Attribute::newExplicit( string(), name_string, type::Qualifier::none ) );
+				return sig_t::norm; } };
+
 		struct StringCopyConstruct : public Action {
-			inline StringCopyConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_string } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto& a1 = values.top().value<string>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringCopyConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_string } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringByteConstruct : public Action {
-			inline StringByteConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_byte } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<byte_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringByteConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_byte } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringCharConstruct : public Action {
-			inline StringCharConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_char } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<char_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringCharConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_char } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringIntConstruct : public Action {
-			inline StringIntConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_int } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<int_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringIntConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_int } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringShortConstruct : public Action {
-			inline StringShortConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_short } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<short_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringShortConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_short } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringLongConstruct : public Action {
-			inline StringLongConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_long } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<long_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm;
-			}
-		};
+			StringLongConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_long } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringFloatConstruct : public Action {
-			inline StringFloatConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_float } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<flt_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringFloatConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_float } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringLowConstruct : public Action {
-			inline StringLowConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_low } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<low_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringLowConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_low } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringHighConstruct : public Action {
-			inline StringHighConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_high } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<high_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringHighConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_high } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringIndexConstruct : public Action {
-			inline StringIndexConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_index } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<index_t>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringIndexConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_index } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringNameConstruct : public Action {
-			inline StringNameConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_name } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<name_t>(); values.pop(); values.push(
-					Attribute::newExplicit( eon::str( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringNameConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_name } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 		struct StringBytesConstruct : public Action {
-			inline StringBytesConstruct() : Action( TypeTuple::action( name_string, name_constructor, name_operator, name_string,
-				{ { no_name, name_bytes } } ) ) {}
-			inline sig_t operator()( stack<Attribute>& values ) const override {
-				auto a1 = values.top().value<std::string>(); values.pop(); values.push(
-					Attribute::newExplicit( string( a1 ), name_string ) ); return sig_t::norm; }
-		};
+			StringBytesConstruct() : Action(
+				TypeTuple::action(
+					name_string,
+					name_constructor,
+					name_constructor,
+					name_string,
+					TypeTuple::args( { name_bytes } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 
 		struct StringCompare : public Action {
-			inline StringCompare() : Action( TypeTuple::action( name_string, symbol_cmp, name_operator, name_int,
-				{ { no_name, name_string } } ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override;
+			StringCompare() : Action(
+				TypeTuple::action(
+					name_string,
+					symbol_cmp,
+					name_operator,
+					name_int,
+					TypeTuple::args( { name_string } ) ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override;
 		};
 
 		struct StringReset : public Action {
-			inline StringReset() : Action( TypeTuple::action( name_string, name_reset, name_operator, name_string, {} ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto& a1 = values.top().value<string>(); a1.clear(); return sig_t::norm; }
-		};
+			StringReset() : Action(
+				TypeTuple::action( name_string, name_reset, name_operator, name_string, {} ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
 
 		struct StringLength : public Action {
-			inline StringLength() : Action( TypeTuple::action( name_string, name_length, name_firstarg, name_index, {} ) ) {}
-			sig_t operator()( stack<Attribute>& values ) const override {
-				auto& a1 = values.top().value<string>(); a1.clear(); return sig_t::norm; }
-		};
+			StringLength() : Action(
+				TypeTuple::action( name_string, name_length, name_firstarg, name_index, {} ) ) {}
+			sig_t operator()( ActionExeArgs& args ) const override; };
+
 
 		void registerString();
 	}

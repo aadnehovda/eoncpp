@@ -535,6 +535,11 @@ namespace eon
 		WANT_EQ( "a--b", eon::string( "a,,b" ).replace( ',', '-' ) );
 		WANT_EQ( "a--b", eon::string( "a::::b" ).replace( "::", "-" ) );
 	}
+	TEST( String, replace3 )
+	{
+		WANT_EQ( "a but b not c", eon::string( "a and b or c" ).replace( { { "or", "not" }, { "and", "but" } } ) );
+		WANT_EQ( "x,y.z", eon::string( "a,b.c" ).replace( { { 'a', 'x' }, { 'b', 'y' }, { 'c', 'z' } } ) );
+	}
 	TEST( String, replace_speed )
 	{
 		eon::string base{ "one one-thousand two one-thousand three one-thousand four one-thousand five one-thousand size one-"
@@ -733,6 +738,12 @@ namespace eon
 			<< "Failed to compare correctly when rhs is identical to lhs but longer";
 	}
 #endif
+	TEST( String, compareNumChars )
+	{
+		WANT_EQ( 0, eon::string( "alpha" ).substr().compare( eon::string( "alpHA" ).substr(), 3 ) );
+		WANT_EQ( 3, eon::string( "alpha" ).substr().compare( eon::string( "alPHA" ).substr(), 3 ) );
+		WANT_EQ( -3, eon::string( "alPha" ).substr().compare( eon::string( "alpha" ).substr(), 3 ) );
+	}
 	TEST( String, iCompare )
 	{
 		WANT_EQ( 0, eon::string( "alpha" ).iCompare( "ALPHA" ) );

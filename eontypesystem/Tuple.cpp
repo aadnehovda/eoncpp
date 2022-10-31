@@ -4,47 +4,41 @@
 
 namespace eon
 {
-	Tuple::Tuple( name_t tuple_type_name, std::initializer_list<AttributePair> attributes, TuplePerm permissions )
+	Tuple::Tuple( name_t tuple_type_name, TuplePerm permissions, Tuple* parent )
 	{
 		_populateData();
-		if( tuple_type_name == name_plain )
-		{
-			TypeTuple plain_type;
-			for( auto& value : attributes )
-			{
-				plain_type.add( value.Name, value.Value.type() );
-				_add( tuple_type_name, value.Name, std::move( *(Attribute*)&value.Value ) );
-			}
-			Type = TypeTuple{ { no_name, name_tuple }, { name_type, name_plain }, { name_tuple, std::move( plain_type ) } };
-		}
-		else
-		{
-			for( auto& value : attributes )
-				_add( tuple_type_name, value.Name, std::move( *(Attribute*)&value.Value ) );
-			Type = TypeTuple{ { no_name, name_tuple }, { name_type, tuple_type_name } };
-		}
+		Type = TypeTuple::tuple( tuple_type_name );
 		_perm( tuple_type_name, permissions );
+		Parent = parent;
 	}
-	Tuple::Tuple( name_t tuple_type_name, std::vector<AttributePair>&& attributes, TuplePerm permissions )
+
+	Tuple::Tuple( name_t tuple_type_name, std::initializer_list<AttributePair> attributes,
+		TuplePerm permissions, Tuple* parent )
 	{
 		_populateData();
-		if( tuple_type_name == name_plain )
-		{
-			TypeTuple plain;
-			for( auto& value : attributes )
-			{
-				plain.add( value.Name, value.Value.type() );
-				_add( tuple_type_name, value.Name, std::move( value.Value ) );
-			}
-			Type = TypeTuple{ { no_name, name_tuple }, { name_type, name_plain }, { name_tuple, std::move( plain ) } };
-		}
+		if( tuple_type_name == name_static )
+			_constructStatic( attributes );
 		else
-		{
-			for( auto& value : attributes )
-				_add( tuple_type_name, value.Name, std::move( value.Value ) );
-			Type = TypeTuple{ { no_name, name_tuple }, { name_type, tuple_type_name } };
-		}
+			_constructNonstatic( tuple_type_name, attributes );
 		_perm( tuple_type_name, permissions );
+		Parent = parent;
+	}
+	Tuple::Tuple( name_t tuple_type_name, std::vector<AttributePair> attributes, TuplePerm permissions, Tuple* parent )
+	{
+		_populateData();
+		if( tuple_type_name == name_static )
+			_constructStatic( attributes );
+		else
+			_constructNonstatic( tuple_type_name, attributes );
+		_perm( tuple_type_name, permissions );
+		Parent = parent;
+	}
+	Tuple::Tuple( TypeTuple optional_tuple_attributes )
+	{
+		_populateData();
+		Type = TypeTuple::tuple( name_optional );
+		Type.add( name_tuple, std::move( optional_tuple_attributes ) );
+		_perm( name_optional, TuplePerm::none );
 	}
 
 
@@ -55,14 +49,7 @@ namespace eon
 		Type = other.Type;
 		Permissions = other.Permissions;
 		Parent = nullptr;
-		Attributes.clear();
-		for( auto& attribute : other.Attributes )
-		{
-			Attributes.push_back( attribute );
-			if( attribute.type() == name_tuple )
-				Attributes[ Attributes.size() - 1 ].value<Tuple>().Parent = this;
-		}
-		NamedAttributes = other.NamedAttributes;
+		_replaceCopyAttributes( other );
 		return *this;
 	}
 	Tuple& Tuple::operator=( Tuple&& other ) noexcept
@@ -70,67 +57,52 @@ namespace eon
 		Type = std::move( other.Type );
 		Permissions = other.Permissions; other.Permissions = TuplePerm::all_normal;
 		Parent = nullptr;
-		Attributes = std::move( other.Attributes );
-		NamedAttributes = std::move( other.NamedAttributes );
+		_replaceMoveAttributes( other );
+		return *this;
+	}
+
+	Tuple& Tuple::copyAttributes( const Tuple& other )
+	{
+		std::set<index_t> taken;
+		for( auto& named : other.NamedAttributes )
+		{
+			attribute( named.first ) = other.Attributes[ named.first ];
+			taken.insert( named.second );
+		}
+		for( index_t i = 0; i < other.Attributes.size(); ++i )
+		{
+			if( taken.find( i ) == taken.end() )
+				Attributes[ i ] = other.Attributes[ i ];
+		}
 		return *this;
 	}
 
 
 
 
-	void Tuple::str( Stringifier& strf ) const
-	{
-		stack<const Tuple*> ancestors;
-		_str( strf, ancestors );
-	}
-
-
-
-
-	Tuple& Tuple::add( const TypeTuple& type )
+	Tuple& Tuple::addType( const TypeTuple& type )
 	{
 		_assertAddPerm( Type.at( name_type ).nameValue(), type );
-		Attributes.push_back( Attribute::newTypeTuple( type ) );
+		Attributes.push_back( Attribute::newTypeTuple( type, type::Qualifier::none ) );
 		if( type == name_tuple )
 			Attributes[ Attributes.size() - 1 ].value<Tuple>().Parent = this;
 		return *this;
 	}
-	Tuple& Tuple::add( name_t name, const TypeTuple& type )
+	Tuple& Tuple::addType( name_t name, const TypeTuple& type )
 	{
+		_assertAddPerm( Type.at( name_type ).nameValue(), type );
 		if( name != no_name )
-		{
-			if( exists( name ) )
-				throw type::DuplicateName( "Cannot add tuple attribute \"" + eon::str( name ) + "\" to tuple!" );
-			_assertAddPerm( Type.at( name_type ).nameValue(), type );
-			NamedAttributes.insert( name, Attributes.size() );
-		}
-		Attributes.push_back( Attribute::newTypeTuple( type ) );
-		if( type == name_tuple )
-			Attributes[ Attributes.size() - 1 ].value<Tuple>().Parent = this;
+			_addAttributeName( name, type );
+		_addAttributeValue( Attribute::newTypeTuple( type, type::Qualifier::none ) );
 		return *this;
 	}
 
-	Tuple& Tuple::add( Attribute&& value )
-	{
-		_assertAddPerm( Type.at( name_type ).nameValue(), value.type() );
-		if( value.type() == name_tuple )
-			value.value<Tuple>().Parent = this;
-		Attributes.push_back( std::move( value ) );
-		return *this;
-	}
 	Tuple& Tuple::add( name_t name, Attribute&& value )
 	{
+		_assertAddPerm( Type.at( name_type ).nameValue(), value.type() );
 		if( name != no_name )
-		{
-			if( exists( name ) )
-				throw type::DuplicateName( "Cannot add attribute \"" + eon::str( name ) + "\" to " + Type.at( name_name ).str()
-					+ " tuple!" );
-			_assertAddPerm( Type.at( name_type ).nameValue(), value.type() );
-			NamedAttributes.insert( name, Attributes.size() );
-		}
-		if( value.type() == name_tuple )
-			value.value<Tuple>().Parent = this;
-		Attributes.push_back( std::move( value ) );
+			_addAttributeName( name, value.type() );
+		_addAttributeValue( std::move( value ) );
 		return *this;
 	}
 
@@ -153,13 +125,32 @@ namespace eon
 		return remove( pos );
 	}
 
+	Attribute* Tuple::findAttributeIncludeParent( name_t attribute_name ) noexcept
+	{
+		auto pos = index( attribute_name );
+		if( pos < Attributes.size() )
+			return &Attributes[ pos ];
+		if( Parent )
+			return Parent->findAttributeIncludeParent( attribute_name );
+		return nullptr;
+	}
+	const Attribute* Tuple::findAttributeIncludeParent( name_t attribute_name ) const noexcept
+	{
+		auto pos = index( attribute_name );
+		if( pos < Attributes.size() )
+			return &Attributes[ pos ];
+		if( Parent )
+			return Parent->findAttributeIncludeParent( attribute_name );
+		return nullptr;
+	}
+
 	bool Tuple::flag( name_t name ) const noexcept
 	{
 		for( index_t i = 0; i < Attributes.size(); ++i )
 		{
 			if( Attributes[ i ].type() == name_name
 				&& !NamedAttributes.containsTwo( i )
-				&& Attributes[ i ].value<name_t, type::hint::name>() == name )
+				&& Attributes[ i ].value<name_t>() == name )
 				return true;
 		}
 		return false;
@@ -172,11 +163,11 @@ namespace eon
 	{
 		_assertTypPerm();
 		if( !exists( name_dottypes ) )
-			add( name_dottypes, Tuple( name_data ) );
-		auto& types = at<Tuple>( name_dottypes );
+			addTuple( name_dottypes, Tuple( name_data ) );
+		auto& types = get<Tuple>( name_dottypes );
 		if( types.exists( type ) )
 			throw type::DuplicateName( "Cannot register type: " + eon::str( type ) );
-		types.add( Attribute::newName( type ) );
+		types.add( Attribute::newName( type, type::Qualifier::none ) );
 		return *this;
 	}
 
@@ -186,7 +177,7 @@ namespace eon
 		{
 			if( exists( name_dottypes ) )
 			{
-				if( at<Tuple, type::hint::name>( name_dottypes ).flag( name ) )
+				if( get<Tuple>( name_dottypes ).flag( name ) )
 					return true;
 			}
 		}
@@ -218,23 +209,24 @@ namespace eon
 		auto found = ActionsByName.find( action_name );
 		return found != ActionsByName.end() ? found->second : none;
 	}
+	std::set<TypeTuple> Tuple::signatures( name_t action_name, name_t type_name ) const
+	{
+		if( Parent )
+			return Parent->signatures( action_name, type_name );
+		return _signatures( action_name, { { name_type, type_name } } );
+	}
 	std::set<TypeTuple> Tuple::signatures( name_t action_name, name_t type_name, const TypeTuple& args ) const
 	{
-		// All actions must be in the global scope!
 		if( Parent )
 			return Parent->signatures( action_name, type_name, args );
-
-		std::set<TypeTuple> actions;
-		auto found = ActionsByName.find( action_name );
-		if( found != ActionsByName.end() )
-		{
-			for( auto& signature : found->second )
-			{
-				if( signature.at( name_type ) == type_name && signature.at( name_args ) == args )
-					actions.insert( signature );
-			}
-		}
-		return actions;
+		return _signatures( action_name, { { name_type, type_name } }, &args );
+	}
+	std::set<TypeTuple> Tuple::signatures(
+		name_t action_name, name_t category, name_t type_name, const TypeTuple& args ) const
+	{
+		if( Parent )
+			return Parent->signatures( action_name, type_name, args );
+		return _signatures( action_name, { { name_type, type_name }, { name_category, category } }, &args );
 	}
 
 
@@ -242,7 +234,9 @@ namespace eon
 
 	void Tuple::_perm( name_t tuple_type, TuplePerm permissions )
 	{
-		if( tuple_type == name_plain )
+		if( tuple_type == name_static )
+			Permissions = TuplePerm::modify;
+		else if( tuple_type == name_optional )
 			Permissions = TuplePerm::modify;
 		else if( tuple_type == name_dynamic || tuple_type == name_data )
 			Permissions = TuplePerm::all_normal;
@@ -254,10 +248,13 @@ namespace eon
 	{
 		if( !( Permissions & TuplePerm::add ) )
 			throw type::AccessDenied( "Tuple does not permit adding attributes: " + eon::str( tuple_type ) );
-		if( tuple_type == name_data
-			&& ( !type.isName() || LegalForDataTuple.find( type.nameValue() ) == LegalForDataTuple.end() ) )
-			throw type::AccessDenied( "Tuple does not permit adding attribute: " + eon::str( tuple_type ) + " cannot add "
-				+ type.str() + "!" );
+		if( tuple_type == name_data && ( !type.isTuple() || type.at( name_type ) != name_data ) )
+		{
+			if( !type.isName() || LegalForDataTuple.find( type.nameValue() ) == LegalForDataTuple.end() )
+				throw type::AccessDenied(
+					"Tuple does not permit adding attribute: " + eon::str( tuple_type ) + " cannot add " + type.str()
+					+ "!" );
+		}
 	}
 	void Tuple::_assertRemPerm() const
 	{
@@ -308,10 +305,10 @@ namespace eon
 		Attributes.push_back( std::move( value ) );
 	}
 
-	void Tuple::_str( Stringifier& strf, stack<const Tuple*>& ancestors, bool named_tuple ) const
+	void Tuple::_str( ToStrData data ) const
 	{
 		// Tuple formatting rules
-		//   1. Start out with formal type (e.g., "p(", "dynamic(", ...)
+		//   1. Start out with formal type (e.g., "static(", "dynamic(", ...)
 		//   2. Non-tuple attributes to be listed on the same line
 		//   3. Unnamed tuple attributes to be listed on new lines
 		//   4. Named tuple attributes to be listed with name + colon on new line, then tuple value on new line after that.
@@ -320,104 +317,134 @@ namespace eon
 		//   6. Non-tuple attributes following a tuple attribute to be listed on same new line after tuple value
 		//   7. End with closing ")"
 
-		// 1. Start out with formal type (e.g., "p(", "dynamic(", ...)
-		auto must_close = _strTupleStart( strf, ancestors, named_tuple );
-
-		bool prev_was_tuple = false;
-		bool first = true;
-		bool indented = named_tuple;
+		_writeTupleStart( data );
+		_writeTupleAttributes( data );
+		_writeTupleEnd( data );
+	}
+	void Tuple::_writeTupleStart( ToStrData& data ) const
+	{
+		if( _needFormalPrefix( data ) )
+			_writeFormalTuplePrefix( data );
+		else if( !data.IndentedBlock )
+			_writeInformalTuplePrefix( data );
+	}
+	bool Tuple::_needFormalPrefix( ToStrData& data ) const
+	{
+		return data.isRoot()
+			|| data.root().tuple().type().at( name_type ).nameValue() != type().at( name_type ).nameValue();
+	}
+	void Tuple::_writeFormalTuplePrefix( ToStrData& data ) const
+	{
+		name_t tuple_type = type().at( name_type ).nameValue();
+		if( tuple_type == name_static )
+			data.strf().prepend( "static" );
+		else if( tuple_type == name_dynamic )
+			data.strf().prepend( "dynamic" );
+		else if( tuple_type == name_data )
+			data.strf().prepend( "data" );
+		data.strf().start_grp2( "(" );
+		data.EndWithCloseParen = true;
+	}
+	void Tuple::_writeInformalTuplePrefix( ToStrData& data ) const
+	{
+		data.strf().start_grp2( "(" );
+		data.EndWithCloseParen = true;
+	}
+	void Tuple::_writeTupleAttributes( ToStrData& data ) const
+	{
 		for( index_t i = 0; i < Attributes.size(); ++i )
 		{
-			auto& attribute = Attributes[ i ];
-			if( first )
-				first = false;
-			else
-			{
-				strf.punct( ",", stringify::Type::end_block );
-				strf.tert_split();
-			}
-			bool named = NamedAttributes.containsTwo( i );
-
-			if( attribute.type().isTuple() )
-			{
-				if( !indented )
-				{
-					strf.start_block();
-					indented = true;
-				}
-				else if( named )
-					strf.hard_lf();
-
-				if( named )
-				{
-					strf.word( eon::str( NamedAttributes.two( i ) ) );
-					strf.punct( ":" );
-					strf.start_block();
-				}
-				attribute.value<Tuple>()._str( strf, ancestors, named );
-				if( named )
-					strf.end_block();
-				prev_was_tuple = true;
-			}
-			else
-			{
-				if( prev_was_tuple )
-				{
-					prev_was_tuple = false;
-					if( !indented )
-					{
-						strf.start_block();
-						indented = true;
-					}
-				}
-
-				if( named )
-				{
-					strf.word( eon::str( NamedAttributes.two( i ) ) );
-					strf.op2( "=" );
-				}
-				_strValue( strf , attribute );
-			}
+			data.AttribNo = i;
+			_writeAttribute( data );
 		}
-
-		if( indented && !named_tuple )
-			strf.end_block();
-		ancestors.pop();
-		if( must_close )
-			strf.end_grp2( ")", stringify::Type::end_block );
 	}
-	bool Tuple::_strTupleStart( Stringifier& strf, stack<const Tuple*>& ancestors, bool named_tuple ) const
+	void Tuple::_writeTupleEnd( ToStrData& data ) const
 	{
-		ancestors.push( this );
-		name_t tuple_type = type().at( name_type ).nameValue();
-		if( ancestors.size() == 1 || ancestors.bottom()->type().at( name_type ).nameValue() != tuple_type )
-		{
-			if( tuple_type == name_plain )
-			{
-				strf.prepend( "p" );
-				strf.start_grp2( "(" );
-			}
-			else if( tuple_type == name_dynamic )
-			{
-				strf.prepend( "dynamic" );
-				strf.start_grp2( "(" );
-			}
-			else if( tuple_type == name_data )
-			{
-				strf.prepend( "data" );
-				strf.start_grp2( "(" );
-			}
-			return true;
-		}
-		else if( !named_tuple )
-		{
-			strf.start_grp2( "(" );
-			return true;
-		}
-		else
-			return false;
+		if( data.IndentedBlock && data.IndentedByAttribute >= 0 )
+			data.strf().end_block();
+		if( data.EndWithCloseParen )
+			data.strf().end_grp2( ")", stringify::Type::end_block );
 	}
-	void Tuple::_strValue( Stringifier& strf, const Attribute& attribute ) const
+	void Tuple::_writeAttribute( ToStrData& data ) const
+	{
+		_separateAttributes( data );
+
+		data.Attrib = &Attributes[ data.AttribNo ];
+		data.NamedAttribute = NamedAttributes.containsTwo( data.AttribNo );
+		if( data.Attrib->type().isTuple() )
+			_writeAttributeTuple( data );
+		else
+			_writeNormalAttribute( data );
+	}
+	void Tuple::_separateAttributes( ToStrData& data ) const
+	{
+		if( data.First )
+			data.First = false;
+		else
+		{
+			data.strf().punct( ",", stringify::Type::end_block );
+			data.strf().tert_split();
+		}
+	}
+	void Tuple::_writeAttributeTuple( ToStrData& data ) const
+	{
+		_formatTupleAttributeLine( data );
+		if( data.NamedAttribute )
+			_writeNamedTupleAttributeName( data );
+		auto sub = ToStrData::newSub( data, data.Attrib->value<Tuple>(), data.NamedAttribute );
+		data.Attrib->value<Tuple>()._str( sub );
+		if( data.NamedAttribute )
+			data.strf().end_block();
+		if( data.IndentedBlock && data.IndentedByAttribute > 0 )
+		{
+			data.strf().end_block();
+			data.IndentedBlock = false;
+		}
+		data.PrevWasTuple = true;
+	}
+	void Tuple::_formatTupleAttributeLine( ToStrData& data ) const
+	{
+		if( !data.IndentedBlock )
+		{
+			data.strf().start_block();
+			data.IndentedBlock = true;
+			data.IndentedByAttribute = static_cast<int>( data.AttribNo );
+		}
+		else if( data.NamedAttribute )
+			data.strf().hard_lf();
+	}
+	void Tuple::_writeNamedTupleAttributeName( ToStrData& data ) const
+	{
+		data.strf().word( eon::str( NamedAttributes.two( data.AttribNo ) ) );
+		data.strf().punct( ":" );
+		data.strf().start_block();
+	}
+	void Tuple::_writeNormalAttribute( ToStrData& data ) const
+	{
+		_formatNormalAttributeLine( data );
+		if( data.NamedAttribute )
+			_writeNamedNormalAttributeName( data );
+		_writeValue( data.strf(), *data.Attrib );
+	}
+	void Tuple::_formatNormalAttributeLine( ToStrData& data ) const
+	{
+		if( data.PrevWasTuple )
+		{
+			data.PrevWasTuple = false;
+			if( !data.IndentedBlock )
+			{
+				data.strf().start_block();
+				data.IndentedBlock = true;
+				data.IndentedByAttribute = 0;
+			}
+		}
+	}
+	void Tuple::_writeNamedNormalAttributeName( ToStrData& data ) const
+	{
+		data.strf().word( eon::str( NamedAttributes.two( data.AttribNo ) ) );
+		data.strf().op2( "=" );
+	}
+	void Tuple::_writeValue( Stringifier& strf, const Attribute& attribute ) const
 	{
 		name_t type = attribute.type().nameValue();
 		auto prefix = StrPrefixPostfixForTypes.find( type );
@@ -445,7 +472,7 @@ namespace eon
 		else if( type == name_index )
 			strf.word( string( attribute.value<index_t, type::hint::index>() ) );
 		else if( type == name_name )
-			strf.word( eon::str( attribute.value<name_t, type::hint::name>() ) );
+			strf.word( eon::str( attribute.value<name_t>() ) );
 		else if( type == name_b8 )
 			strf.word( string( attribute.value<b8_t, type::hint::bits>() ) );
 		else if( type == name_b16 )
@@ -457,7 +484,7 @@ namespace eon
 		else if( type == name_bytes )
 			strf.word( string( attribute.value<std::string>() ) );
 		else if( type == name_string )
-			strf.word( attribute.value<string>() );
+			strf.word( attribute.value<string>().replace( { { "\"", "\\\"" }, { "\n", "\\n" } } ) );
 //		else if( type == name_real )
 //			strf.word( string( attribute.value<real_t>() ) );
 //		else if( type == name_complex )
@@ -538,5 +565,73 @@ namespace eon
 				{ name_timespan, { "", "" } },
 				{ name_expression, { "e(", ")" } } };
 		}
+	}
+
+
+	void Tuple::_replaceCopyAttributes( const Tuple& other )
+	{
+		Attributes.clear();
+		for( auto& attribute : other.Attributes )
+		{
+			Attributes.push_back( attribute );
+			if( attribute.type() == name_tuple )
+				Attributes[ Attributes.size() - 1 ].value<Tuple>().Parent = this;
+		}
+		NamedAttributes = other.NamedAttributes;
+	}
+	void Tuple::_replaceMoveAttributes( Tuple& other )
+	{
+		Attributes = std::move( other.Attributes );
+		for( auto& attribute : Attributes )
+			if( attribute.type() == name_tuple )
+				attribute.value<Tuple>().Parent = this;
+		NamedAttributes = std::move( other.NamedAttributes );
+	}
+
+	void Tuple::_addAttributeName( name_t name, const TypeTuple& type )
+	{
+		if( exists( name ) )
+			throw type::DuplicateName( "Cannot add tuple attribute \"" + eon::str( name ) + "\" to tuple!" );
+		_assertAddPerm( Type.at( name_type ).nameValue(), type );
+		NamedAttributes.insert( name, Attributes.size() );
+	}
+	void Tuple::_addAttributeValue( Attribute&& value )
+	{
+		Attributes.push_back( std::move( value ) );
+		auto& attribute = Attributes[ Attributes.size() - 1 ];
+		if( attribute.type().isTuple() )
+			attribute.value<Tuple>().Parent = this;
+	}
+
+	std::set<TypeTuple> Tuple::_signatures(
+		name_t action_name,
+		const std::vector<std::pair<name_t, name_t>>& name_fields,
+		const TypeTuple* args ) const
+	{
+		auto found = ActionsByName.find( action_name );
+		std::set<TypeTuple> actions;
+		if( found != ActionsByName.end() )
+		{
+			for( auto& signature : found->second )
+			{
+				if( _matchingSignature( signature, name_fields, args ) )
+					actions.insert( signature );
+			}
+		}
+		return actions;
+	}
+
+	bool Tuple::_matchingSignature( const TypeTuple& signature,
+		const std::vector<std::pair<name_t, name_t>>& name_fields,
+		const TypeTuple* args ) const noexcept
+	{
+		for( auto& field : name_fields )
+		{
+			if( signature.at( field.first ) != field.second )
+				return false;
+		}
+		if( args && signature.at( name_args ) != *args )
+			return false;
+		return true;
 	}
 }

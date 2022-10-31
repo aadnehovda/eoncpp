@@ -67,8 +67,7 @@ namespace eon
 				{ name_b32, hint::bits },
 				{ name_b64, hint::bits },
 				{ name_byte, hint::byte },
-				{ name_index, hint::index },
-				{ name_name, hint::name }
+				{ name_index, hint::index }
 			};
 			if( type_hint != hint::none )
 			{
@@ -80,7 +79,6 @@ namespace eon
 				}
 			}
 
-printf( "X\n" );
 			// If we have no hints then assume it's not a bits type!
 			for( auto& option : found->second )
 			{

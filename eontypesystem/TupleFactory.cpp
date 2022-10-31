@@ -17,14 +17,17 @@ namespace eon
 		{
 			auto scope_name = compilerName( "package#" + str( package_name ) );
 			if( global().exists( scope_name ) )
-				return global().at<Tuple>( scope_name );
+				return global().get<Tuple>( scope_name );
 			else
-				return global().add( scope_name, Tuple( name_scope ) );
+			{
+				auto scope = Tuple( scope_name, TuplePerm::all_normal, &global() );
+				return global().addTuple( scope_name, std::move( scope ) );
+			}
 		}
 
-		Tuple scope( std::initializer_list<AttributePair> attributes )
+		Tuple normal( Tuple& parent_scope, std::initializer_list<AttributePair> attributes )
 		{
-			Tuple scope( name_scope, attributes, TuplePerm::modify | TuplePerm::actions );
+			Tuple scope( name_scope, attributes, TuplePerm::modify | TuplePerm::actions, &parent_scope );
 			return scope;
 		}
 	}
@@ -39,7 +42,7 @@ namespace eon
 			if( scope::global().exists( cache_name ) )
 				throw type::DuplicateName( "Cannot create cache \"" + str( name ) + "\"" );
 			else
-				return scope::global().add( cache_name, Tuple( name_cache, permissions ) );
+				return scope::global().addTuple( cache_name, Tuple( name_cache, permissions ) );
 		}
 
 		Tuple& cache( name_t name, std::initializer_list<AttributePair> attributes, TuplePerm permissions )
@@ -48,7 +51,7 @@ namespace eon
 			if( scope::global().exists( cache_name ) )
 				throw type::DuplicateName( "Cannot create cache \"" + str( name ) + "\"" );
 			else
-				return scope::global().add( cache_name, Tuple( name_cache, attributes, permissions ) );
+				return scope::global().addTuple( cache_name, Tuple( name_cache, attributes, permissions ) );
 		}
 
 		Tuple& cache( name_t name )
@@ -57,7 +60,7 @@ namespace eon
 			if( !scope::global().exists( cache_name ) )
 				throw type::NotFound( "Cannot access cache \"" + str( name ) + "\"" );
 			else
-				return scope::global().at<Tuple>( cache_name );
+				return scope::global().get<Tuple>( cache_name );
 		}
 	}
 
@@ -71,7 +74,7 @@ namespace eon
 			if( scope::global().exists( unit_name ) )
 				throw type::DuplicateName( "Cannot create unit \"" + str( name ) + "\"" );
 			else
-				return scope::global().add( unit_name,
+				return scope::global().addTuple( unit_name,
 					Tuple( name_unit, attributes, TuplePerm::all_normal | TuplePerm::types ) );
 		}
 
@@ -81,7 +84,7 @@ namespace eon
 			if( !scope::global().exists( unit_name ) )
 				throw type::NotFound( "Cannot access unit \"" + str( name ) + "\"" );
 			else
-				return scope::global().at<Tuple>( unit_name );
+				return scope::global().get<Tuple>( unit_name );
 		}
 	}
 }

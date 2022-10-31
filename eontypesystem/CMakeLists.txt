@@ -4,30 +4,50 @@ message(STATUS " - EonTypeSystem")
 
 set(TYPESYSTEM_HEADERS
 	Definitions.h
-	TypeTuple.h
-	Action.h
-	PrimitiveTypes.h
-	BitsTypes.h
+	TypeMap.h
+	Bool.h
+	Byte.h
+	Char.h
 	IntTypes.h
 	FloatTypes.h
-	TypeMap.h
-	Tuple.h
-	Expression.h
-	Attribute.h
-	TupleFactory.h
-	Operators.h
+	Index.h
+	Name.h
+	Handle.h
+	BitsTypes.h
+	BytesActions.h
 	StringActions.h
+	Expression.h
+	ExpressionNode.h
+	TupleDefs.h
+	TypeTuple.h
+	Tuple.h
+	TupleActions.h
+	TupleFactory.h
+	Attribute.h
+	Action.h
+	Operators.h
+	DirectConversion.h
 )
 set(TYPESYSTEM_SOURCES
-	TypeTuple.cpp
-	PrimitiveTypes.cpp
 	TypeMap.cpp
-	Tuple.cpp
-	Expression.cpp
-	Attribute.cpp
-	TupleFactory.cpp
-	Operators.cpp
+	Bool.cpp
+	Byte.cpp
+	Char.cpp
+	Index.cpp
+	Name.cpp
+	Handle.cpp
+	BytesActions.cpp
 	StringActions.cpp
+	Expression.cpp
+	ExpressionNode.cpp
+	TupleDefs.cpp
+	TypeTuple.cpp
+	Tuple.cpp
+	TupleFactory.cpp
+	TupleActions.cpp
+	Attribute.cpp
+	Operators.cpp
+	DirectConversion.cpp
 )
 
 if(WIN32)

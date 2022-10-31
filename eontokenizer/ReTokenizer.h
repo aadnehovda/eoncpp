@@ -3,23 +3,25 @@
 #include <eonregex/RegEx.h>
 
 
-/******************************************************************************
-  The 'eon' namespace encloses all public functionality
-******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//
+// The 'eon' namespace encloses all public functionality
+//
 namespace eon
 {
-	/**************************************************************************
-	  Eon Re-tokenizer Class - eon::ReTokenParser
-
-	  Given a stream of raw tokens, run through them and combine into larger
-	  tokens as defined by a set of rules. The result will be a new token
-	  stream with more meaningful tokens.
-	**************************************************************************/
+	///////////////////////////////////////////////////////////////////////////
+	// Eon Re-tokenizer Class - eon::ReTokenParser
+	//
+	// Given a stream of raw tokens, run through them and combine into larger
+	// tokens as defined by a set of rules. The result will be a new token
+	// stream with more meaningful tokens.
+	//
 	class ReTokenizer
 	{
-		/**********************************************************************
-		  Construction
-		**********************************************************************/
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Construction
+		//
 	public:
 
 		ReTokenizer() = default;
@@ -28,73 +30,73 @@ namespace eon
 
 
 
-		/**********************************************************************
-		  Configuration
-
-		  Set up rules for re-tokenizing.
-
-		  Examples, assuming raw tokens of type "letters", "digits",
-		  "underscore", and "point".
-
-			Rule for creating "name" tokens in Æon style:
-				name=combo(letters, digits, underscore), exclude=?/^\d+$/
-			The regex will identify pure digit sequences and exclude them.
-
-			Rule for creating "float" tokens:
-			    float=sequence(digits, point, digits)
-
-		  Each rule must be one of:
-		    1. Name + Combo [+ Exclude]
-			2. Name + PrefixCombo [+ Exclude]
-			3. Name + Sequence [+ Exclude]
-			4. Name + LiteralName
-			5. Name + Regex
-			6. Name + Enclose
-			7. Name + LineStart
-			8. Name + Remove
-		  Combo:
-			A list of names for which token types must match. All consecutive
-			tokens for which the type is in the list will be included in the
-			final token. Matching is greedy but a full match can be excluded
-			if it matches the Exclude regex.
-		  PrefixCombo:
-		    Same as Combo, but the first token must match a specific string
-		  Alternating:
-		    Two names (A, B) for which the following tokens must match.
-			Matching can stop on first failed match of A or of B. The longest
-			possible sequence will be included in the match.
-		  PrefixAlternating:
-		    Same as Alternating, but the first token must match a specific string.
-		  Sequence:
-			A list of names for which tokens must match in corresponding
-			sequence. A match can be negated if it also matches the Exclude
-			regex.
-		  LiteralName:
-		    A list of names for which the next token must match one.
-		  Regex:
-		    A regex for which the next token must match.
-		  Enclose:
-			A start token and an end token encloses the tokens inbetween into
-			a single token. Start and end tokens are not part of the new token,
-			so make sure to name it properly!
-			An escape token can be named to avoid escaped end token!
-		  PrefixEnclose:
-		    Same as Enclose, but the first token must match a specific string
-		  LineStart:
-		    A token occurring at the start of a line (first token of source or
-			first after a newline).
-		  Remove:
-			A list of names for which tokens with matching type shall be
-			removed.
-
-		  Multiple rules can specify the same name (type name of target token).
-
-		  Any raw tokens that don't get matched by any rules are accepted as-
-		  is.
-		**********************************************************************/
+		///////////////////////////////////////////////////////////////////////
+		// Configuration
+		//
+		// Set up rules for re-tokenizing.
+		//
+		// Examples, assuming raw tokens of type "letters", "digits",
+		// "underscore", and "point".
+		//
+		//   Rule for creating "name" tokens in Æon style:
+		//     name=combo(letters, digits, underscore), exclude=?/^\d+$/
+		// The regex will identify pure digit sequences and exclude them.
+		//
+		//   Rule for creating "float" tokens:
+		//     float=sequence(digits, point, digits)
+		//
+		// Each rule must be one of:
+		//   1. Name + Combo [+ Exclude]
+		//   2. Name + PrefixCombo [+ Exclude]
+		//   3. Name + Sequence [+ Exclude]
+		//   4. Name + LiteralName
+		//   5. Name + Regex
+		//   6. Name + Enclose
+		//   7. Name + LineStart
+		//   8. Name + Remove
+		// Combo:
+		//   A list of names for which token types must match. All consecutive
+		//   tokens for which the type is in the list will be included in the
+		//   final token. Matching is greedy but a full match can be excluded
+		//   if it matches the Exclude regex.
+		// PrefixCombo:
+		//   Same as Combo, but the first token must match a specific string
+		// Alternating:
+		//   Two names (A, B) for which the following tokens must match.
+		//   Matching can stop on first failed match of A or of B. The longest
+		//   possible sequence will be included in the match.
+		// PrefixAlternating:
+		//   Same as Alternating, but the first token must match a specific string.
+		// Sequence:
+		//   A list of names for which tokens must match in corresponding
+		//   sequence. A match can be negated if it also matches the Exclude
+		//   regex.
+		// LiteralName:
+		//   A list of names for which the next token must match one.
+		// Regex:
+		//   A regex for which the next token must match.
+		// Enclose:
+		//   A start token and an end token encloses the tokens inbetween into
+		//   a single token. Start and end tokens are not part of the new token,
+		//   so make sure to name it properly!
+		//   An escape token can be named to avoid escaped end token!
+		// PrefixEnclose:
+		//   Same as Enclose, but the first token must match a specific string
+		// LineStart:
+		//   A token occurring at the start of a line (first token of source or
+		//   first after a newline).
+		// Remove:
+		//   A list of names for which tokens with matching type shall be
+		//   removed.
+		//
+		// Multiple rules can specify the same name (type name of target token).
+		//
+		// Any raw tokens that don't get matched by any rules are accepted as-
+		// is.
+		//
 	public:
 
-		//* Super-class for re-tokenizing rules
+		// Super-class for re-tokenizing rules
 		class RuleDef
 		{
 		public:
@@ -228,26 +230,42 @@ namespace eon
 
 
 
-		//* Check if there are any rules present
+		// Check if there are any rules present
 		inline operator bool() const noexcept { return !Rules.empty(); }
 
-		//* Add a rule
+		// Add a rule
 		inline void addRule( RuleDef* rule ) { Rules.push_back( rule ); }
 
 
 
 
-		/**********************************************************************
-		  Operations
-		**********************************************************************/
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Operations
+		//
 	public:
 
-		//* Run re-tokenizing
+		// Run re-tokenizing
 		std::vector<Token> operator()( TokenParser& parser ) const noexcept;
 
 
 
 
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Helpers
+		//
+	private:
+
+		bool _matchARule( TokenParser& parser, std::vector<Token>& output ) const noexcept;
+
+
+
+
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Attributes
+		//
 	private:
 		std::vector<RuleDef*> Rules;
 	};

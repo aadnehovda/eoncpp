@@ -10,16 +10,16 @@ namespace eon
 		ElmSize = elm_size;
 	}
 
-	Storage::Storage( Storage&& other, size_t additional_elements )
-	{
-		if( SIZE_MAX - other.NumElms < additional_elements )
-			throw SizeOverflow();
-		Memory = new char[ ( other.NumElms + additional_elements ) * other.ElmSize ];
-		NumElms = other.NumElms + additional_elements;
-		ElmSize = other.ElmSize;
-		memcpy( Memory, other.Memory, other.NumElms * other.ElmSize );
-		other.clear();
-	}
+	//Storage::Storage( Storage&& other, size_t additional_elements )
+	//{
+	//	if( SIZE_MAX - other.NumElms < additional_elements )
+	//		throw SizeOverflow();
+	//	Memory = new char[ ( other.NumElms + additional_elements ) * other.ElmSize ];
+	//	NumElms = other.NumElms + additional_elements;
+	//	ElmSize = other.ElmSize;
+	//	memcpy( Memory, other.Memory, other.NumElms * other.ElmSize );
+	//	other.clear();
+	//}
 
 
 

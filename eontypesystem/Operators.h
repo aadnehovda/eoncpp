@@ -140,11 +140,20 @@ namespace eon
 				nano_hi = 6, nano_lo = 5,
 				// Operators: or
 				pico_hi = 4, pico_lo = 3,
-				// Operators: +=, -=, *=, /=, =, raise, if, if-else, for-each, for-each-where, while, until, find, continue,
-				// break, [, :
+				// Operators: =, +=, -=, *=, /=, =, raise, if, if-else, for-each, for-each-where, while, until, find,
+				// continue, break, [, :
 				min_hi = 2, min_lo = 1,
 
 				none = 0
+			};
+
+
+			// Operator elements (symbols and names part of the operator) can appear before the next operand, or after -
+			// they can be prefix or postfix.
+			enum class Position : uint8_t
+			{
+				prefix,
+				postfix
 			};
 
 
@@ -159,9 +168,10 @@ namespace eon
 			struct OperatorElement
 			{
 				OperatorElement() = default;
-				OperatorElement( name_t op, bool prefix = false ) { Op = op; Prefix = prefix; }
+				inline OperatorElement( name_t op, Position pos = Position::postfix) { Op = op; Pos = pos; }
+				inline bool prefix() const noexcept { return Pos == Position::prefix;	 }
 				name_t Op{ no_name };
-				bool Prefix{ false };
+				Position Pos{ Position::postfix };
 			};
 
 

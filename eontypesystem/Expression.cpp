@@ -1,5 +1,5 @@
 #include "Expression.h"
-#include "Tuple.h"
+#include "TupleFactory.h"
 
 
 namespace eon
@@ -14,16 +14,17 @@ namespace eon
 		source::String src( "string", std::move( infix ) );
 		TokenParser temp( tokenizer( src ) );
 		TokenParser parser( retokenizer( temp ) );
+
 		source::Reporter issues;
 		issues.defaultTargets();
 		ParseData data( parser, issues, { ";" } );
-		_runParse( data );
+		_parseLargeExpression( data );
 	}
 	Expression::Expression( TokenParser& parser, Tuple& scope, source::Reporter& reporter, std::set<string> terminate_on )
 	{
 		Scope = &scope;
 		ParseData data( parser, reporter, terminate_on );
-		_runParse( data );
+		_parseLargeExpression( data );
 	}
 
 
@@ -70,160 +71,13 @@ namespace eon
 			throw type::NotFound( "Cannot execute void expression!" );
 		std::vector<Attribute> results;
 		for( auto& node : Roots )
-			results.push_back( node.evaluate() );
+			results.push_back( node.evaluate( *Scope ) );
 		return results;
 	}
 
 
 
 
-	Attribute Expression::Node::evaluate()
-	{
-		if( isValue() )
-			return value();
-
-		stack<Attribute> values;
-		for( auto& child : Children )
-			values.push( child.evaluate() );
-
-		( *Operator )( values );
-
-		if( values.size() == 1 )
-		{
-			auto value = std::move( values.top() );
-			return value;
-		}
-		else if( values.empty() )
-			return Attribute();
-		else
-		{
-			// TODO: Is this even possible?
-			auto value = std::move( values.top() );
-			return value;
-		}
-	}
-
-	bool Expression::Node::findOperator( Tuple& scope, source::Reporter& reporter )
-	{
-		if( Operator != nullptr )
-			return true;
-		auto req_operands = type::Operators::numOperands( OpName );
-		if( Children.size() != req_operands )
-		{
-			if( req_operands == 1 )
-				reporter.error( "Expected one operand, not " + ( Children.empty() ? string( "none" )
-					: string( Children.size() ) ) + "!", Source );
-			return false;
-		}
-
-		// Make sure all the children have their operators (and return types).
-		for( auto& child : Children )
-		{
-			if( child.isOperator() )
-			{
-				if( !child.findOperator( scope, reporter ) )
-					return false;
-			}
-		}
-
-		if( type::Operators::isTypeImplemented( OpName ) )
-		{
-			auto child = Children.begin();
-			auto type = child->isOperator() || child->isCall() ? child->OpReturnType : child->Value.type();
-			TypeTuple args;
-			for( ++child; child != Children.end(); ++child )
-			{
-				if( child->isOperator() || child->isCall() )
-				{
-					if( child->OpReturnType.isName() )
-						args.add( child->OpReturnType.nameValue() );
-					else
-						args.add( child->OpReturnType );
-				}
-				else
-					args.add( child->Value.type() );
-			}
-			auto actions = scope.signatures( OpName, type.nameValue(), args );
-			if( actions.size() == 1 )
-			{
-				// We have a match.
-				Operator = scope.action( *actions.begin() );
-				OpReturnType = Operator->signature().at( name_return );
-			}
-			else if( actions.size() > 0 )
-			{
-				// More than one - we must check return value!
-				// TODO: Check return value!
-			}
-			else
-			{
-				static std::set<name_t> cmp_ops{ symbol_lt, symbol_le, symbol_gt, symbol_ge, symbol_eq, symbol_ne };
-
-				// If we were looking for a comparison operator other than '<=>', we can use '<=>' instead.
-				if( cmp_ops.find( OpName ) != cmp_ops.end() )
-				{
-					actions = scope.signatures( symbol_cmp, type.nameValue(), args );
-					if( actions.size() == 1 )
-					{
-						// Found it. Now we need to do some re-organizing. We need to change from:
-						//          .-- <child 1>
-						//   <op> --|
-						//          '-- <child 2>
-						// to:
-						//                    .-- <child 1>
-						//          .-- cmp --|
-						//          |         '-- <child 2>
-						//   <op> --|
-						//          '-- 0
-						Node cmp( symbol_cmp );
-						cmp.Operator = scope.action( *actions.begin() );
-						OpReturnType = name_int;
-						cmp.Children = std::move( Children );
-						Children.push_back( std::move( cmp ) );
-						Children.push_back( Node( Attribute::newImplicit( int_t( 0 ) ), source::Ref() ) );
-
-						// Now we can use the original comparison operator towards int
-						actions = scope.signatures( OpName, name_int, TypeTuple( { { no_name, name_int } } ) );
-						Operator = scope.action( *actions.begin() );
-						OpReturnType = name_bool;
-					}
-				}
-			}
-			if( Operator == nullptr )
-				reporter.error( "Operator '" + eon::str( OpName ) + "' is not implemented for " + type.str() + "!",
-					Source );
-			return Operator != nullptr;
-		}
-		else
-		{
-			// TODO: Deal with system-implemented operators ...
-			return false;
-		}
-	}
-	
-	void Expression::Node::str( Stringifier& strf ) const
-	{
-		if( isOperator() )
-		{
-			auto& sequence = type::Operators::sequence( OpName );
-			auto child = Children.begin();
-			for( auto& elm : sequence )
-			{
-				if( elm.Prefix )
-					strf.op1( eon::str( elm.Op ) );
-				else
-				{
-					child->str( strf );
-					strf.op1( eon::str( elm.Op ) );
-					++child;
-				}
-			}
-			for( ; child != Children.end(); ++child )
-				child->str( strf );
-		}
-		else if( Value )
-			Value.str( strf );
-	}
 
 
 
@@ -269,7 +123,8 @@ namespace eon
 		tokenizer.registerSequenceToken( symbol_rshift, ">>" );
 		tokenizer.registerSequenceToken( symbol_cmp, "<=>" );
 		tokenizer.registerSequenceToken( name_typetuple, "T(" );
-		tokenizer.registerSequenceToken( name_plain, "p(" );
+		tokenizer.registerSequenceToken( name_static, "static(" );
+		tokenizer.registerSequenceToken( name_optional, "optional(" );
 		tokenizer.registerSequenceToken( name_dynamic, "dynamic(" );
 		tokenizer.registerSequenceToken( name_data, "data(" );
 		tokenizer.registerSequenceToken( name_expression, "e(" );
@@ -294,132 +149,247 @@ namespace eon
 		retokenizer.addRule( new ReTokenizer::RemoveRule( { name_space } ) );
 	}
 
-	void Expression::_runParse( ParseData& data )
+	void Expression::_parseLargeExpression( ParseData& data )
 	{
-		while( true )
+		do
 		{
-			data.lastSeenOperator();
-			if( _parse( data ) )
-			{
-				Roots.push_back( std::move( data.operands().top() ) );
-				data.operands().pop();
-			}
-			if( !data.parser() )
-				break;
-			if( data.terminateOn( data.parser().current().str() ) )
-				break;
-		}
-
+			_parseSmallExpression( data );
+		} while( !_endOfLargeExpression( data ) );
 		if( data.errors() )
 			throw InvalidExpression();
 	}
 
-	bool Expression::_parse( ParseData& data )
+	void Expression::_parseSmallExpression( ParseData& data )
 	{
-		while( data.parser()
-			&& !data.terminateOn( data.parser().current().str() )
-			&& !data.parser().current().is( symbol_semicolon ) )
+		data.recordOperatorAsLastSeen();
+		if( _parseExpressionDetails( data ) )
 		{
-			if( _parseLiteral( data ) )
-			{
-				data.lastSeenOperand();
-				data.parser().forward();
-			}
-			else if( _parseOperator( data ) )
-				data.parser().forward();
-			else if( _parseTuple( data ) )
-				data.parser().forward();
-			else if( _parseName( data ) )
-				data.parser().forward();
-			else if( _parseExpression( data ) )
-				data.parser().forward();
-			else
-			{
-				data.error();
-				data.reporter().error(
-					"Unknown element \"" + data.parser().current().str() + "\"", data.parser().current().source() );
-				data.parser().forward();
-				break;
-			}
+			Roots.push_back( std::move( data.operands().top() ) );
+			data.operands().pop();
 		}
-		if( data.parser() && data.parser().current().is( symbol_semicolon ) )
-			data.parser().forward();
-		while( !data.operators().empty() )
-			_bindOperator( data );
+	}
+
+	bool Expression::_parseExpressionDetails( ParseData& data )
+	{
+		while( !_endOfSmallExpression( data ) )
+		{
+			if( !_parseDetails( data ) )
+				break;
+		}
+		_finishExpressionDetails( data );
 		return !data.operands().empty();
+	}
+
+	void Expression::_reportUnknownElementError( ParseData& data )
+	{
+		data.error();
+		data.reporter().error(
+			"Unknown element \"" + data.parser().current().str() + "\"", data.parser().current().source() );
+		data.parser().forward();
+	}
+
+
+	bool Expression::_parseDetails( ParseData& data )
+	{
+		if( _parseLiteral( data ) )
+		{
+			data.recordOperandAsLastSeen();
+			data.parser().forward();
+		}
+		else if( _parseOperator( data ) )
+			data.parser().forward();
+		else if( _parseTuple( data ) )
+			data.parser().forward();
+		else if( _parseName( data ) )
+			data.parser().forward();
+		else if( _parseExpression( data ) )
+			data.parser().forward();
+		else
+		{
+			_reportUnknownElementError( data );
+			return false;
+		}
+		return true;
 	}
 
 	bool Expression::_parseLiteral( ParseData& data )
 	{
 		auto type = data.parser().current().type();
 		if( type == name_bool )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().str() == "true", name_bool ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseBoolLiteral( data );
 		else if( type == name_byte )
-		{
-			data.operands().push( Node( Attribute::newExplicit( static_cast<byte_t>(
-				*data.parser().current().str().begin() ), name_byte ), data.parser().current().source() ) );
-			return true;
-		}
+			return _parseByteLiteral( data );
 		else if( type == name_char )
-		{
-			data.operands().push( Node( Attribute::newExplicit( *data.parser().current().str().begin(), name_char ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseCharLiteral( data );
 		else if( type == name_int )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().str().toInt(), name_int ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseIntLiteral( data );
 		else if( type == name_float )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().str().toFloat(), name_float ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseFloatLiteral( data );
 		else if( type == name_digits )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().str().toInt(), name_int ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseIntLiteral( data );
 		else if( type == name_bytes )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().bytes(), name_bytes ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseBytesLiteral( data );
 		else if( type == name_string )
-		{
-			data.operands().push( Node( Attribute::newExplicit( data.parser().current().str(), name_string ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseStringLiteral( data );
 		else if( type == name_regex )
-		{
-			data.operands().push( Node( Attribute::newExplicit( regex( data.parser().current().str() ), name_regex ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parseRegexLiteral( data );
 		else if( type == name_namepath )
-		{
-			data.operands().push( Node( Attribute::newExplicit( namepath( data.parser().current().str().slice( 1, -1 ) ),
-				name_namepath ), data.parser().current().source() ) );
-			return true;
-		}
+			return _parseNamepathLiteral( data );
 		else if( type == name_path )
-		{
-			data.operands().push( Node( Attribute::newExplicit( path( data.parser().current().str() ), name_path ),
-				data.parser().current().source() ) );
-			return true;
-		}
+			return _parsePathLiteral( data );
 		return false;
 	}
+
+	bool Expression::_parseBoolLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					data.parser().current().str() == "true",
+					name_bool,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseByteLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					static_cast<byte_t>( *data.parser().current().str().begin() ),
+					name_byte,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseCharLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					*data.parser().current().str().begin(),
+					name_char,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseIntLiteral( ParseData& data )
+	{
+		// If the size of the literal value exceeds that which int can hold, we make it a long!
+		const long_t value = data.parser().current().str().toLong();
+		if( value < EON_INT_MIN || value > EON_INT_MAX )
+		{
+			data.operands().push(
+				expression::Node::newValue(
+					Attribute::newExplicit(
+						value,
+						name_long,
+						type::Qualifier::literl | type::Qualifier::rvalue,
+						data.parser().current().source() ) ) );
+		}
+		else
+		{
+			data.operands().push(
+				expression::Node::newValue(
+					Attribute::newExplicit(
+						static_cast<int_t>( value ),
+						name_int,
+						type::Qualifier::literl | type::Qualifier::rvalue,
+						data.parser().current().source() ) ) );
+		}
+		return true;
+	}
+
+	bool Expression::_parseFloatLiteral( ParseData& data )
+	{
+		// If the size of the literal value exceeds that which float can hold, we make it a high!
+		const high_t value = data.parser().current().str().toHigh();
+		if( value < EON_FLOAT_MIN || value > EON_FLOAT_MAX )
+		{
+			data.operands().push(
+				expression::Node::newValue(
+					Attribute::newExplicit(
+						value,
+						name_high,
+						type::Qualifier::literl | type::Qualifier::rvalue,
+						data.parser().current().source() ) ) );
+		}
+		else
+		{
+			data.operands().push(
+				expression::Node::newValue(
+					Attribute::newExplicit(
+						static_cast<flt_t>( value ),
+						name_float,
+						type::Qualifier::literl | type::Qualifier::rvalue,
+						data.parser().current().source() ) ) );
+		}
+		return true;
+	}
+
+	bool Expression::_parseBytesLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					data.parser().current().bytes(),
+					name_bytes,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseStringLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					data.parser().current().str(),
+					name_string,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseRegexLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					regex( data.parser().current().str() ),
+					name_regex,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parseNamepathLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					namepath( data.parser().current().str().slice( 1, -1 ) ),
+					name_namepath,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
+	bool Expression::_parsePathLiteral( ParseData& data )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					path( data.parser().current().str() ),
+					name_path,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
+		return true;
+	}
+
 
 	bool Expression::_parseOperator( ParseData& data )
 	{
@@ -427,38 +397,49 @@ namespace eon
 		if( type == name_operator )
 			return _processOperator( data );
 		else if( type::Operators::isOperator( type ) )
-		{
-			if( compilerName( data.parser().current().str() ) == symbol_minus && data.lastSeen() == Seen::_operator )
-				type = name_unary_minus;
-			return _processOperator( data, type, data.parser().current().source() );
-		}
+			return _processOperatorName( data, type );
 		else if( type == symbol_semicolon )
 			return _processOperator( data, type, data.parser().current().source() );
+		else if( type == name_assign )
+			return _processOperator( data, symbol_assign, data.parser().current().source() );
 
 		return false;
 	}
+
 	bool Expression::_processOperator( ParseData& data )
 	{
 		// This is one of: +*=~&|^<>[]
 		name_t op_name = compilerName( data.parser().current().str() );
 		return _processOperator( data, op_name, data.parser().current().source() );
 	}
+
+	bool Expression::_processOperatorName( ParseData& data, name_t name )
+	{
+		if( compilerName( data.parser().current().str() ) == symbol_minus && data.lastSeen() == Seen::_operator )
+			name = name_unary_minus;
+		return _processOperator( data, name, data.parser().current().source() );
+	}
+
 	bool Expression::_processOperator( ParseData& data, name_t op_name, source::Ref op_source )
 	{
 		if( op_name == symbol_semicolon )
-		{
-			while( !data.operators().empty() )
-				_bindOperator( data );
-			data.lastSeenOperator();
-			return true;
-		}
+			return _processEndOfSmallExpression( data );
 		else if( op_name == symbol_close_round )
-			return _processClose( data );
+			return _processCloseParen( data );
 		else
 			return _processPlainOperator( data, op_name, op_source );
 		return false;
 	}
-	bool Expression::_processClose( ParseData& data )
+
+	bool Expression::_processEndOfSmallExpression( ParseData& data )
+	{
+		while( !data.operators().empty() )
+			_bindOperator( data );
+		data.recordOperatorAsLastSeen();
+		return true;
+	}
+
+	bool Expression::_processCloseParen( ParseData& data )
 	{
 		while( !data.operators().empty() && data.operators().top().Op != symbol_open_round )
 			_bindOperator( data );
@@ -469,13 +450,13 @@ namespace eon
 			data.error();
 			data.reporter().error( "Unbalanced parenthesis!", data.parser().current().source() );
 		}
-		data.lastSeenOperator();
+		data.recordOperatorAsLastSeen();
 		return true;
 	}
+
 	bool Expression::_processPlainOperator( ParseData& data, name_t new_op_name, source::Ref new_op_source )
 	{
-		while( !data.operators().empty() && type::Operators::inputPrecedence( new_op_name )
-			<= type::Operators::stackPrecedence( data.operators().top().Op ) )
+		while( _canBindOperator( data, new_op_name ) )
 		{
 			if( new_op_name == symbol_open_round )
 			{
@@ -486,25 +467,72 @@ namespace eon
 				_bindOperator( data );
 		}
 		if( type::Operators::isFirstInSequence( new_op_name ) )
-		{
-			// If this is a sequence operator, then parse whatever is inbetween as if parenthesis
-			name_t op_name = _resolveOperator( data, new_op_name );
-			if( op_name != no_name )
-				data.operators().push( Operator( op_name, new_op_source ) );
-		}
-		data.lastSeenOperator();
+			_resolveOperatorSequence( data, new_op_name, new_op_source );
+		data.recordOperatorAsLastSeen();
 		return true;
 	}
-	bool Expression::_processNamedOperator( ParseData& data, name_t op_name )
+	bool Expression::_canBindOperator( ParseData& data, name_t new_op_name )
 	{
-		auto& seq = type::Operators::sequence( op_name );
-		// TODO: Finish!
-		return false;
+		return !data.operators().empty()
+			&& type::Operators::inputPrecedence( new_op_name )
+				<= type::Operators::stackPrecedence( data.operators().top().Op );
 	}
+
+
+	void Expression::_finishExpressionDetails( ParseData& data )
+	{
+		if( data.parser() && data.parser().current().is( symbol_semicolon ) )
+			data.parser().forward();
+		while( !data.operators().empty() )
+			_bindOperator( data );
+	}
+
 	void Expression::_bindOperator( ParseData& data )
 	{
-		Node op( data.operators().top().Op, data.operators().top().Source );
-		for( size_t i = 0; i < type::Operators::numOperands( op.opName() ); ++i )
+		if( data.operators().top().Op == symbol_assign )
+			_bindAssign( data );
+		else
+			_bindNormal( data );
+	}
+
+	void Expression::_bindAssign( ParseData& data )
+	{
+		expression::Node lhs, rhs;
+		if( !_getOperands( data, { &rhs, &lhs } ) )
+			return;
+
+		if( !_isLvalue( data, lhs ) )
+			return;
+
+		// Option 1: The types are identical - we can do a direct copy or move!
+		if( lhs.type() == rhs.type() )
+			_assignDirect( data, lhs, rhs );
+
+		// Option 2: Implicit conversion available - we can convert and do a direct copy or move!
+		else if( _canConvertDirectly( data, lhs.type(), rhs ) )
+			_assignDirectByConversion( data, lhs, rhs );
+
+		// Option 3: Tuple copy (direct or compatible)!
+		else if( rhs.type().isTuple() )
+			_assignTuple( data, lhs, rhs );
+
+		// Option 4: Conversion to same type by constructor!
+		else
+			_assignByConstructor( data, lhs, rhs );
+	}
+
+	void Expression::_bindNormal( ParseData& data )
+	{
+		auto op = expression::Node::newOperator( data.operators().top().Op, data.operators().top().Source );
+		_bindOperands( data, op );
+		_bindOperatorAction( data, op );
+		data.operands().push( std::move( op ) );
+		data.operators().pop();
+	}
+
+	void Expression::_bindOperands( ParseData& data, expression::Node& op )
+	{
+		for( size_t i = 0; i < type::Operators::numOperands( op.name() ); ++i )
 		{
 			if( data.operands().empty() )
 			{
@@ -515,11 +543,181 @@ namespace eon
 			op.addOperand( std::move( data.operands().top() ) );
 			data.operands().pop();
 		}
-		if( !op.findOperator( *Scope, data.reporter() ) )
+	}
+
+	void Expression::_bindOperatorAction( ParseData& data, expression::Node& op )
+	{
+		if( !op.bindOperator( *Scope, data.reporter() ) )
+		{
+			data.reporter().fatal( "Operator not implemented!", op.source() );
 			data.error();
-		data.operands().push( std::move( op ) );
+		}
+	}
+
+	bool Expression::_getOperands( ParseData& data, std::initializer_list<expression::Node*> operands )
+	{
+		for( auto op : operands )
+		{
+			if( data.operands().empty() )
+			{
+				data.error();
+				data.reporter().error( "Operator is missing operand!", data.operators().top().Source );
+				data.operators().pop();
+				return false;
+			}
+			*op = std::move( data.operands().top() );
+			data.operands().pop();
+		}
+		return true;
+	}
+
+	bool Expression::_isLvalue( ParseData& data, const expression::Node& operand ) const
+	{
+		if( operand.type().rvalue() )
+		{
+			data.error();
+			data.reporter().error( "Cannot assign to an rvalue!", operand.source() );
+			data.operators().pop();
+			return false;
+		}
+		return true;
+	}
+
+	void Expression::_assignDirect( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const
+	{
+		name_t type = lhs.type().name();
+		auto args = TypeTuple::args( { lhs.type() } );
+		auto action_signature = rhs.type().rvalue()
+			? _findAction( data, name_take, name_operator, type, args )
+			: _findAction( data, type::name_copy, name_operator, type, args );
+		if( !action_signature )
+			return;
+
+		_bindAction( data, lhs, rhs, action_signature );
+	}
+
+	TypeTuple Expression::_findAction( ParseData& data, name_t name, name_t classification, name_t type, TypeTuple args ) const
+	{
+		std::set<TypeTuple> action_signatures = scope::global().signatures( name, classification, type, args );
+		if( action_signatures.size() == 1 )
+			return *action_signatures.begin();
+
+		if( action_signatures.empty() )
+			_directAssignNotSupportedError( data, type );
+		else if( action_signatures.size() > 1 )	// This should not be possible ...
+			_directAssignMultipleOptionsError( data, name, type, args, action_signatures );
+		
+		return TypeTuple();
+	}
+
+	void Expression::_directAssignNotSupportedError( ParseData& data, name_t type ) const
+	{
+		data.error();
+		data.reporter().error(
+			"Direct assignment of T(" + eon::str( type ) + ") is not supported!",
+			data.operators().top().Source );
 		data.operators().pop();
 	}
+
+	void Expression::_directAssignMultipleOptionsError(
+		ParseData& data, name_t name, name_t type, TypeTuple args, const std::set<TypeTuple>& action_types ) const
+	{
+		data.error();
+		data.reporter().error(
+			"Multiple " + eon::str( name ) + " options for T(" + eon::str( type ) + ") from " + args.str() + "!",
+			data.operators().top().Source );
+		bool first = true;
+		for( auto& type : action_types )
+		{
+			string lead = first ? "Could be" : "or";
+			first = false;
+			auto action = scope::global().action( type );
+			data.reporter().note( lead + " from " + type.str() + " ...", action ? action->source() : source::Ref() );
+		}
+	}
+
+	void Expression::_bindAction(
+		ParseData& data, expression::Node& lhs, expression::Node& rhs, TypeTuple action_signature ) const
+	{
+		auto action = scope::global().action( action_signature );
+		auto assign = expression::Node::newCall( *action, data.operators().top().Source );
+		assign.addOperand( std::move( rhs ) );
+		assign.addOperand( std::move( lhs ) );
+		data.operands().push( std::move( assign ) );
+		data.operators().pop();
+	}
+
+	void Expression::_assignDirectByConversion( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const
+	{
+		// We need to convert rhs to the type of lhs
+		rhs = expression::Node::newValue( data.Converter.convert( rhs, lhs.type().name() ) );
+
+		// Now we can do direct conversion
+		_assignDirect( data, lhs, rhs );
+	}
+
+	void Expression::_assignTuple( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const
+	{
+		if( !rhs.type().compatibleWith( lhs.type() ) )
+		{
+			_incompatibleTupleError( data, lhs, rhs );
+			return;
+		}
+
+		auto action_signature = _findAction(
+			data, name_assign, name_operator, name_tuple, TypeTuple::args( { name_tuple } ) );
+		if( action_signature )
+			_bindAction( data, lhs, rhs, action_signature );
+	}
+
+	void Expression::_incompatibleTupleError( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const
+	{
+		data.error();
+		data.reporter().error(
+			"Cannot assign incompatible right operand " + rhs.type().str() + " to left operand "
+			+ lhs.type().str() + "!",
+			lhs.source() );
+		data.operators().pop();
+	}
+
+	void Expression::_assignByConstructor( ParseData& data, expression::Node& lhs, expression::Node& rhs ) const
+	{
+		auto constructor_signature = _findAction(
+			data, name_constructor, name_constructor, lhs.type().name(), TypeTuple::args( { rhs.type() } ) );
+		if( !constructor_signature )
+			return;
+		auto assign_signature = _findAction(
+			data, name_take, name_operator, lhs.type().name(), TypeTuple::args( { lhs.type().name() } ) );
+		if( !assign_signature )
+			return;
+
+		auto constructor_action = scope::global().action( constructor_signature );
+		auto constructor = expression::Node::newCall( *constructor_action, data.operators().top().Source );
+		constructor.addOperand( std::move( rhs ) );
+		auto assign_action = scope::global().action( assign_signature );
+		auto assign = expression::Node::newCall( *assign_action, data.operators().top().Source );
+		assign.addOperand( std::move( lhs ) );
+		assign.addOperand( std::move( constructor ) );
+		data.operands().push( std::move( assign ) );
+		data.operators().pop();
+	}
+
+	bool Expression::_canConvertDirectly( ParseData& data, const TypeTuple& lhs, const expression::Node& rhs ) const noexcept
+	{
+		if( !rhs.type().literal() )		// Rhs must be a literal value!
+			return false;
+		return data.Converter.legal( lhs.name(), rhs );
+	}
+
+
+	void Expression::_resolveOperatorSequence( ParseData& data, name_t new_op_name, source::Ref new_op_source )
+	{
+		// If this is a sequence operator, then parse whatever is inbetween as if parenthesis
+		name_t op_name = _resolveOperator( data, new_op_name );
+		if( op_name != no_name )
+			data.operators().push( Operator( op_name, new_op_source ) );
+	}
+
 	name_t Expression::_resolveOperator( ParseData& data, name_t op_name )
 	{
 		std::vector<name_t> all_options = type::Operators::mapOperator( op_name );
@@ -529,73 +727,67 @@ namespace eon
 			throw InvalidExpression();	// Impossible!?
 		}
 
-		// A single option without sequence (most operators) need no special resloving.
-		if( all_options.size() == 1 && type::Operators::sequence( all_options[ 0 ] ).size() == 1 )
+		if( _singleOptionNoSequence( all_options ) )
 			return all_options[ 0 ];
+		else
+			return _resolveNonTrivalOperator( all_options, data, op_name );
+	}
 
-		// We have a single option with a sequence or multiple options (which means all have sequences)!
-
-		std::vector<Node> operands;
+	name_t Expression::_resolveNonTrivalOperator( std::vector<name_t>& all_options, ParseData& data, name_t op_name )
+	{
+		// We have a single option with a sequence, or multiple options (which means all have sequences)!
+		std::vector<expression::Node> operands;
 		for( index_t seq_no = 1; ; ++seq_no )
 		{
-			// If we have an option with a following prefix operator in the sequence (meaning no operand inbetween),
-			// and the next token is that operator, we know that option must be the one!
-			name_t solid_op_name = _findSolidOpName( data, all_options, op_name, seq_no );
-			if( solid_op_name != no_name )
-				return _processSequenceOperator( data, solid_op_name, std::move( operands ) );
-
-			// We can now discard any option where the next operator in squence is a prefix operator
-			// (since we have found that it didn't match the next token).
-			std::vector<name_t> options = _discardPrefixOperatorOptions( all_options, seq_no );
-
-			// If we are left with none, then we have a syntax error
-			if( options.empty() )
-			{
-				data.error();
-				data.reporter().error( "This operator requires an additional element!", data.parser().current().source() );
-				for( auto& option : all_options )
-				{
-					auto& sequence = type::Operators::sequence( option );
-					if( seq_no < sequence.size() )
-					{
-						string lead = option == all_options[ 0 ] ? "  Perhaps" : "  or perhaps";
-						data.reporter().note( lead + " this one? : " + eon::str( sequence[ seq_no ].Op ), source::Ref() );
-					}
-				}
-				return no_name;
-			}
-
-			// If we have only one option left, we can continue with that.
-			if( options.size() == 1 )
-				return _processSequenceOperator( data, options[ 0 ], std::move( operands ) );
-
-			// We still have multiple options left and must parse the next operand before we can get to the next operator name
-			source::Ref orig_source = data.parser().current().source();
-			data.parser().forward();	// Must move past the operator!
-			ParseData data2( data, _findStopOn( options, seq_no ) );
-			if( _parse( data2 ) )
-				operands.push_back( std::move( data2.operands().top() ) );
-
-			// If at the end of the tokens, we have a syntax error
-			if( !data.parser() )
-			{
-				data.error();
-				data.reporter().error( "Incomplete operator!", orig_source );
-				return no_name;
-			}
-
-			// Eliminate options for which the next token does not match the next operator in sequence
-			all_options = _matchNextSequenceOperator( data, options, seq_no );
+			auto result = _resolveNonTrivalOperator( all_options, data, op_name, operands, seq_no );
+			if( result != name_nn )
+				return result;
 		}
+		return no_name;
 	}
-	name_t Expression::_findSolidOpName( ParseData& data, const std::vector<name_t>& options, name_t op_name, index_t seq_no )
+
+	name_t Expression::_resolveNonTrivalOperator(
+		std::vector<name_t>& all_options,
+		ParseData& data,
+		name_t op_name,
+		std::vector<expression::Node>& operands,
+		index_t seq_no )
+	{
+		name_t singular_op_name = _identifySingularOperator( data, all_options, op_name, seq_no );
+		if( singular_op_name != no_name )
+			return _processSequenceOperator( data, singular_op_name, std::move( operands ) );
+
+		auto remaining_options = _discardPrefixOperatorOptions( all_options, seq_no );
+		if( remaining_options.empty() )
+			return _operatorMissingElementSyntaxError( data, all_options, seq_no );
+
+		// If we have only one option left, we can continue with that.
+		if( remaining_options.size() == 1 )
+			return _processSequenceOperator( data, remaining_options[ 0 ], std::move( operands ) );
+
+		// We still have multiple options left and must parse the next operand before we can get to the next operator name
+		source::Ref orig_source = data.parser().current().source();
+		_parseNextNonTrivalOperatorOperand( data, remaining_options, operands, seq_no );
+
+		// If at the end of the tokens, we have a syntax error
+		if( !data.parser() )
+			return _incompleteOperatorError( data, orig_source );
+
+		// Eliminate options for which the next token does not match the next operator in sequence
+		all_options = _matchNextSequenceOperator( data, remaining_options, seq_no );
+
+		return name_nn;
+	}
+
+	name_t Expression::_identifySingularOperator(
+		ParseData& data, const std::vector<name_t>& options, name_t op_name, index_t seq_no )
 	{
 		for( auto& option : options )
 		{
 			auto& sequence = type::Operators::sequence( option );
 			if( seq_no >= sequence.size() )
 				return option;	// All operators in the sequence have been matched!
-			if( !sequence[ seq_no ].Prefix )
+			if( !sequence[ seq_no ].prefix() )
 				continue;
 
 			auto next_type = data.parser().ahead().type();
@@ -609,17 +801,36 @@ namespace eon
 		}
 		return no_name;
 	}
+
 	std::vector<name_t> Expression::_discardPrefixOperatorOptions( const std::vector<name_t>& options, index_t seq_no )
 	{
 		std::vector<name_t> remaining;
 		for( auto& option : options )
 		{
 			auto& sequence = type::Operators::sequence( option );
-			if( seq_no < sequence.size() && !sequence[ seq_no ].Prefix )
+			if( seq_no < sequence.size() && !sequence[ seq_no ].prefix() )
 				remaining.push_back( option );
 		}
 		return remaining;
 	}
+
+	name_t Expression::_operatorMissingElementSyntaxError(
+		ParseData& data, std::vector<name_t>& all_options, index_t seq_no )
+	{
+		data.error();
+		data.reporter().error( "This operator requires an additional element!", data.parser().current().source() );
+		for( auto& option : all_options )
+		{
+			auto& sequence = type::Operators::sequence( option );
+			if( seq_no < sequence.size() )
+			{
+				string lead = option == all_options[ 0 ] ? "  Perhaps" : "  or perhaps";
+				data.reporter().note( lead + " this one? : " + eon::str( sequence[ seq_no ].Op ), source::Ref() );
+			}
+		}
+		return no_name;
+	}
+
 	std::set<string> Expression::_findStopOn( const std::vector<name_t>& options, index_t seq_no )
 	{
 		std::set<string> stop_on;
@@ -627,7 +838,9 @@ namespace eon
 			stop_on.insert( eon::str( type::Operators::sequence( option )[ seq_no ].Op ) );
 		return stop_on;
 	}
-	std::vector<name_t> Expression::_matchNextSequenceOperator( ParseData& data, const std::vector<name_t>& options, index_t seq_no )
+
+	std::vector<name_t> Expression::_matchNextSequenceOperator(
+		ParseData& data, const std::vector<name_t>& options, index_t seq_no )
 	{
 		std::vector<name_t> remaining;
 		for( auto& option : options )
@@ -638,12 +851,14 @@ namespace eon
 			auto next_type = data.parser().current().type();
 			if( next_type == sequence[ seq_no ].Op
 				|| ( next_type == name_name && name( data.parser().current().str() ) == sequence[ seq_no ].Op )
-				|| ( next_type == name_operator && compilerName( data.parser().current().str() ) == sequence[ seq_no ].Op ) )
+				|| ( next_type == name_operator
+					&& compilerName( data.parser().current().str() ) == sequence[ seq_no ].Op ) )
 				remaining.push_back( option );
 		}
 		return remaining;
 	}
-	name_t Expression::_processSequenceOperator( ParseData& data, name_t op_name, std::vector<Node>&& operands )
+
+	name_t Expression::_processSequenceOperator( ParseData& data, name_t op_name, std::vector<expression::Node>&& operands )
 	{
 		// Get remaining operands - if any
 		auto& sequence = type::Operators::sequence( op_name );
@@ -651,7 +866,7 @@ namespace eon
 		{
 			data.parser().forward();	// Must move past the operator!
 			ParseData data2( data, { eon::str( sequence[ seq_no ].Op ) } );
-			if( _parse( data2 ) )
+			if( _parseExpressionDetails( data2 ) )
 				operands.push_back( std::move( data2.operands().top() ) );
 			else
 			{
@@ -660,121 +875,139 @@ namespace eon
 			}
 		}
 
-		// Push all that we have and we're done!
+		// Push all that's left and we're done!
 		for( auto& operand : operands )
 			data.operands().push( std::move( operand ) );
 		return op_name;
 	}
 
+	void Expression::_parseNextNonTrivalOperatorOperand(
+		ParseData& data, const std::vector<name_t>& options, std::vector<expression::Node>& operands, index_t seq_no )
+	{
+		data.parser().forward();	// Must move past the operator!
+		ParseData data2( data, _findStopOn( options, seq_no ) );
+		if( _parseExpressionDetails( data2 ) )
+			operands.push_back( std::move( data2.operands().top() ) );
+	}
+
+	name_t Expression::_incompleteOperatorError( ParseData& data, source::Ref orig_source )
+	{
+		data.error();
+		data.reporter().error( "Incomplete operator!", orig_source );
+		return no_name;
+	}
+
+
 	bool Expression::_parseTuple( ParseData& data )
 	{
 		auto type = data.parser().current().type();
-		if( type == name_plain )
+		if( type == name_static )
 			return _parseTuple( data, type );
 		else if( type == name_typetuple )
 			return _parseTypeTuple( data );
 		else if( type == name_dynamic || type == name_data )
-		{
-			data.error();
-			data.reporter().error( "Cannot declare " + eon::str( type ) + " tuple inside expression! (Only plain tuple!)",
-				data.parser().current().source() );
-			data.parser().forward();
-		}
+			return _badTupleInExpressionError( data, type );
 		return false;
 	}
+
 	bool Expression::_parseTuple( ParseData& data, name_t tupletype )
 	{
-		auto source = data.parser().current().source();
+		source::Ref source = data.parser().current().source();
 		data.parser().forward();	// Skip tuple identifier
 
+		auto attributes = _parseTupleAttributes( data );
+		if( !data.parser() )
+			return _operandNotProperlyEndedError( data, "Tuple", source, false );
+
+		Tuple tuple( tupletype, std::move( attributes ) );
+		data.operands().push(
+			expression::Node::newValue( Attribute::newTuple( std::move( tuple ), type::Qualifier::rvalue, source ) ) );
+		return true;
+	}
+
+	bool Expression::_badTupleInExpressionError( ParseData& data, name_t type )
+	{
+		data.error();
+		data.reporter().error( "Cannot declare " + eon::str( type ) + " tuple inside expression! (Only static tuple!)",
+			data.parser().current().source() );
+		data.parser().forward();
+		// TODO: Move parser past the entire tuple to avoid additional errors about it!
+		return false;
+	}
+
+	std::vector<AttributePair> Expression::_parseTupleAttributes( ParseData& data )
+	{
 		std::vector<AttributePair> attributes;
 
-		// Each attribute is an expression we must evaluate
+		// Each attribute is an expression we must evaluate.
 		// Read attributes until we see a ')'!
 		ParseData data2( data, { ",", ")" } );
 		while( data2.parser() && !data2.parser().current().is( symbol_close_round ) )
 		{
-			// Is the attribute named?
-			name_t attrib_name = no_name;
-			if( data2.parser().current().is( name_name )
-				&& data2.parser().exists() && data2.parser().ahead().type() == name_assign )
-			{
-				attrib_name = eon::name( data2.parser().current().str() );
-				data2.parser().forward( 2 );
-			}
-
-			if( _parse( data2 ) )
-			{
-				attributes.push_back( AttributePair( attrib_name, std::move( data2.operands().top().value() ) ) );
-				data2.operands().pop();
-			}
-
+			_parseTupleAttribute( data2, attributes );
 			if( data.parser().current().is( symbol_comma ) )
 				data.parser().forward();
 		}
-		if( !data.parser() )
-		{
-			data.error();
-			data.reporter().error( "Tuple is not properly ended!", source );
-			return false;
-		}
 
-		Tuple tuple( tupletype, std::move( attributes ) );
-		data.operands().push( Node( Attribute::newTuple( std::move( tuple ) ), source ) );
-		return true;
+		return attributes;
 	}
+
+	void Expression::_parseTupleAttribute( ParseData& data, std::vector<AttributePair>& attributes )
+	{
+		auto attrib_name = _parseTupleAttributeName( data );
+		if( _parseExpressionDetails( data ) )
+		{
+			attributes.push_back( AttributePair( attrib_name, std::move( data.operands().top().value() ) ) );
+			data.operands().pop();
+		}
+	}
+
+	name_t Expression::_parseTupleAttributeName( ParseData& data )
+	{
+		name_t attrib_name = no_name;
+		if( data.parser().current().is( name_name )
+			&& data.parser().exists() && data.parser().ahead().type() == name_assign )
+		{
+			attrib_name = eon::name( data.parser().current().str() );
+			data.parser().forward( 2 );
+		}
+		return attrib_name;
+	}
+
+
 	bool Expression::_parseTypeTuple( ParseData& data )
 	{
-		auto source = data.parser().current().source();
-		auto ttuple = _processTypeTuple( data );
+		source::Ref source = data.parser().current().source();
+		auto ttuple = _parseTypeTupleDetails( data );
 		if( !ttuple )
 			return false;
-		data.operands().push( Node( Attribute::newTypeTuple( std::move( ttuple ) ), source ) );
+		data.operands().push(
+			expression::Node::newValue( Attribute::newTypeTuple( std::move( ttuple ), type::Qualifier::rvalue, source ) ) );
 		return true;
 	}
-	TypeTuple Expression::_processTypeTuple( ParseData& data )
+
+	TypeTuple Expression::_parseTypeTupleDetails( ParseData& data )
 	{
-		auto source = data.parser().current().source();
+		source::Ref source = data.parser().current().source();
 		data.parser().forward();	// Skip tuple identifier
 
 		// A type tuple consists of attributes that are either names or parenthesized sub-tuples, and can be either
 		// unnamed or named.
 		TypeTuple ttuple;
+		_parseTypeTupleAttributes( data, ttuple );
+
+		if( !data.parser() )
+			return _operandNotProperlyEndedError( data, "Type tuple", source, TypeTuple() );
+
+		return ttuple;
+	}
+
+	void Expression::_parseTypeTupleAttributes( ParseData& data, TypeTuple& ttuple )
+	{
 		while( data.parser() && !data.parser().current().is( symbol_close_round ) )
 		{
-			// Is the attribute named?
-			name_t attrib_name = no_name;
-			if( data.parser().current().is( name_name )
-				&& data.parser().exists() && data.parser().ahead().type() == name_assign )
-			{
-				attrib_name = eon::name( data.parser().current().str() );
-				data.parser().forward( 2 );
-			}
-
-			// Do we have a sub-tuple value?
-			if( data.parser().current().is( symbol_open_round ) )
-			{
-				auto sub = _processTypeTuple( data );
-				if( sub )
-				{
-					ttuple.add( attrib_name, std::move( sub ) );
-					data.parser().forward();
-				}
-			}
-
-			// Must be a name
-			else if( data.parser().current().is( name_name ) )
-			{
-				ttuple.add( attrib_name, eon::name( data.parser().current().str() ) );
-				data.parser().forward();
-			}
-
-			else
-			{
-				data.error();
-				data.reporter().error( "Invalid type tuple attribute!", data.parser().current().source() );
-				data.parser().forward();
-			}
+			auto attrib_name = _parseTupleAttributeName( data );
+			_parseTypeTupleAttributeValue( data, attrib_name, ttuple );
 
 			if( !data.parser() )
 				break;
@@ -786,31 +1019,49 @@ namespace eon
 				data.reporter().error( "Expected comma or ')' here!", data.parser().current().source() );
 			}
 		}
+	}
 
-		if( !data.parser() )
+	void Expression::_parseTypeTupleAttributeValue( ParseData& data, name_t attrib_name, TypeTuple& ttuple )
+	{
+		// Do we have a sub-tuple value?
+		if( data.parser().current().is( symbol_open_round ) )
+			_parseTypeTupleTupleAttributeValue( data, attrib_name, ttuple );
+
+		// Must be a name
+		else if( data.parser().current().is( name_name ) )
 		{
-			data.error();
-			data.reporter().error( "Type tuple is not properly ended!", source );
-			return TypeTuple();
+			ttuple.add( attrib_name, eon::name( data.parser().current().str() ) );
+			data.parser().forward();
 		}
 
-		return ttuple;
+		else
+		{
+			data.error();
+			data.reporter().error( "Invalid type tuple attribute!", data.parser().current().source() );
+			data.parser().forward();
+		}
 	}
+
+	void Expression::_parseTypeTupleTupleAttributeValue( ParseData& data, name_t attrib_name, TypeTuple& ttuple )
+	{
+		auto sub = _parseTypeTupleDetails( data );
+		if( sub )
+		{
+			ttuple.add( attrib_name, std::move( sub ) );
+			data.parser().forward();
+		}
+	}
+
 
 	bool Expression::_parseName( ParseData& data )
 	{
 		if( data.parser().current().type() == name_literal )
-		{
-			data.operands().push( Node( Attribute::newExplicit( eon::name( data.parser().current().str().slice( 1, -1 ) ),
-				name_name ), data.parser().current().source() ) );
-			return true;
-		}
-
-		if( data.parser().current().type() != name_name )
+			return _parseNameLiteral( data );
+		else if( data.parser().current().type() != name_name )
 			return false;
 
 		// NOTE: The name can be: a variable, a name value, an operator or part of an operator, or an action call.
-		
+
 		name_t name = eon::name( data.parser().current().str() );
 		if( type::Operators::isOperator( name ) )
 			return _processOperator( data, name, data.parser().current().source() );
@@ -819,95 +1070,126 @@ namespace eon
 		if( data.parser().exists() && data.parser().ahead().is( symbol_open_round ) )
 			return _parseActionCall( data, name );
 
+		// If followed by ' or ", it must be a misspelled prefix
+		if( data.parser().exists()
+			&& ( data.parser().ahead().is( name_string ) || data.parser().ahead().is( name_char ) ) )
+			return _misspelledPrefixError( data, name );
+
 		// Can be a variable
-		for( Tuple* scop = Scope; scop != nullptr; scop = scop->parent() )
-		{
-			if( scop->exists( name ) )
-			{
-				data.operands().push( Node( Attribute( scop->attribute( name ) ), source::Ref() ) );
-				return true;
-			}
-		}
+		auto var = Scope->findAttributeIncludeParent( name );
+		if( var )
+			return _processVariable( data, *var, name );
 
 		// Assuming name value!
-		data.operands().push( Node( Attribute::newExplicit<name_t>( name, name_name ), data.parser().current().source() ) );
+		return _parseNameLiteral( data, name );
+	}
+
+	bool Expression::_parseNameLiteral( ParseData& data, name_t name )
+	{
+		data.operands().push(
+			expression::Node::newValue(
+				Attribute::newExplicit(
+					name != no_name ? name : eon::name( data.parser().current().str().slice( 1, -1 ) ),
+					name_name,
+					type::Qualifier::literl | type::Qualifier::rvalue,
+					data.parser().current().source() ) ) );
 		return true;
 	}
 
+	bool Expression::_misspelledPrefixError( ParseData& data, name_t prefix )
+	{
+		static std::map<name_t, string> suggestions{
+			{ eon::name( "b" ), "'B' for Byte(s)" },
+			{ eon::name( "P" ), "'p' for path" },
+			{ eon::name( "R" ), "'r' for regex" } };
+		data.error();
+		string tip;
+		auto suggestion = suggestions.find( prefix );
+		if( suggestion != suggestions.end() )
+			tip = " Perhaps you meant " + suggestion->second + "?";
+		data.reporter().error( "This is not a supported prefix!" + tip, data.parser().current().source() );
+
+		// We handled this "name" so move on to the next token!
+		return true;
+	}
+
+	bool Expression::_processVariable( ParseData& data, Attribute& variable, name_t name )
+	{
+		data.operands().push( expression::Node::newValue( Attribute( variable ), name ) );
+		data.operands().top().source( data.parser().current().source() );
+		return true;
+	}
+
+
 	bool Expression::_parseActionCall( ParseData& data, name_t action_name )
 	{
-		auto source = data.parser().current().source();
+		source::Ref source = data.parser().current().source();
 		data.parser().forward( 2 );		// Skip name + '('
 
-		std::vector<Node> args;
-		TypeTuple argtypes;
+		auto args = _parseActionCallArgs( data );
+		if( !data.parser() )
+			return _operandNotProperlyEndedError( data, "Action call", source, false );
+
+		// If the action name is a type, we have a constructor
+		if( Scope->isType( action_name ) )
+			return _processConstructorCall( data, action_name, args, source );
+
+		// TODO: Add support for other action types!
+		return false;
+	}
+
+	Expression::CallArgs Expression::_parseActionCallArgs( ParseData& data )
+	{
+		CallArgs args;
 
 		// Each argument is an expression we must evaluate.
 		// Read arguments until we see a ')'!
 		ParseData data2( data, { ",", ")" } );
 		while( data2.parser() && !data2.parser().current().is( symbol_close_round ) )
 		{
-			// Is the argument named?
-			name_t arg_name = no_name;
-			if( data2.parser().current().is( name_name )
-				&& data2.parser().exists() && data2.parser().ahead().type() == name_assign )
+			auto arg_name = _parseTupleAttributeName( data2 );
+			if( _parseExpressionDetails( data2 ) )
 			{
-				arg_name = eon::name( data2.parser().current().str() );
-				data2.parser().forward( 2 );
-			}
-
-			if( _parse( data2 ) )
-			{
-				args.push_back( std::move( data2.operands().top() ) );
+				args.Args.push_back( std::move( data2.operands().top() ) );
 				data2.operands().pop();
-				if( args[ args.size() - 1 ].isOperator() )
-					argtypes.add( arg_name, args[ args.size() - 1 ].opReturnType() );
+				if( args.Args[ args.Args.size() - 1 ].isOperator() )
+					args.ArgTypes.add( arg_name, args.Args[ args.Args.size() - 1 ].type() );
 				else
-					argtypes.add( arg_name, args[ args.size() - 1 ].value().type() );
+					args.ArgTypes.add( arg_name, args.Args[ args.Args.size() - 1 ].value().type() );
 			}
 
 			if( data.parser().current().is( symbol_comma ) )
 				data.parser().forward();
 		}
-		if( !data.parser() )
-		{
-			data.error();
-			data.reporter().error( "Action call is not properly ended!", source );
-			return false;
-		}
+		return args;
+	}
 
-		// If the action name is a type, we have a constructor
-		if( Scope->isType( action_name ) )
-		{
-			auto actions = Scope->signatures( name_constructor, action_name, argtypes );
-			if( actions.size() == 1 )
-			{
-				// We have a match.
-				Node call( *Scope->action( *actions.begin() ), source );
-				for( auto& arg : args )
-					call.addOperand( std::move( arg ) );
-				data.operands().push( std::move( call ) );
-			}
-		}
-		else
-		{
-			// TODO: Add support for other action types!
-			return false;
-		}
+	bool Expression::_processConstructorCall( ParseData& data, name_t action_name, CallArgs& args, source::Ref source )
+	{
+		auto constructor_signature = _findAction( data, name_constructor, name_constructor, action_name, args.ArgTypes );
+		if( !constructor_signature )
+			return true;	// Returning true to indicate we have handled this!
+		auto call = expression::Node::newCall( *Scope->action( constructor_signature ), source );
+		for( auto& arg : args.Args )
+			call.addOperand( std::move( arg ) );
+		data.operands().push( std::move( call ) );
 		return true;
 	}
+
 
 	bool Expression::_parseExpression( ParseData& data )
 	{
 		if( !data.parser().current().is( name_expression ) )
 			return false;
 
-		auto source = data.parser().current().source();
+		source::Ref source = data.parser().current().source();
 		data.parser().forward();	// Skip 'e('
 		try
 		{
 			Expression expr( data.parser(), *Scope, data.reporter(), { ")" } );
-			data.operands().push( Node( Attribute::newExplicit( std::move( expr ), name_expression ), source ) );
+			data.operands().push(
+				expression::Node::newValue(
+					Attribute::newExplicit( std::move( expr ), name_expression, type::Qualifier::rvalue, source ) ) );
 			return true;
 		}
 		catch( ... )

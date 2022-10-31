@@ -23,6 +23,7 @@ namespace eon
 #include "symbol_math.cpp"
 #include "symbol_other.cpp"
 	}
+
 	Characters::~Characters()
 	{
 		delete other_format;
@@ -46,11 +47,12 @@ namespace eon
 
 
 
+
 	const Characters& Characters::get()
 	{
-		static std::shared_ptr<Characters> Cats;
+		static std::unique_ptr<Characters> Cats;
 		if( !Cats )
-			Cats = std::shared_ptr<Characters>( new Characters() );
+			Cats = std::unique_ptr<Characters>( new Characters() );
 		return *Cats;
 	}
 

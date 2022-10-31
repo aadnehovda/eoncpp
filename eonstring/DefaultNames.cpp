@@ -55,7 +55,8 @@ namespace eon
 	// Tuples
 	const name_t name_tuple = name( "tuple" );
 	const name_t name_basic = name( "basic" );
-	const name_t name_plain = name( "plain" );
+	const name_t name_static = name( "static" );
+	const name_t name_optional = name( "optional" );
 	const name_t name_dynamic = name( "dynamic" );
 	const name_t name_data = name( "data" );
 	const name_t name_typetuple = name( "typetuple" );
@@ -181,6 +182,7 @@ namespace eon
 	const name_t name_newline = name( "newline" );
 	const name_t name_literal = name( "literal" );
 	const name_t name_comment = name( "comment" );
+	const name_t name_define = name( "define" );
 
 /*
 	const name_t name_binary = name( "binary" );
@@ -199,7 +201,6 @@ namespace eon
 	const name_t name_test = name( "test" );
 	const name_t name_title = name( "title" );
 	const name_t name_pattern = name( "pattern" );
-	const name_t name_optional = name( "optional" );
 	const name_t name_yes = name( "yes" );
 	const name_t name_no = name( "no" );
 	const name_t name_on = name( "on" );
@@ -235,7 +236,6 @@ namespace eon
 	const name_t name_shared = name( "shared" );
 	const name_t name_ellipsis = name( "ellipsis" );
 	const name_t name_locked = name( "locked" );
-	const name_t name_static = name( "static" );
 	const name_t name_protected = name( "protected" );
 	const name_t name_restricted = name( "restricted" );
 	const name_t name_local = name( "local" );
