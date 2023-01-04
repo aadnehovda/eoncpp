@@ -22,6 +22,7 @@ namespace eon
 		Lookup[ Names[ Names.size() - 1 ] ] = id;
 		return id;
 	}
+
 	bool NameData::validName( const string& str ) noexcept
 	{
 		if( str.empty() )

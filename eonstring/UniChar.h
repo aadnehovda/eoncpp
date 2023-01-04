@@ -81,11 +81,12 @@ namespace eon
 	// An eon::high_t (high precision) is a 64-or-more-bit floating point number.
 	using high_t = long double;
 
-	
+
 	// While not strictly necessary, these character definitions can help
 	// increase clarity and avoid some confusions:
 	static const char_t NullChr{ '\0' };
 	static const char_t SpaceChr{ ' ' }, TabChr{ '\t' };
+	static const char_t NBSpaceChr{ 160 };
 	static const char_t PointChr{ '.' }, CommaChr{ ',' };
 	static const char_t ColonChr{ ':' }, SemiColonChr{ ';' };
 	static const char_t DblQuoteChr{ '"' }, SglQuoteChr{ '\'' };
@@ -112,8 +113,7 @@ namespace eon
 
 
 	// Check if the given [eon::char_t] is a valid Unicode codepoint.
-	static inline bool isValidCodepoint( char_t value ) noexcept {
-		return value < 0xC0 || ( value > 0xC1 && value < 0x140000 ); }
+	static inline bool isValidCodepoint( char_t value ) noexcept { return value < 0x110000; }
 
 
 
@@ -127,77 +127,89 @@ namespace eon
 	//
 	enum class charcat
 	{
-		letter_lowercase,
-		Ll = letter_lowercase,
-		letter_uppercase,
-		Lu = letter_uppercase,
-		letter_titlecase,
-		Lt = letter_titlecase,
-		letter_modifier,
-		Lm = letter_modifier,
-		letter_other,
-		Lo = letter_other,
+		undef = 0x00000000,
 
-		mark_spacing_combining,
+		letter_lowercase = 0x00000001,
+		Ll = letter_lowercase,
+		letter_uppercase = 0x0000002,
+		Lu = letter_uppercase,
+		letter_titlecase = 0x0000004,
+		Lt = letter_titlecase,
+		letter_modifier = 0x00000008,
+		Lm = letter_modifier,
+		letter_other = 0x00000010,
+		Lo = letter_other,
+		letter = Ll | Lu | Lt | Lm | Lo,
+
+		mark_spacing_combining = 0x00000020,
 		Mc = mark_spacing_combining,
-		mark_enclosing,
+		mark_enclosing = 0x00000040,
 		Me = mark_enclosing,
-		mark_nonspacing,
+		mark_nonspacing = 0x00000080,
 		Mn = mark_nonspacing,
+		mark = Mc | Me | Mn,
 
 		// All ASCII digits [0-9] - Custom Eon character class!
-		number_ascii_digit,
+		number_ascii_digit = 0x00000100,
 
-		number_decimal_digit,
+		number_decimal_digit = 0x00000200,
 		Nd = number_decimal_digit,
-		number_letter,
+		number_letter = 0x00000400,
 		Nl = number_letter,
-		number_other,
+		number_other = 0x00000800,
 		No = number_other,
+		number = Nd | Nl | No,
 
-		punctuation_connector,
+		punctuation_connector = 0x00001000,
 		Pc = punctuation_connector,
-		punctuation_dash,
+		punctuation_dash = 0x00002000,
 		Pd = punctuation_dash,
-		punctuation_close,
+		punctuation_close = 0x00004000,
 		Pe = punctuation_close,
-		punctuation_final_quote,
+		punctuation_final_quote = 0x00008000,
 		Pf = punctuation_final_quote,
-		punctuation_initial_quote,
+		punctuation_initial_quote = 0x00010000,
 		Pi = punctuation_initial_quote,
-		punctuation_other,
+		punctuation_other = 0x00020000,
 		Po = punctuation_other,
-		punctuation_open,
+		punctuation_open = 0x00040000,
 		Ps = punctuation_open,
+		punctuation = Pc | Pd | Pe | Pf | Pi | Po | Ps,
 
-		symbol_currency,
+		symbol_currency = 0x00080000,
 		Sc = symbol_currency,
-		symbol_modifier,
+		symbol_modifier = 0x00100000,
 		Sk = symbol_modifier,
-		symbol_math,
+		symbol_math = 0x00200000,
 		Sm = symbol_math,
-		symbol_other,
+		symbol_other = 0x00400000,
 		So = symbol_other,
+		symbol = Sc | Sk | Sm | So,
 
-		separator_line,
+		separator_line = 0x00800000,
 		Zl = separator_line,
-		separator_paragraph,
+		separator_paragraph = 0x01000000,
 		Zp = separator_paragraph,
-		separator_space,
+		separator_space = 0x02000000,
 		Zs = separator_space,
+		separator = Zl | Zp | Zs,
 
-		other_control,
+		other_control = 0x04000000,
 		Cc = other_control,
-		other_format,
+		other_format = 0x08000000,
 		Cf = other_format,
-		other_private_use,
+		other_private_use = 0x10000000,
 		Co = other_private_use,
-		other_surrogate,
+		other_surrogate = 0x20000000,
 		Cs = other_surrogate,
-
-		// Value used when character category is unknown.
-		undef
+		other = Cc | Cf | Co | Cs
 	};
+
+	inline charcat operator|( charcat a, charcat b ) noexcept {
+		return static_cast<charcat>( static_cast<int>( a ) | static_cast<int>( b ) ); }
+	inline charcat& operator|=( charcat& a, charcat b ) noexcept { return a = a | b; }
+	inline bool operator&&( charcat a, charcat b ) noexcept {
+		return static_cast<bool>( static_cast<int>( a ) & static_cast<int>( b ) ); }
 
 
 
@@ -295,8 +307,8 @@ namespace eon
 		inline bool isMarkSpacingCombining( char_t c ) const noexcept {
 			return std::binary_search( mark_spacing_combining->begin(), mark_spacing_combining->end(), c ); }
 
-		// Check if a character belongs to the "mark" "non-spacing" category.
-		inline bool isMarkNonSpacing( char_t c ) const noexcept {
+		// Check if a character belongs to the 'Mark, Nonspacing' category.
+		inline bool isMarkNonspacing( char_t c ) const noexcept {
 			return std::binary_search( mark_nonspacing->begin(), mark_nonspacing->end(), c ); }
 
 		// Check if a character belongs to the "mark" "enclosing" category.
@@ -341,7 +353,7 @@ namespace eon
 		// Check if a character belongs to the "punctuation" "open" category.
 		inline bool isPunctuationOpen( char_t c ) const noexcept {
 			return std::binary_search( punctuation_open->begin(), punctuation_open->end(), c ); }
-		
+
 		// Check if a character belongs to the "punctuation" "close" category.
 		inline bool isPunctuationClose( char_t c ) const noexcept {
 			return std::binary_search( punctuation_close->begin(), punctuation_close->end(), c ); }
@@ -391,12 +403,14 @@ namespace eon
 		inline bool isSeparatorParagraph( char_t c ) const noexcept { return c == 0x2029; }
 
 		// Check if a character belongs to the "separator" "space" category.
-		inline bool isSeparatorSpace( char_t c ) const noexcept { return ( c >= 0x08 && c <= 0x0D ) || c == 0x20
-			|| ( c >= 0x2000 && c <= 0x200A ) || c == 0xA0 || c == 0x1680 || c == 0x202F || c == 0x205F || c == 0x3000; }
+		inline bool isSeparatorSpace( char_t c ) const noexcept { return c == 0x20 || c == 0xA0 || c == 0x1680
+			|| ( c >= 0x2000 && c <= 0x200A ) || c == 0x202F || c == 0x205F || c == 0x3000; }
 
 
 		// Check if a character belongs to a named [eon::charcat] character category.
-		bool is( char_t codepoint, charcat category ) const noexcept;
+		// If 'category' is a combination, this method will return true if 'codepoint' is in any of those!
+		inline bool is( char_t codepoint, charcat category ) const noexcept {
+			return category && this->category( codepoint ); }
 
 		// Get the [eon::charcat] character category for the specified character.
 		// Returns [eon::charcat::undef] if unable to categorize.
@@ -462,6 +476,26 @@ namespace eon
 	static inline bool isNumeral( char_t codepoint ) noexcept {
 		return Characters::get().isNumberDecimalDigit( codepoint ); }
 
+	// Given a numeral codepoint (in the 'Number, Decimal Digit' category), get the corresponding zero numeral.
+	// Returns the corresponding zero character, or zero if not a legal numeral!
+	extern char_t zeroChar( char_t codepoint ) noexcept;
+
+	// Given a numeral codepoint (in the 'Number, Decimal Digit' category), get the corresponding numeric value.
+	// Returns integer value 0, 1, ..., 9 for legal numeral code points, -1 for illegal!
+	static inline int numeralValue( char_t codepoint ) noexcept {
+		auto zero = zeroChar( codepoint ); return zero != 0 ? codepoint - zero : -1; }
+
+	// Check if the given code point is a plus sign (in the 'Symbol, Math' category)
+	// including super- or sub-script but not composite signs.
+	static inline bool isPlus( char_t codepoint ) noexcept {
+		return codepoint == 0x2B || codepoint == 0xFB29 || codepoint == 0xFE62 || codepoint == 0xFF0B
+			|| codepoint == 0x207A || codepoint == 0x208A; }
+
+	// Check if the given code point is a minus sign (in the 'Symbol, Math' category)
+	// including super- and sub-script but not composite signs.
+	static inline bool isMinus( char_t codepoint ) noexcept {
+		return codepoint == 0x2D || codepoint == 0x2212 || codepoint == 0x207B || codepoint == 0x208B; }
+
 	// Check if the given codepoint is a hexadecimal digit.
 	static inline bool isHexDigit( char_t codepoint ) noexcept {
 		return ( codepoint >= '0' && codepoint <= '9' )
@@ -477,7 +511,7 @@ namespace eon
 	// Given a byte, convert it into two hexadecimal digits stored in a std::string of bytes.
 	static inline std::string byteToHex( byte_t byte ) noexcept {
 		byte_t hi = byte / 16, lo = byte % 16; std::string str( "00" );
-		str[ 0 ] = hi < 10 ? '0' + hi : 'A' + hi - 10; str[ 0 ] = lo < 10 ? '0' + lo : 'A' + lo - 10; return str; }
+		str[ 0 ] = hi < 10 ? '0' + hi : 'A' + hi - 10; str[ 1 ] = lo < 10 ? '0' + lo : 'A' + lo - 10; return str; }
 
 	// Check if the given codepoint is/can be used as an octal digit.
 	static inline bool isOctalDigit( char_t codepoint ) noexcept { return codepoint >= '0' && codepoint <= '7'; }

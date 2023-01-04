@@ -11,7 +11,7 @@ namespace eon
 				throw BadName();
 			Name = name;
 #ifdef EON_WINDOWS
-			Data = std::ifstream( Name.wstr(), std::ios_base::in | std::ios_base::binary );
+			Data = std::ifstream( Name.stdwstr(), std::ios_base::in | std::ios_base::binary );
 #else
 			Data = std::ifstream( Name.stdstr(), std::ios_base::in | std::ios_base::binary );
 #endif
@@ -36,7 +36,7 @@ namespace eon
 				if( Data.fail() )
 					throw EndOfSource();
 			}
-				
+
 			Pos pos = start_point;
 			for( ; static_cast<size_t>( Data.tellg() ) < NumBytes && num_characters > 0; --num_characters )
 			{
@@ -50,7 +50,7 @@ namespace eon
 						break;
 				}
 				if( state != UTF8_ACCEPT )
-					throw InvalidUTF8( "Not a valid UTF-8 file" );					
+					throw InvalidUTF8( "Not a valid UTF-8 file" );
 				if( cp == NewlineChr )
 				{
 					if( pos.Line == LineLengths.size() )

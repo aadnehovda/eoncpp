@@ -1,4 +1,4 @@
 #pragma once
 
-#include "Macros.h"
+#include "TestMacros.h"
 #include "TestBase.h"

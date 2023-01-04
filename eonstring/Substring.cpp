@@ -1,83 +1,258 @@
 #include "Substring.h"
+#include <eoninlinetest/InlineTest.h>
 #include <cctype>
 
 
 namespace eon
 {
+	EON_TEST_3STEP( substring, substring, copy,
+		const char* source = "abcdef",
+		substring other( source ),
+		EON_TRUE( other == substring( other ) ) );
+
+	EON_TEST_3STEP( substring, substring, iterators,
+		const char* source = "abcdef",
+		substring obj( string_iterator( source ), string_iterator( source ) + 6 ),
+		EON_TRUE( obj == substring( source ) ) );
+
+	EON_TEST_3STEP( substring, substring, iterator,
+		const char* source = "abcdef",
+		substring obj( string_iterator( source ) + 3 ),
+		EON_TRUE( obj.empty() && *obj.begin() == 'd' ) );
+
+	EON_TEST( substring, substring, stdstring,
+		EON_EQ( 6, substring( std::string( "abcdef" ) ).numChars() ) );
+
+	EON_TEST( substring, substring, cstring,
+		EON_EQ( 6, substring( "abcdef" ).numChars() ) );
+
+
+
+
+	EON_TEST_3STEP( substring, clear, basic,
+		substring obj( "abcdef" ),
+		obj.clear(),
+		EON_TRUE( obj.empty() ) );
+
+
+
+
+	EON_TEST_3STEP( substring, sameSource, true,
+		const char* source = "abcdef",
+		substring obj( source ),
+		EON_TRUE( obj.sameSource( source ) ) );
+	EON_TEST_3STEP( substring, sameSource, false,
+		const char* source = "abcdef",
+		substring obj( "bcdefa" ),
+		EON_FALSE( obj.sameSource( source ) ) );
+
+	EON_TEST_3STEP( substring, assertSameSource, true,
+		const char* source = "abcdef",
+		substring obj( source ),
+		EON_NO_X( obj.assertSameSource( source ) ) );
+	EON_TEST_3STEP( substring, assertSameSource, false,
+		const char* source = "abcdef",
+		substring obj( "bcdefa" ),
+		EON_RAISE( obj.assertSameSource( source ), WrongSource ) );
+
+	EON_TEST_3STEP( substring, sameArea, true,
+		const char* source = "abcdef",
+		substring obj( source ),
+		EON_TRUE( obj.sameArea( substring( source ) ) ) );
+	EON_TEST_3STEP( substring, sameArea, false,
+		const char* source = "abcdef",
+		substring obj( "bcdefa" ),
+		EON_FALSE( obj.sameArea( substring( source + 1 ) ) ) );
+
+	EON_TEST( substring, isLowToHigh, true_default,
+		EON_TRUE( substring( "abcdef" ).isLowToHigh() ) );
+	EON_TEST( substring, isLowToHigh, true_flipped,
+		EON_TRUE( substring( "abcdef" ).highToLow().lowToHigh().isLowToHigh() ) );
+	EON_TEST( substring, isLowToHigh, false,
+		EON_FALSE( substring( "abcdef" ).highToLow().isLowToHigh() ) );
+
+	EON_TEST( substring, isHighToLow, false_default,
+		EON_FALSE( substring( "abcdef" ).isHighToLow() ) );
+	EON_TEST( substring, isHighToLow, true_flipped,
+		EON_TRUE( substring( "abcdef" ).highToLow().isHighToLow() ) );
+
 	substring substring::lowToHigh() const noexcept
 	{
 		if( !isHighToLow() )
 			return *this;
 		return substring( End + 1, Beg + 1 );
 	}
+	EON_NO_TEST( substring, lowToHigh );
+
 	substring substring::highToLow() const noexcept
 	{
 		if( !isLowToHigh() )
 			return *this;
 		return substring( End - 1, Beg - 1 );
 	}
+	EON_NO_TEST( substring, lowToHigh );
 
+	EON_NO_TEST( substring, validUTF8 );
 
+	EON_TEST( substring, operator_bool, true,
+		EON_TRUE( substring( "abcdef" ) ) );
+	EON_TEST( substring, operator_bool, false_empty,
+		EON_FALSE( substring( "" ) ) );
+	EON_TEST( substring, operator_bool, false_no_source,
+		EON_FALSE( substring() ) );
+
+	EON_TEST( substring, empty, true_no_source,
+		EON_TRUE( substring().empty() ) );
+	EON_TEST( substring, empty, true_source,
+		EON_TRUE( substring( "" ).empty() ) );
+	EON_TEST( substring, empty, false,
+		EON_FALSE( substring( "abcdef" ).empty() ) );
+
+	EON_TEST( substring, hasSource, true_empty,
+		EON_TRUE( substring( "" ).hasSource() ) );
+	EON_TEST( substring, hasSource, true_source,
+		EON_TRUE( substring( "abcdef" ).hasSource() ) );
+	EON_TEST( substring, hasSource, false,
+		EON_FALSE( substring().hasSource() ) );
+
+	EON_TEST( substring, numChars, no_source,
+		EON_EQ( 0, substring().numChars() ) );
+	EON_TEST( substring, numChars, empty,
+		EON_EQ( 0, substring( "" ).numChars() ) );
+	EON_TEST( substring, numChars, ASCII,
+		EON_EQ( 6, substring( "abcdef" ).numChars() ) );
+	EON_TEST( substring, numChars, UTF8,
+		EON_EQ( 6, substring( u8"Ø€Œ™©µ" ).numChars() ) );
 
 	index_t substring::numBytes() const noexcept
 	{
-		if( Beg.atREnd() )
-		{
-			if( End.atREnd() )
-				return 0;
-			else
-				return End.numByte() - Beg.numByte() + 1;
-		}
-		else if( End.atREnd() )
-			return Beg.numByte() - End.numByte() + 1;
-		else if( Beg <= End )
-			return End.numByte() - Beg.numByte();
-		else
-			return Beg.numByte() - End.numByte();
+		if( isHighToLow() )
+			return lowToHigh().numBytes();
+		auto beg_bytes = Beg.atREnd() ? 0 : Beg.atEnd() ? Beg.numSourceBytes() : Beg.numByte();
+		auto end_bytes = End.atREnd() ? 0 : End.atEnd() ? End.numSourceBytes() : End.numByte();
+		return end_bytes - beg_bytes;
 	}
+	EON_TEST( substring, numBytes, no_source,
+		EON_EQ( 0, substring().numBytes() ) );
+	EON_TEST( substring, numBytes, empty,
+		EON_EQ( 0, substring( "" ).numBytes() ) );
+	EON_TEST( substring, numBytes, ASCII,
+		EON_EQ( 6, substring( "abcdef" ).numBytes() ) );
+	EON_TEST( substring, numBytes, ASCII_HighToLow,
+		EON_EQ( 6, substring( "abcdef" ).highToLow().numBytes() ) );
+	EON_TEST( substring, numBytes, UTF8,
+		EON_EQ( 14, substring( u8"Ø€Œ™©µ" ).numBytes() ) );
+	EON_TEST( substring, numBytes, UTF8_HighToLow,
+		EON_EQ( 14, substring( u8"Ø€Œ™©µ" ).highToLow().numBytes() ) );
+
+	EON_TEST( substring, stdstr, empty,
+		EON_EQ( "", substring( "" ).stdstr() ) );
+	EON_TEST( substring, stdstr, all,
+		EON_EQ( "abcdef", substring( "abcdef" ).stdstr() ) );
+	EON_TEST_2STEP( substring, stdstr, part,
+		const char* source = "abcdef",
+		EON_EQ( "bcde", substring( string_iterator( source ) + 1, string_iterator( source ) + 5 ).stdstr() ) );
+	EON_TEST_2STEP( substring, stdstr, part_HighToLow,
+		const char* source = "abcdef",
+		EON_EQ( "edcb", substring( string_iterator( source ) + 1, string_iterator( source ) + 5 ).highToLow().stdstr() ) );
 
 	byte_t substring::byte( index_t pos ) const noexcept
 	{
-		if( empty() )
+		if( empty() || pos >= numBytes() )
 			return 0;
-		if( Beg < End )
-			return pos < static_cast<index_t>( End.Source - Beg.Source ) ? *( Beg.Source + pos ) : 0;
+		if( isLowToHigh() )
+			return *( Beg.Pos + pos );
 		else
-			return pos < static_cast<index_t>( Beg.Source - End.Source ) ? *( End.Source + pos ) : 0;
+			return *( Beg.Pos - pos );
 	}
+	EON_TEST( substring, byte, no_source,
+		EON_EQ( 0, static_cast<int>( substring().byte( 0 ) ) ) );
+	EON_TEST( substring, byte, empty,
+		EON_EQ( 0, static_cast<int>( substring( "" ).byte( 0 ) ) ) );
+	EON_TEST( substring, byte, out_of_bounds,
+		EON_EQ( 0, static_cast<int>( substring( "abcdef" ).byte( 7 ) ) ) );
+	EON_TEST( substring, byte, ASCII_full,
+		EON_EQ( 99, static_cast<int>( substring( "abcdef" ).byte( 2 ) ) ) );
+	EON_TEST_2STEP( substring, byte, ASCII_sub,
+		const char* source = "abcdefg",
+		EON_EQ( 100, static_cast<int>( substring(
+			string_iterator( source ) + 1, string_iterator( source ) + 5 ).byte( 2 ) ) ) );
+	EON_TEST( substring, byte, ASCII_full_HighToLow,
+		EON_EQ( 100, static_cast<int>( substring( "abcdef" ).highToLow().byte( 2 ) ) ) );
+	EON_TEST_2STEP( substring, byte, ASCII_sub_HighToLow,
+		const char* source = "abcdefg",
+		EON_EQ( 101, static_cast<int>( substring(
+			string_iterator( source ) + 6, string_iterator( source ) + 1 ).byte( 2 ) ) ) );
+
+	EON_TEST( substring, enclosed, no_source,
+		EON_FALSE( substring().enclosed( '"' ) ) );
+	EON_TEST( substring, enclosed, empty,
+		EON_FALSE( substring( "" ).enclosed( '"' ) ) );
+	EON_TEST( substring, enclosed, false,
+		EON_FALSE( substring( "abcdef" ).enclosed( '"' ) ) );
+	EON_TEST( substring, enclosed, half,
+		EON_FALSE( substring( "\"abcdef" ).enclosed( '"' ) ) );
+	EON_TEST( substring, enclosed, same_char,
+		EON_TRUE( substring( "\"abcdef\"" ).enclosed( '"' ) ) );
+	EON_TEST( substring, enclosed, diff_char,
+		EON_TRUE( substring( "(abcdef)" ).enclosed( '(', ')' ) ) );
 
 	bool substring::blank() const noexcept
 	{
 		auto& chars = Characters::get();
 		for( auto cp : *this )
 		{
-			if( !chars.isSeparatorSpace( cp ) )
+			if( !chars.isSeparatorSpace( cp ) && !chars.isOtherControl( cp ) )
 				return false;
 		}
 		return true;
 	}
+	EON_TEST( substring, blank, no_source,
+		EON_TRUE( substring().blank() ) );
+	EON_TEST( substring, blank, empty,
+		EON_TRUE( substring( "" ).blank() ) );
+	EON_TEST( substring, blank, ASCII_true,
+		EON_TRUE( substring( " \t" ).blank() ) );
+	EON_TEST( substring, blank, ASCII_false,
+		EON_FALSE( substring( " _" ).blank() ) );
+	EON_TEST( substring, blank, UTF8_true,
+		EON_TRUE( substring( u8" \u00A0\u2000\u3000" ).blank() ) );
+	EON_TEST( substring, blank, UTF8_false,
+		EON_FALSE( substring( u8" \u00A0\u2000_\u3000" ).blank() ) );
 
 	string_iterator substring::iterator( index_t num_char ) const noexcept
 	{
-		auto num_chars = end().numChar() - begin().numChar();
+		auto num_chars = numChars();
 		if( num_char > num_chars )
 			return end().getEnd();
 
-		// If there are less than 10 characters, we can skip optimizations
 		if( num_chars >= 10 )
 		{
-			// Since counting backwards is slightly more costly than counting
-			// forwards, we skew the "middle point" to 2/3.
+			// Only optimize counting if the substring is of a certain size.
+			// NOTE: Counting backward is slightly more costly so skew the middle-point.
 			auto mid_point = ( num_chars / 3 ) * 2;
-
-			// Only count from end if the character is closer to the end
 			if( num_char >= mid_point )
-				return end() - ( num_chars - num_char );
+			{
+				if( isLowToHigh() )
+					return end() - ( num_chars - num_char );
+				else
+					lowToHigh().iterator( num_chars - num_char );
+			}
 		}
-
-		// Count from beginning
-		return begin() + num_char;
+		return isLowToHigh() ? begin() + num_char : begin() - num_char;
 	}
+	EON_TEST( substring, iterator, no_source,
+		EON_FALSE( substring().iterator( 0 ).hasSource() ) );
+	EON_TEST( substring, iterator, empty,
+		EON_TRUE( substring( "" ).iterator( 0 ).hasSource() ) );
+	EON_TEST( substring, iterator, lowToHigh,
+		EON_EQ( char_t( 'c' ), *substring( "abcdef" ).iterator( 2 ) ) );
+	EON_TEST( substring, iterator, highToLow,
+		EON_EQ( char_t( 'd' ), *substring( "abcdef" ).highToLow().iterator( 2 ) ) );
+	EON_TEST( substring, iterator, lowToHigh_long,
+		EON_EQ( char_t( 'u' ), *substring( "abcdefghijklmnopqrstuvwxyz" ).iterator( 20 ) ) );
+	EON_TEST( substring, iterator, highToLow_long,
+		EON_EQ( char_t( 'f' ), *substring( "abcdefghijklmnopqrstuvwxyz" ).highToLow().iterator( 20 ) ) );
 
 	index_t substring::indentationLevel( char_t indentation_char ) const noexcept
 	{
@@ -90,57 +265,76 @@ namespace eon
 		}
 		return level;
 	}
+	EON_TEST( substring, indentationLevel, no_source,
+		EON_EQ( 0, substring().indentationLevel( ' ' ) ) );
+	EON_TEST( substring, indentationLevel, empty,
+		EON_EQ( 0, substring( "" ).indentationLevel( ' ' ) ) );
+	EON_TEST( substring, indentationLevel, ASCII_all_indents,
+		EON_EQ( 2, substring( "  " ).indentationLevel( ' ' ) ) );
+	EON_TEST( substring, indentationLevel, ASCII,
+		EON_EQ( 2, substring( "  abc" ).indentationLevel( ' ' ) ) );
+	EON_TEST( substring, indentationLevel, UTF8_all_indents,
+		EON_EQ( 2, substring( u8"™™" ).indentationLevel( char_t( 8482 ) ) ) );
+	EON_TEST( substring, indentationLevel, UTF8,
+		EON_EQ( 2, substring( u8"™™abc" ).indentationLevel( char_t( 8482 ) ) ) );
 
-	std::vector<char_t> substring::chars() const
-	{
-		std::vector<char_t> result;
-		for( auto chr : *this )
-			result.push_back( chr );
-		return result;
-	}
-
+	EON_TEST( substring, characters, no_source,
+		EON_EQ( 0, substring().characters<std::vector<char_t>>().size() ) );
+	EON_TEST( substring, characters, empty,
+		EON_EQ( 0, substring( "" ).characters<std::vector<char_t>>().size() ) );
+	EON_TEST( substring, characters, ASCII,
+		EON_EQ( 6, substring( "abcdef" ).characters<std::vector<char_t>>().size() ) );
+	EON_TEST( substring, characters, UTF8,
+		EON_EQ( 6, substring( u8"Ø€Œ™©µ" ).characters<std::vector<char_t>>().size() ) );
 
 	substring substring::trim() const
 	{
-		if( empty() )
+		if( empty() || isHighToLow() )
 			return *this;
-		auto& chars = Characters::get();
-		auto start = begin();
-		for( ; start && chars.isSeparatorSpace( *start ); ++start )
-			;
-		if( !start )
-			return substring( end().getEnd() );
-		auto end = this->last();
-		for( ; end && chars.isSeparatorSpace( *end ); --end )
-			;
-		return substring( start, end + 1 );
+		auto beg = findFirstNotOf( charcat::separator_space | charcat::other_control );
+		auto end = highToLow().findLastNotOf( charcat::separator_space | charcat::other_control );
+		return substring( beg ? beg : End, end ? end + 1 : End );
 	}
+	EON_TEST_2STEP( substring, trim, ASCII,
+		const char* source = "  abcdefg  ",
+		EON_EQ( "abcdefg", substring( source ).trim().stdstr() ) );
+	EON_TEST_2STEP( substring, trim, UTF8,
+		const char* source = u8"\u00A0\u2008Ø€Œ™©µ\u200A\u3000",
+		EON_EQ( u8"Ø€Œ™©µ", substring( source ).trim().stdstr() ) );
+	EON_TEST_2STEP( substring, trim, all,
+		const char* source = " ",
+		EON_EQ( "", substring( source ).trim().stdstr() ) );
+
 	substring substring::trimLeading() const
 	{
-		if( empty() )
+		if( empty() || isHighToLow() )
 			return *this;
-		auto& chars = Characters::get();
-		auto start = begin();
-		for( ; start && chars.isSeparatorSpace( *start ); ++start )
-			;
-		if( start != end() )
-			return substring( start, end() );
-		else
-			return substring( end().getEnd() );
+		auto beg = findFirstNotOf( charcat::separator_space | charcat::other_control );
+		return substring( beg ? beg : End, End );
 	}
+	EON_TEST_2STEP( substring, trimLeading, ASCII,
+		const char* source = "  abcdefg  ",
+		EON_EQ( "abcdefg  ", substring( source ).trimLeading().stdstr() ) );
+	EON_TEST_2STEP( substring, trimLeading, UTF8,
+		const char* source = u8"\u00A0\u2008Ø€Œ™©µ\u200A\u3000",
+		EON_EQ( u8"Ø€Œ™©µ\u200A\u3000", substring( source ).trimLeading().stdstr() ) );
+	EON_TEST_2STEP( substring, trimLeading, all,
+		const char* source = " ",
+		EON_EQ( "", substring( source ).trimLeading().stdstr() ) );
+
 	substring substring::trimTrailing() const
 	{
-		if( empty() )
+		if( empty() || isHighToLow() )
 			return *this;
-		auto& chars = Characters::get();
-		auto end = last();
-		for( ; end && chars.isSeparatorSpace( *end ); --end )
-			;
-		if( end )
-			return substring( begin(), end + 1 );
-		else
-			return substring( this->end().getEnd() );
+		auto end = highToLow().findLastNotOf( charcat::separator_space | charcat::other_control );
+		return substring( Beg, end ? end + 1 : End );
 	}
+	EON_TEST_2STEP( substring, trimTrailing, ASCII,
+		const char* source = "  abcdefg  ",
+		EON_EQ( "  abcdefg", substring( source ).trimTrailing().stdstr() ) );
+	EON_TEST_2STEP( substring, trimTrailing, UTF8,
+		const char* source = u8"\u00A0\u2008Ø€Œ™©µ\u200A\u3000",
+		EON_EQ( u8"\u00A0\u2008Ø€Œ™©µ", substring( source ).trimTrailing().stdstr() ) );
 
 
 
@@ -163,103 +357,112 @@ namespace eon
 		}
 		return true;
 	}
-	bool substring::isFloat( char_t decimal_separator ) const noexcept
+
+	bool substring::isFloatingPoint( const locale* custom_locale ) const noexcept
 	{
 		if( empty() )
 			return false;
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
+		string_iterator i = begin();
+		if( isPlus( *i ) || isMinus( *i ) )
+			++i;
 		int sep = 0;
-		auto i = begin();
+		for( ; i != end() && sep > 2; ++i )
+		{
+			if( *i == loc.decimalSep() )
+				++sep;
+			else if( !isNumeral( *i ) )
+				return false;
+		}
+		return sep > 0 && sep < 2;
+	}
+
+	bool substring::isFloat( const locale* custom_locale ) const noexcept
+	{
+		if( empty() )
+			return false;
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
+		string_iterator i = begin();
 		if( *i == '+' || *i == '-' )
 			++i;
-		for( ; i != end(); ++i )
+		int sep = 0;
+		for( ; i != end() && sep < 2; ++i )
 		{
-			if( *i == decimal_separator )
-			{
-				if( ++sep > 1 )
-					return false;
-			}
+			if( *i == loc.decimalSep() )
+				++sep;
 			else if( !isDigit( *i ) )
 				return false;
 		}
-		return sep > 0;
+		return sep > 0 && sep < 2;
 	}
 
-	long_t substring::toLong() const
+	long_t substring::toLongT() const noexcept
 	{
-		int64_t num = 0;
+		long_t value = 0;
 		if( empty() )
-			return num;
-		auto i = begin();
-		int64_t sign = *i == '+' ? 1 : *i == '-' ? -1 : 0;
-		if( sign != 0 )
+			return value;
+		string_iterator i = begin();
+		long_t sign = isMinus( *i ) ? -1 : isPlus( *i ) ? 1 : 0;
+		if( sign == 0 )
+			sign = 1;
+		else
 			++i;
 		for( ; i != end(); ++i )
 		{
-			if( !isDigit( *i ) )
-				break;
-			num *= 10;
-			num += ( *i - ZeroChr );
+			value *= 10;
+			value += numeralValue( *i );
 		}
-		return sign ? num * sign : num;
+		return value * sign;
 	}
 
-	high_t substring::toHigh( char_t decimal_separator ) const
+	high_t substring::toHighT( const locale* custom_locale ) const noexcept
 	{
+		high_t value = 0.0;
 		if( empty() )
-			return 0.0;
-		long double num = 0.0, dec = 0.0, dec_pow = 1.0;
-		int point = 0;
-		auto i = begin();
-		long double sign = *i == '+' ? 1.0 : *i == '-' ? -1.0 : 0.0;
-		if( sign != 0.0 )
+			return value;
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
+		string_iterator i = begin();
+		high_t sign = isMinus( *i ) ? -1.0 : isPlus( *i ) ? 1.0 : 0.0;
+		if( sign == 0.0 )
+			sign = 1.0;
+		else
 			++i;
+		bool before_sep{ true };
+		high_t decimals{ 0.0 }, decimal_power{ 1.0 };
 		for( ; i != end(); ++i )
 		{
-			if( *i == decimal_separator )
+			if( before_sep )
 			{
-				if( ++point > 1 )
-					break;
+				if( *i == loc.decimalSep() )
+					before_sep = false;
+				else
+				{
+					value *= 10.0;
+					value += static_cast<high_t>( numeralValue( *i ) );
+				}
 			}
 			else
 			{
-				if( !isDigit( *i ) )
-					break;
-				if( point == 0 )
-				{
-					num *= 10.0;
-					num += ( *i - ZeroChr );
-				}
-				else
-				{
-					dec *= 10.0;
-					dec += ( *i - ZeroChr );
-					dec_pow *= 10.0;
-				}
+				decimals *= 10.0;
+				decimal_power *= 10.0;
+				decimals += static_cast<high_t>( numeralValue( *i ) );
 			}
 		}
-		if( sign )
-			return sign * ( num + ( dec / dec_pow ) );
-		else
-			return num + ( dec / dec_pow );
+		return sign * ( value + ( decimals / decimal_power ) );
 	}
 
-	index_t substring::toIndex() const
+	index_t substring::toIndex() const noexcept
 	{
-		index_t num = 0;
-		if( empty() )
-			return num;
+		index_t value = 0;
 		for( auto chr : *this )
 		{
-			if( !isDigit( chr ) )
-				break;
-			num *= 10;
-			if( chr >= ZeroChr )
-				num += ( chr - ZeroChr );
+			value *= 10;
+			value += numeralValue( chr );
 		}
-		return num;
+		return value;
 	}
 
-	substring substring::trimNumber( char_t decimal_separator ) const
+	substring substring::trimNumber( const locale* custom_locale ) const
 	{
 		// Find first non-zero
 		auto first_non_zero = begin();
@@ -271,8 +474,9 @@ namespace eon
 			return substring( first_non_zero - 1, end() );
 
 		// Find the decimal separator
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
 		auto sep = first_non_zero;
-		while( sep != end() && *sep != decimal_separator )
+		while( sep != end() && *sep != loc.decimalSep() )
 			++sep;
 
 		// If no separator, we have an all integer number
@@ -301,7 +505,7 @@ namespace eon
 
 		return substring( first_non_zero, last_non_zero + 1 );
 	}
-	substring substring::trimFloat( char_t decimal_separator ) const
+	substring substring::trimFloat( const locale* custom_locale ) const
 	{
 		// Find first non-zero
 		auto first_non_zero = begin();
@@ -313,12 +517,13 @@ namespace eon
 			return substring( end().getEnd() );
 
 		// If first non-zero is the point, then include previous zero (if any)
-		if( *first_non_zero == decimal_separator && first_non_zero != begin() )
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
+		if( *first_non_zero == loc.decimalSep() && first_non_zero != begin() )
 			--first_non_zero;
 
 		// Find the decimal separator
 		auto sep = first_non_zero;
-		while( sep != end() && *sep != decimal_separator )
+		while( sep != end() && *sep != loc.decimalSep() )
 			++sep;
 
 		// If no separator, we have an all integer number
@@ -347,278 +552,90 @@ namespace eon
 
 
 
-	substring substring::findFirst( const substring& to_find ) const noexcept
+	const substring::fast_compare substring::FastCompare;
+	const substring::fast_chr_compare substring::FastChrCompare;
+	const substring::diff_compare substring::DiffCompare;
+	const substring::icase_compare substring::ICaseCompare;
+	const substring::icase_chr_compare substring::ICaseChrCompare;
+
+	int substring::fast_compare::operator()( const substring& a, const substring& b ) const noexcept
 	{
-		if( empty() || to_find.empty() )
-			return substring( End.getEnd() );
+		if( !a )
+			return b ? -1 : 0;
+		else if( !b )
+			return 1;
+		auto cmp = memcmp( a.Beg.Pos, b.Beg.Pos, a.numBytes() < b.numBytes() ? a.numBytes() : b.numBytes() );
+		return cmp != 0 || a.numBytes() == b.numBytes() ? cmp : a.numBytes() < b.numBytes() ? -1 : 1;
+	}
 
-		// Optimize search when bytes-only
-		if( Beg.bytesOnly() )
+	int substring::diff_compare::operator()( const substring& a, const substring& b ) const noexcept
+	{
+		if( !a )
+			return b ? -1 : 0;
+		else if( !b )
+			return 1;
+		string_iterator a_i = a.Beg, b_i = b.Beg;
+		int pos = 1;
+		for( ; a_i != a.End && b_i != b.end(); ++a_i, ++b_i, ++pos )
 		{
-			// If the sub-string isn't bytes-only, we know it cannot exist
-			// within the source!
-			if( !to_find.begin().bytesOnly() )
-				return substring( End.getEnd() );
+			if( *a_i < *b_i )
+				return -pos;
+			else if( *b_i < *a_i )
+				return pos;
+		}
+		return a_i == a.End && b_i == b.End ? 0 : a_i != a.End ? pos : -pos;
+	}
 
-			auto found = _findFirst( Beg.Pos, numBytes(), to_find.begin().Pos, to_find.numBytes() );
-			if( found != nullptr )
+	int substring::icase_compare::operator()( const substring& a, const substring& b ) const noexcept
+	{
+		if( !a )
+			return b ? -1 : 0;
+		else if( !b )
+			return 1;
+		string_iterator a_i = a.Beg, b_i = b.Beg;
+		int pos = 1;
+		for( ; a_i != a.End && b_i != b.end(); ++a_i, ++b_i, ++pos )
+		{
+			if( *a_i != *b_i )
 			{
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + to_find.numBytes(), ( found + to_find.numBytes() ) - Beg.Source ) );
+				auto lw_a = Loc->toLower(
+					static_cast<wchar_t>( *a_i ) ), lw_b = Loc->toLower( static_cast<wchar_t>( *b_i ) );
+				if( lw_a != lw_b )
+					return lw_a < lw_b ? -pos : pos;
+			}
+		}
+		return a_i == a.End && b_i == b.End ? 0 : a_i != a.End ? pos : -pos;
+	}
+
+
+
+
+	substring substring::findFirstNumber( string_iterator* separator, const locale* custom_locale )
+	{
+		auto& chars = Characters::get();
+		const locale& loc = custom_locale != nullptr ? *custom_locale : locale::get();
+		substring number;
+		for( string_iterator i = begin(); i != end(); ++i )
+		{
+			if( !number.begin() )
+			{
+				if( chars.isNumber( *i ) )
+					number.begin() = i; number.end() = i + 1;
 			}
 			else
-				return substring( End.getEnd() );
-		}
-
-		// Do normal iterator search
-		for( auto i = begin(); i != end(); ++i )
-		{
-			auto i_beg = i;
-			auto j = to_find.begin();
-			for( ; j != to_find.end() && i != end() && *i == *j; ++j, ++i )
-				;
-			if( j == to_find.end() )
-				return substring( i_beg, i );
-		}
-		return substring( End.getEnd() );
-	}
-	substring substring::findFirst( char_t to_find ) const noexcept
-	{
-		if( empty() )
-			return substring( End.getEnd() );
-
-		// Optimize search when bytes-only
-		if( Beg.bytesOnly() )
-		{
-			// If the codepoint isn't UTF-8, then only accept search if 'this'
-			// also isn't UTF-8
-			if( to_find > 127 && Beg.ValidUTF8 )
-				return substring( End.getEnd() );
-
-			auto found = _findFirst( Beg.Pos, numBytes(), static_cast<char>( to_find ) );
-			if( found != nullptr )
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + 1, ( found + 1 ) - Beg.Source ) );
-			else
-				return substring( End.getEnd() );
-		}
-
-		// Do Beg normal iterator search
-		for( auto i = begin(); i != end(); ++i )
-		{
-			if( *i == to_find )
-				return substring( i, i + 1 );
-		}
-		return substring( End.getEnd() );
-	}
-
-	substring substring::findLast( const substring& to_find ) const noexcept
-	{
-		if( empty() || to_find.empty() )
-			return substring( End.getEnd() );
-
-		// Optimize search when bytes-only
-		if( Beg.bytesOnly() )
-		{
-			// If the sub-string isn't bytes-only, we know it cannot exist
-			// within the source!
-			if( !to_find.begin().bytesOnly() )
-				return substring( End.getEnd() );
-
-			auto found = _findLast( Beg.Pos, numBytes(), to_find.begin().Pos, to_find.numBytes() );
-			if( found != nullptr )
 			{
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + to_find.numBytes(), ( found + to_find.numBytes() ) - Beg.Source ) );
-			}
-			else
-				return substring( End.getEnd() );
-		}
-
-		// Do normal iterator search
-		for( auto i = begin(); i != end(); --i )
-		{
-			auto i_beg = i;
-			auto j = to_find.begin();
-			for( ; j != to_find.end() && i != end() && *i == *j; --j, --i )
-				;
-			if( j )
-				return substring( i_beg, i );
-		}
-		return substring( End.getEnd() );
-	}
-	substring substring::findLast( char_t to_find ) const noexcept
-	{
-		if( empty() )
-			return substring( End.getEnd() );
-
-		// Optimize search when bytes-only
-		if( Beg.bytesOnly() )
-		{
-			// If the codepoint isn't UTF-8, then only accept search if 'this'
-			// also isn't UTF-8
-			if( to_find > 127 && Beg.ValidUTF8 )
-				return substring( End.getEnd() );
-
-			auto found = _findLast( Beg.Pos, numBytes(), static_cast<char>( to_find ) );
-			if( found != nullptr )
-			{
-				if( found < Beg.SourceEnd )
-					return substring( string_iterator( Beg, found, found - Beg.Source ),
-						string_iterator( Beg, found + 1, ( found + 1 ) - Beg.Source ) );
+				if( chars.isNumber( *i ) )
+					++number.end();
+				else if( separator != nullptr && *i == loc.decimalSep() && !*separator )
+					*separator = i;
 				else
-					return substring( string_iterator( Beg, found,
-						found - Beg.Source ), End );
-			}
-			else
-				return substring( End.getEnd() );
-		}
-
-		// Do Beg normal iterator search
-		for( auto i = Beg; i != End; --i )
-		{
-			if( *i == to_find )
-				return substring( i, i + 1 );
-		}
-		return substring( End.getEnd() );
-	}
-
-	string_iterator substring::findFirstOf( const substring& characters ) const noexcept
-	{
-		for( auto i = begin(); i != end(); ++i )
-		{
-			if( characters.contains( *i ) )
-				return i;
-		}
-		return end().getEnd();
-	}
-	string_iterator substring::findLastOf( const substring& characters ) const noexcept
-	{
-		for( auto i = begin(); i != end(); --i )
-		{
-			if( characters.contains( *i ) )
-				return i;
-		}
-		return end().getEnd();
-	}
-
-	string_iterator substring::findFirstNotOf( const substring& characters ) const noexcept
-	{
-		for( auto i = begin(); i != end(); ++i )
-		{
-			if( !characters.contains( *i ) )
-				return i;
-		}
-		return end().getEnd();
-	}
-	string_iterator substring::findLastNotOf( const substring& characters ) const noexcept
-	{
-		for( auto i = begin(); i != end(); --i )
-		{
-			if( !characters.contains( *i ) )
-				return i;
-		}
-		return end().getEnd();
-	}
-
-	inline string_iterator substring::findFirstDiff( const substring& other ) const noexcept
-	{
-		auto i = begin(), j = other.begin();
-		for( ; i != end() && j != other.end(); ++i, ++j )
-		{
-			if( *i != *j )
-				return i;
-		}
-		if( i != end() )
-			return i;
-		else
-			return end().getEnd();
-	}
-
-	substring substring::findFirstIgnoreSections( const substring& other, char_t start_sect, char_t end_sect ) const noexcept
-	{
-		end_sect = end_sect == same_char ? start_sect : end_sect;
-		int sections = 0;
-		bool escaped = false;
-		for( auto i = begin(); i != end(); ++i )
-		{
-			if( escaped )
-				escaped = false;
-			else if( sections > 0 )
-			{
-				if( start_sect != end_sect )
-				{
-					// Nesting
-					if( *i == start_sect )
-						++sections;
-				}
-				else
-				{
-					// Check for backslash
-					if( *i == BackSlashChr )
-						escaped = true;
-				}
-				if( *i == end_sect )
-					--sections;
-			}
-			else
-			{
-				if( start_sect == end_sect && *i == BackSlashChr )
-					escaped = true;
-				else if( *i == start_sect )
-					++sections;
-				else
-				{
-					auto j = other.begin(), k = i;
-					for( ; j != other.end() && k != end() && *k == *j; ++j, ++k )
-						;
-					if( j == other.end() )
-						return substring( i, k );
-				}
+					break;
 			}
 		}
-		return substring( End.getEnd() );
-	}
-	substring substring::findFirstIgnoreSections( char_t cp, char_t start_sect, char_t end_sect ) const noexcept
-	{
-		end_sect = end_sect == same_char ? start_sect : end_sect;
-		int sections = 0;
-		bool escaped = false;
-		for( auto i = begin(); i != end(); ++i )
-		{
-			if( escaped )
-				escaped = false;
-			else if( sections > 0 )
-			{
-				if( start_sect != end_sect )
-				{
-					// Nesting
-					if( *i == start_sect )
-						++sections;
-				}
-				else
-				{
-					// Check for backslash
-					if( *i == BackSlashChr )
-						escaped = true;
-				}
-				if( *i == end_sect )
-					--sections;
-			}
-			else
-			{
-				if( start_sect == end_sect && *i == BackSlashChr )
-					escaped = true;
-				else if( *i == start_sect )
-					++sections;
-				else if( *i == cp )
-					return substring( i, i + 1 );
-			}
-		}
-		return substring( End.getEnd() );
+		return number;
 	}
 
-	string_iterator substring::findFirst( charcat category ) const noexcept
+	string_iterator substring::findFirstOf( charcat category ) const noexcept
 	{
 		auto& chars = Characters::get();
 		for( auto i = begin(); i != end(); ++i )
@@ -628,7 +645,8 @@ namespace eon
 		}
 		return end().getEnd();
 	}
-	string_iterator substring::findLast( charcat category ) const noexcept
+
+	string_iterator substring::findLastOf( charcat category ) const noexcept
 	{
 		auto& chars = Characters::get();
 		for( auto i = begin(); i != end(); --i )
@@ -638,6 +656,28 @@ namespace eon
 		}
 		return end().getEnd();
 	}
+	string_iterator substring::findFirstNotOf( charcat category ) const noexcept
+	{
+		auto& chars = Characters::get();
+		for( auto i = begin(); i != end(); ++i )
+		{
+			if( !chars.is( *i, category ) )
+				return i;
+		}
+		return end().getEnd();
+	}
+
+	string_iterator substring::findLastNotOf( charcat category ) const noexcept
+	{
+		auto& chars = Characters::get();
+		for( auto i = begin(); i != end(); --i )
+		{
+			if( !chars.is( *i, category ) )
+				return i;
+		}
+		return end().getEnd();
+	}
+
 
 	string_iterator substring::findFirstOtherThan( charcat category ) const noexcept
 	{
@@ -660,171 +700,37 @@ namespace eon
 		return end().getEnd();
 	}
 
-	substring substring::beforeFirst( const substring& delimiter ) const noexcept
-	{
-		auto found = findFirst( delimiter );
-		if( found )
-			return substring( begin(), found.begin() );
-		else
-			return substring( end() );
-	}
-	substring substring::beforeFirst( char_t delimiter ) const noexcept
-	{
-		auto found = findFirst( delimiter );
-		if( found )
-			return substring( begin(), found.begin() );
-		else
-			return substring( end() );
-	}
-	substring substring::beforeLast( const substring& delimiter ) const noexcept
-	{
-		auto found = highToLow().findLast( delimiter );
-		if( found )
-			return substring( begin(), found.begin() );
-		else
-			return substring( end() );
-	}
-	substring substring::beforeLast( char_t delimiter ) const noexcept
-	{
-		auto found = highToLow().findLast( delimiter );
-		if( found )
-			return substring( begin(), found.begin() );
-		else
-			return substring( end() );
-	}
-	substring substring::afterFirst( const substring& delimiter ) const noexcept
-	{
-		auto found = findFirst( delimiter );
-		if( found )
-			return substring( found.end(), end() );
-		else
-			return substring( end() );
-	}
-	substring substring::afterFirst( char_t delimiter ) const noexcept
-	{
-		auto found = findFirst( delimiter );
-		if( found )
-			return substring( found.end(), end() );
-		else
-			return substring( end() );
-	}
-	substring substring::afterLast( const substring& delimiter ) const noexcept
-	{
-		auto found = highToLow().findLast( delimiter );
-		if( found )
-			return substring( found.end(), end() );
-		else
-			return substring( end() );
-	}
-	substring substring::afterLast( char_t delimiter ) const noexcept
-	{
-		auto found = highToLow().findLast( delimiter );
-		if( found )
-			return substring( found.end(), end() );
-		else
-			return substring( end() );
-	}
 
 
 
-
-	index_t substring::count( char_t to_count ) const noexcept
+	void substring::_bypassSection( char_t start_sect, char_t end_sect, string_iterator& i ) const
 	{
-		index_t cnt = 0;
-		for( auto i = begin(); i != end(); ++i )
+		int sections = 1;
+		bool escaped = false;
+		for( ++i; i != end(); ++i )
 		{
-			if( *i == to_count )
-				++cnt;
-		}
-		return cnt;
-	}
-	index_t substring::count( const substring& to_count ) const noexcept
-	{
-		if( numBytes() > 0 && numBytes() < to_count.numChars() )
-			return 0;
-
-		index_t cnt = 0;
-		auto found = findFirst( to_count );
-		while( found )
-		{
-			++cnt;
-			found = substring( found.begin() + 1, end() ).findFirst(
-				to_count );
-		}
-		return cnt;
-	}
-
-
-
-	int substring::compare( const substring& other, CompareType type ) const noexcept
-	{
-		if( !*this )
-			return other ? -1 : 0;
-		else if( !other )
-			return 1;
-
-		if( type == CompareType::faster )
-		{
-			auto cmp = memcmp( Beg.Pos, other.Beg.Pos, numBytes() < other.numBytes() ? numBytes() : other.numBytes() );
-			return cmp != 0 || numBytes() == other.numBytes() ? cmp : numBytes() < other.numBytes() ? -1 : 1;
-		}
-		else
-		{
-			auto i = Beg, other_i = other.Beg;
-			int pos = 1;
-			for( ; i != End && other_i != other.end(); ++i, ++other_i, ++pos )
+			if( escaped )
+				escaped = false;
+			else
 			{
-				if( *i < *other_i )
-					return -pos;
-				else if( *other_i < *i )
-					return pos;
-			}
-			return i == End && other_i == other.End ? 0 : i != End ? pos : -pos;
-		}
-	}
-
-	int substring::compare( const substring& other, index_t num_chars ) const noexcept
-	{
-		if( !*this )
-			return other ? -1 : 0;
-		else if( !other )
-			return 1;
-
-		auto i = Beg, other_i = other.Beg;
-		int pos = 1;
-		for( ; i != End && other_i != other.end() && pos <= num_chars; ++i, ++other_i, ++pos )
-		{
-			if( *i < *other_i )
-				return -pos;
-			else if( *other_i < *i )
-				return pos;
-		}
-		return pos - 1 == num_chars ? 0 : i != End ? pos : -pos;
-	}
-
-	int substring::iCompare( const substring& other ) const noexcept
-	{
-		auto i = Beg, other_i = other.Beg;
-		int pos = 1;
-		for( ; i != End && other_i != other.End; ++i, ++other_i, ++pos )
-		{
-			if( *i != *other_i )
-			{
-				// We only convert case when actually different
-				auto i_lower = std::tolower( *i );
-				auto other_lower = std::tolower( *other_i );
-				if( i_lower < other_lower )
-					return -pos;
-				else if( i_lower > other_lower )
-					return pos;
+				if( start_sect != end_sect )
+				{
+					if( *i == start_sect )
+						++sections;
+				}
+				else
+				{
+					if( *i == BackSlashChr )
+						escaped = true;
+				}
+				if( *i == end_sect )
+				{
+					if( --sections == 0 )
+						break;
+				}
 			}
 		}
-		return i == End && other_i == other.End ? 0 : i == End ? -pos : pos;
 	}
-
-
-
-
 
 	const char* substring::_findFirst( const char* source, index_t source_size,
 		const char* substr, index_t substr_size ) const noexcept
@@ -850,11 +756,12 @@ namespace eon
 		}
 		return nullptr;
 	}
-	const char* substring::_findLast( const char* source, index_t source_size, const char* substr, index_t substr_size )
-		const noexcept
+	const char* substring::_findLast(
+		const char* source, index_t source_size, const char* substr, index_t substr_size ) const noexcept
 	{
-		const char* last = source + source_size - substr_size;
-		for( auto c = last; ; --c )
+		const char* rbeg = source - substr_size + 1;
+		const char* rend = source - source_size;
+		for( auto c = rbeg; c != rend; --c )
 		{
 			if( *c != *substr )
 				continue;

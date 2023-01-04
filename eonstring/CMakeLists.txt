@@ -3,6 +3,7 @@ project(EonString LANGUAGES CXX)
 message(STATUS " - EonString")
 
 set(STRING_HEADERS
+	Locale.h
 	String.h
 	StringIterator.h
 	Substring.h
@@ -19,7 +20,15 @@ set(STRING_HEADERS
 	StringifierDefs.h
 )
 set(STRING_SOURCES
+	Locale.cpp
 	String.cpp
+	StringAsNumber.cpp
+	StringAssign.cpp
+	StringConstruct.cpp
+	StringCopyTransform.cpp
+	StringIteration.cpp
+	StringModifying.cpp
+	StringStatic.cpp
 	StringIterator.cpp
 	Substring.cpp
 	UniChar.cpp

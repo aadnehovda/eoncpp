@@ -2,7 +2,6 @@
 
 #include <eonexcept/Exception.h>
 #include <eonstring/String.h>
-#include <eoninlinetest/InlineTest.h>
 #include <filesystem>
 
 
@@ -35,7 +34,7 @@ namespace eon
 	//
 	// Eon will consider any path/name ending with a slash as a directory, and
 	// any path/name not ending with slash as a file.
-	// 
+	//
 	// NOTE: Path objects can refer to non-existing directories and files!
 	//
 	// Paths consists of the following elements:
@@ -308,7 +307,7 @@ namespace eon
 		inline bool operator!=( const path& other ) const noexcept { return Full != other.Full; }
 
 
-		
+
 
 		///////////////////////////////////////////////////////////////////
 		//
