@@ -1,4 +1,4 @@
-ï»¿#include "String.h"
+#include "String.h"
 #include <eoninlinetest/InlineTest.h>
 #include <cctype>
 #include <regex>
@@ -86,14 +86,14 @@ namespace eon
 	EON_TEST( string, string, wstring_ascii,
 		EON_EQ( "aB1", string( std::wstring( L"aB1" ) ) ) );
 	EON_TEST( string, string, wstring_unicode,
-		EON_EQ( u8"â‚¬Ã˜Ã¡", string( std::wstring( L"â‚¬Ã˜Ã¡" ) ) ) );
+		EON_EQ( u8"€Øá", string( std::wstring( L"€Øá" ) ) ) );
 
 	EON_TEST( string, string, wchar_empty,
 		EON_EQ( string(), string( L"" ) ) );
 	EON_TEST( string, string, wchar_ascii,
 		EON_EQ( "aB1", string( L"aB1" ) ) );
 	EON_TEST( string, string, wchar_unicode,
-		EON_EQ( u8"â‚¬Ã˜Ã¡", string( L"â‚¬Ã˜Ã¡" ) ) );
+		EON_EQ( u8"€Øá", string( L"€Øá" ) ) );
 
 	string& string::operator=( const std::wstring& stdwstr )
 	{
@@ -105,7 +105,7 @@ namespace eon
 	EON_TEST( string, operator_asgn, wstring_ascii,
 		EON_EQ( "aB1", string() = std::wstring( L"aB1" ) ) );
 	EON_TEST( string, operator_asgn, wstring_unicode,
-		EON_EQ( u8"â‚¬Ã˜Ã¡", string() = std::wstring( L"â‚¬Ã˜Ã¡" ) ) );
+		EON_EQ( u8"€Øá", string() = std::wstring( L"€Øá" ) ) );
 
 	string& string::operator=( const wchar_t* cstr )
 	{
@@ -117,14 +117,14 @@ namespace eon
 	EON_TEST( string, operator_asgn, wchar_ascii,
 		EON_EQ( "aB1", string() = L"aB1" ) );
 	EON_TEST( string, operator_asgn, wchar_unicode,
-		EON_EQ( u8"â‚¬Ã˜Ã¡", string() = L"â‚¬Ã˜Ã¡" ) );
+		EON_EQ( u8"€Øá", string() = L"€Øá" ) );
 
 	EON_TEST( string, operator_wstring, empty,
 		EON_EQ( L"", static_cast<std::wstring>( string() ) ) );
 	EON_TEST( string, operator_wstring, ascii,
 		EON_EQ( L"aB1", static_cast<std::wstring>( string( "aB1" ) ) ) );
 	EON_TEST( string, operator_wstring, unicode,
-		EON_EQ( L"â‚¬Ã˜Ã¡", static_cast<std::wstring>( string( u8"â‚¬Ã˜Ã¡" ) ) ) );
+		EON_EQ( L"€Øá", static_cast<std::wstring>( string( u8"€Øá" ) ) ) );
 
 	std::wstring string::stdwstr() const
 	{
@@ -136,7 +136,7 @@ namespace eon
 	EON_TEST( string, stdwstr, ascii,
 		EON_EQ( L"aB1", string( "aB1" ).stdwstr() ) );
 	EON_TEST( string, stdwstr, unicode,
-		EON_EQ( L"â‚¬Ã˜Ã¡", string( u8"â‚¬Ã˜Ã¡" ).stdwstr() ) );
+		EON_EQ( L"€Øá", string( u8"€Øá" ).stdwstr() ) );
 
 	EON_TEST( string, operator_plsasgn, wstring_empty_empty,
 		EON_EQ( string(), string( ) += std::wstring() ) );
@@ -145,7 +145,7 @@ namespace eon
 	EON_TEST( string, operator_plsasgn, wstring_ascii,
 		EON_EQ( "abcdef", string( "abc" ) += std::wstring( L"def" ) ) );
 	EON_TEST( string, operator_plsasgn, wstring_unicode,
-		EON_EQ( u8"abcâ‚¬Ã˜Ã¡", string( "abc" ) += std::wstring( L"â‚¬Ã˜Ã¡" ) ) );
+		EON_EQ( u8"abc€Øá", string( "abc" ) += std::wstring( L"€Øá" ) ) );
 
 
 

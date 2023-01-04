@@ -279,7 +279,7 @@ namespace eon
 	bool Expression::_parseIntLiteral( ParseData& data )
 	{
 		// If the size of the literal value exceeds that which int can hold, we make it a long!
-		const long_t value = data.parser().current().str().toLong();
+		const long_t value = data.parser().current().str().toLongT();
 		if( value < EON_INT_MIN || value > EON_INT_MAX )
 		{
 			data.operands().push(
@@ -306,7 +306,7 @@ namespace eon
 	bool Expression::_parseFloatLiteral( ParseData& data )
 	{
 		// If the size of the literal value exceeds that which float can hold, we make it a high!
-		const high_t value = data.parser().current().str().toHigh();
+		const high_t value = data.parser().current().str().toHighT();
 		if( value < EON_FLOAT_MIN || value > EON_FLOAT_MAX )
 		{
 			data.operands().push(
@@ -606,7 +606,7 @@ namespace eon
 			_directAssignNotSupportedError( data, type );
 		else if( action_signatures.size() > 1 )	// This should not be possible ...
 			_directAssignMultipleOptionsError( data, name, type, args, action_signatures );
-		
+
 		return TypeTuple();
 	}
 

@@ -174,25 +174,25 @@ namespace eon
 		inline explicit string( bool value ) { *this = value; }
 
 
-		// Construct as string representation of the input int_t.
+		// Construct as string representation of the input [eon::int_t].
 		inline explicit string( int_t input ) { *this = toString( input ); }
 
-		// Construct as string representation of the input short_t.
+		// Construct as string representation of the input [eon::short_t].
 		inline explicit string( short_t value ) { *this = toString( value ); }
 
-		// Construct as string representation of the input long_t.
+		// Construct as string representation of the input [eon::long_t].
 		inline explicit string( long_t value ) { *this = toString( value ); }
 
-		// Construct as string representation of the input index_t.
+		// Construct as string representation of the input [eon::index_t].
 		inline explicit string( index_t value ) { *this = toString( value ); }
 
-		// Construct as string representation of the input flt_t.
+		// Construct as string representation of the input [eon::flt_t].
 		inline explicit string( flt_t value ) { *this = toString( value ).trimFloat(); }
 
-		// Construct as string representation of the input low_t.
+		// Construct as string representation of the input [eon::low_t].
 		inline explicit string( low_t value ) { *this = toString( value ).trimFloat(); }
 
-		// Construct as string representation of the input high_t.
+		// Construct as string representation of the input [eon::high_t].
 		inline explicit string( high_t value ) { *this = toString( value ).trimFloat(); }
 
 #ifdef EON_WINDOWS
@@ -1692,6 +1692,8 @@ namespace eon
 		inline high_t toHighT() const { return substr().toHighT(); }
 
 		// Convert String to index_t.
+
+		// Convert String to [eon::index_t].
 		inline index_t toIndex() const { return substr().toIndex(); }
 
 
@@ -1704,12 +1706,16 @@ namespace eon
 			area.assertSameSource( Bytes.c_str() ); return area.toInt32(); }
 
 		// Convert String to number.
+
+		// Convert String to number.
 		inline int64_t toInt64() const { return substr().toInt64(); }
 
 		// Convert String to number.
 		// Throws [eon::WrongSource] if 'area' is not a substring of 'this'!
 		inline int64_t toInt64( const substring& area ) const {
 			area.assertSameSource( Bytes.c_str() ); return area.toInt64(); }
+
+		// Convert String to number.
 
 		// Convert String to number.
 		inline uint32_t toUInt32() const { return substr().toUInt32(); }
@@ -1720,12 +1726,16 @@ namespace eon
 			area.assertSameSource( Bytes.c_str() ); return area.toUInt32(); }
 
 		// Convert String to number.
+
+		// Convert String to number.
 		inline uint64_t toUInt64() const { return substr().toUInt64(); }
 
 		// Convert String to number.
 		// Throws [eon::WrongSource] if 'area' is not a substring of 'this'!
 		inline uint64_t toUInt64( const substring& area ) const {
 			area.assertSameSource( Bytes.c_str() ); return area.toUInt64(); }
+
+		// Convert String to number.
 
 		// Convert String to number.
 		inline size_t toSize() const { return substr().toSize(); }
@@ -1736,12 +1746,16 @@ namespace eon
 			area.assertSameSource( Bytes.c_str() ); return area.toSize(); }
 
 		// Convert String to number.
+
+		// Convert String to number.
 		inline double toDouble() const { return substr().toDouble(); }
 
 		// Convert String to number.
 		// Throws [eon::WrongSource] if 'area' is not a substring of 'this'!
 		inline double toDouble( const substring& area ) const {
 			area.assertSameSource( Bytes.c_str() ); return area.toDouble(); }
+
+		// Convert String to number.
 
 		// Convert String to number.
 		inline long double toLongDouble() const { return substr().toLongDouble(); }
