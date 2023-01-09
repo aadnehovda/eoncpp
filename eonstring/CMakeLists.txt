@@ -18,6 +18,7 @@ set(STRING_HEADERS
 	ByteSerializer.h
 	Stringifier.h
 	StringifierDefs.h
+	GlobPattern.h
 )
 set(STRING_SOURCES
 	Locale.cpp
@@ -31,6 +32,10 @@ set(STRING_SOURCES
 	StringStatic.cpp
 	StringIterator.cpp
 	Substring.cpp
+	SubstringReadOnly.cpp
+	SubstringAsNumber.cpp
+	SubstringComparing.cpp
+	SubstringSearching.cpp
 	UniChar.cpp
 	Name.cpp
 	NameData.cpp
@@ -39,6 +44,7 @@ set(STRING_SOURCES
 	Hex.cpp
 	Serializer.cpp
 	Stringifier.cpp
+	GlobPattern.cpp
 )
 
 if(WIN32)

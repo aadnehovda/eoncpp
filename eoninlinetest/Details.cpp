@@ -76,13 +76,14 @@ namespace eonitest
 		if( text.isDoubleQuoted() )
 		{
 			*this << LogItem( "\"", eon::style::weak );
-			*this << LogItem( text.slice( 1, -2 ), value_style );
+			if( text.numChars() > 2 )
+				*this << LogItem( text.slice( 1, -2 ), value_style );
 			*this << LogItem( "\"", eon::style::weak );
 		}
 		else if( text.startsWith( "@type=" ) )
 		{
 			*this << LogItem( "type=" + text.substr( text.begin() + 6 ) + ": ", eon::style::weak );
-			*this << LogItem( "<unknown value>", value_style );
+			*this << LogItem( "<cannot translate into text>", value_style );
 		}
 		else if( text.startsWith( "@char=" ) )
 		{

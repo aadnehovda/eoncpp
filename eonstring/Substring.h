@@ -180,8 +180,16 @@ namespace eon
 		inline container characters() const
 		{
 			auto output = container();
-			for( auto chr : *this )
-				output.push_back( chr );
+			if( isLowToHigh() )
+			{
+				for( auto chr : *this )
+					output.push_back( chr );
+			}
+			else
+			{
+				for( auto chr = begin(); chr != end(); --chr )
+					output.push_back( *chr );
+			}
 			return output;
 		}
 
@@ -191,17 +199,17 @@ namespace eon
 
 		// Get a substring narrowed in front and end, bypassing all characters
 		// in the 'Separator, Space' and 'Other, Control' categories.
-		// NOTE: Substring must be 'low-to-high'!
+		// NOTE: Ordering is ignored (always performed in 'low-to-high')!
 		substring trim() const;
 
 		// Get a substring narrowed in front, bypassing all characters in the
 		// 'Separator, Space' and 'Other, Control' categories.
-		// NOTE: Substring must be 'low-to-high'!
+		// NOTE: Ordering is ignored (always performed in 'low-to-high')!
 		substring trimLeading() const;
 
 		// Get a substring narrowed at end, bypassing all characters in the
 		// 'Separator, Space' and 'Other, Control' categories.
-		// NOTE: Substring must be 'low-to-high'!
+		// NOTE: Ordering is ignored (always performed in 'low-to-high')!
 		substring trimTrailing() const;
 
 
@@ -387,7 +395,7 @@ namespace eon
 		//
 	public:
 
-		// Split substring on every occurrence of 'delimiter' into a
+		// Split substring on every occurrence of 'delimiter' substring into a
 		// 'sequential container' (typically list<substring> or
 		// vector<substring>) - requires the 'push_back' method!
 		// If a max number of elements is specified, the last element will
@@ -395,70 +403,97 @@ namespace eon
 		template<typename container_t>
 		container_t splitSequential( const substring& delimiter, index_t max_elements = INDEX_MAX ) const
 		{
-			container_t elms;
-			auto start = begin();
+			auto elms = container_t();
+			string_iterator start = begin();
+			bool got_trailing_element = false;
 			for( auto found = findFirst( delimiter );
 				found || elms.size() == max_elements - 1;
 				found = substring( start, end() ).findFirst( delimiter ) )
 			{
 				elms.push_back( substring( start, found.begin() ) );
 				start = found.end();
+				got_trailing_element = true;
 			}
 			if( start )
 				elms.push_back( substring( start, end() ) );
-			return elms;
-		}
-		template<typename container_t>
-		container_t splitSequential( char_t delimiter, index_t max_elements = INDEX_MAX ) const
-		{
-			container_t elms;
-			auto start = begin();
-			for( auto found = findFirst( delimiter );
-				found || elms.size() == max_elements - 1;
-				found = substring( start, end() ).findFirst( delimiter ) )
-			{
-				elms.push_back( substring( start, found.begin() ) );
-				start = found.end();
-			}
-			if( start )
-				elms.push_back( substring( start, end() ) );
+			else if( got_trailing_element )
+				elms.push_back( substring( end(), end() ) );
 			return elms;
 		}
 
-		// Split substring on every occurrence of 'delimiter' into a
+		// Split substring on every occurrence of 'delimiter' character into a
+		// 'sequential container' (typically list<substring> or
+		// vector<substring>) - requires the 'push_back' method!
+		// If a max number of elements is specified, the last element will
+		// reference the unsplit remainder.
+		template<typename container_t>
+		container_t splitSequential( char_t delimiter, index_t max_elements = INDEX_MAX ) const
+		{
+			auto elms = container_t();
+			string_iterator start = begin();
+			bool got_trailing_element = false;
+			for( auto found = findFirst( delimiter );
+				found || elms.size() == max_elements - 1;
+				found = substring( start, end() ).findFirst( delimiter ) )
+			{
+				elms.push_back( substring( start, found.begin() ) );
+				start = found.end();
+				got_trailing_element = true;
+			}
+			if( start )
+				elms.push_back( substring( start, end() ) );
+			else if( got_trailing_element )
+				elms.push_back( substring( end(), end() ) );
+			return elms;
+		}
+
+		// Split substring on every occurrence of 'delimiter' substring into a
 		// 'non-sequential container' (typically set<substring>,
 		// multiset<substring>, unordered_set<substring>, or
 		// unordered_multiset<substring>) - requires the insert method!
 		template<typename container_t>
-		container_t splitNonsequential( const substring& delimiter ) const
+		container_t splitNonSequential( const substring& delimiter ) const
 		{
-			container_t elms;
-			auto start = begin();
+			auto elms = container_t();
+			string_iterator start = begin();
+			bool got_trailing_element = false;
 			for( auto found = findFirst( delimiter );
 				found;
 				found = substring( start, end() ).findFirst( delimiter ) )
 			{
 				elms.insert( substring( start, found.begin() ) );
 				start = found.begin() + delimiter.numChars();
+				got_trailing_element = true;
 			}
 			if( start )
 				elms.insert( substring( start, end() ) );
+			else if( got_trailing_element )
+				elms.insert( substring( end(), end() ) );
 			return elms;
 		}
+
+		// Split substring on every occurrence of 'delimiter' character into a
+		// 'non-sequential container' (typically set<substring>,
+		// multiset<substring>, unordered_set<substring>, or
+		// unordered_multiset<substring>) - requires the insert method!
 		template<typename container_t>
 		container_t splitNonSequential( char_t delimiter ) const
 		{
-			container_t elms;
-			auto start = begin();
+			auto elms = container_t();
+			string_iterator start = begin();
+			bool got_trailing_element = false;
 			for( auto found = findFirst( delimiter );
 				found;
 				found = substring( start, end() ).findFirst( delimiter ) )
 			{
 				elms.insert( substring( start, found.begin() ) );
 				start = found.begin() + 1;
+				got_trailing_element = true;
 			}
 			if( start )
 				elms.insert( substring( start, end() ) );
+			else if( got_trailing_element )
+				elms.insert( substring( end(), end() ) );
 			return elms;
 		}
 
@@ -546,16 +581,19 @@ namespace eon
 
 
 		// Check if substring starts with a specific substring 'value'.
+		// If the 'value' is empty, the return value will always be 'false'!
 		// Comparison is done using a binary substring predicate.
 		template<typename compare_T = fast_compare>
 		inline bool startsWith( const substring& value, const compare_T& cmp = FastCompare ) const noexcept
 		{
-			if( value.numChars() == numChars() )
-				return cmp( *this, value ) == 0;
-			else if( value.numChars() < numChars() )
-				return cmp( substring( begin(), begin() + value.numChars() ), value ) == 0;
-			else
-				return false;
+			if( !value.empty() )
+			{
+				if( value.numChars() == numChars() )
+					return cmp( *this, value ) == 0;
+				else if( value.numChars() < numChars() )
+					return cmp( substring( begin(), begin() + value.numChars() ), value ) == 0;
+			}
+			return false;
 		}
 
 		// Check if substring starts with a specific character.
@@ -565,16 +603,19 @@ namespace eon
 			return cmp( *begin(), value ) == 0; }
 
 		// Check if substring ends with a specific substring.
+		// If the 'value' is empty, the return value will always be 'false'!
 		// Comparison is done using a binary substring predicate.
 		template<typename compare_T = fast_compare>
 		inline bool endsWith( const substring& value, const compare_T& cmp = FastCompare ) const noexcept
 		{
-			if( value.numChars() == numChars() )
-				return cmp( *this, value ) == 0;
-			else if( value.numChars() < numChars() )
-				return cmp( substring( end() - value.numChars(), end() ), value ) == 0;
-			else
-				return false;
+			if( !value.empty() )
+			{
+				if( value.numChars() == numChars() )
+					return cmp( *this, value ) == 0;
+				else if( value.numChars() < numChars() )
+					return cmp( substring( end() - value.numChars(), end() ), value ) == 0;
+			}
+			return false;
 		}
 
 		// Check if substring ends with a specific character.
@@ -582,6 +623,7 @@ namespace eon
 		template<typename compare_T = fast_chr_compare>
 		inline bool endsWith( char_t value, const compare_T& cmp = FastChrCompare ) const noexcept {
 			return cmp( *last(), value ) == 0; }
+
 
 		// Do normal comparison.
 		// Assumes both 'this' and 'other' are 'low-to-high'!
@@ -607,6 +649,70 @@ namespace eon
 
 		// Check if 'this' substring sorts before or after 'other' using [eon::substring::FastCompare].
 		inline bool operator!=( const substring& other ) const noexcept { return compare( other, FastCompare ) != 0; }
+
+
+		// Check if 'this' substring sorts before std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator<( const std::string& other ) const noexcept { return compare( substring( other ) ) < 0; }
+
+		// Check if 'this' substring sorts before or same as std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator<=( const std::string& other ) const noexcept { return compare( substring( other ) ) <= 0; }
+
+		// Check if 'this' substring sorts after std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator>( const std::string& other ) const noexcept { return compare( substring( other ) ) > 0; }
+
+		// Check if 'this' substring sorts after or same as std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator>=( const std::string& other ) const noexcept { return compare( substring( other ) ) >= 0; }
+
+		// Check if 'this' substring sorts same as std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator==( const std::string& other ) const noexcept { return compare( substring( other ) ) == 0; }
+
+		// Check if 'this' substring sorts before or after std::string 'other' using [eon::substring::FastCompare].
+		inline bool operator!=( const std::string& other ) const noexcept { return compare( substring( other ) ) != 0; }
+
+		inline friend bool operator<( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) > 0; }
+		inline friend bool operator<=( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) >= 0; }
+		inline friend bool operator>( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) < 0; }
+		inline friend bool operator>=( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) <= 0; }
+		inline friend bool operator==( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) == 0; }
+		inline friend bool operator!=( const std::string& a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) != 0; }
+
+
+		// Check if 'this' substring sorts before C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator<( const char* other ) const noexcept { return compare( substring( other ) ) < 0; }
+
+		// Check if 'this' substring sorts before or same as C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator<=( const char* other ) const noexcept { return compare( substring( other ) ) <= 0; }
+
+		// Check if 'this' substring sorts after C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator>( const char* other ) const noexcept { return compare( substring( other ) ) > 0; }
+
+		// Check if 'this' substring sorts after or same as C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator>=( const char* other ) const noexcept { return compare( substring( other ) ) >= 0; }
+
+		// Check if 'this' substring sorts same as C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator==( const char* other ) const noexcept { return compare( substring( other ) ) == 0; }
+
+		// Check if 'this' substring sorts before or after C-string 'other' using [eon::substring::FastCompare].
+		inline bool operator!=( const char* other ) const noexcept { return compare( substring( other ) ) != 0; }
+
+		inline friend bool operator<( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) > 0; }
+		inline friend bool operator<=( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) >= 0; }
+		inline friend bool operator>( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) < 0; }
+		inline friend bool operator>=( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) <= 0; }
+		inline friend bool operator==( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) == 0; }
+		inline friend bool operator!=( const char* a, const substring& b ) noexcept {
+			return b.compare( substring( a ) ) != 0; }
 
 
 		// Do partial comparison from start of substrings.
@@ -649,10 +755,10 @@ namespace eon
 	public:
 
 		// Check if substring contains the specified substring.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = fast_compare>
-		inline bool contains( const substring& sub, const compare_T& cmp = FastCompare ) const noexcept {
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = fast_chr_compare>
+		inline bool contains( const substring& sub, const compare_T& cmp = FastChrCompare ) const noexcept {
 			return static_cast<bool>( findFirst( sub, cmp ) ); }
 
 		// Check if substring contains the specified codepoint.
@@ -669,17 +775,18 @@ namespace eon
 		inline bool containsAnyOf( const substring& sub, const compare_T& cmp = FastChrCompare ) const noexcept {
 			return static_cast<bool>( findFirstOf( sub, cmp ) ); }
 
-		// Check if substring contains any characters other than the ones in the specified substring.
+		// Check if substring contains none of the 'characters' in the specified substring.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// NOTE: If 'chararcters' is empty the return value will always be 'true'!
 		template<typename compare_T = fast_chr_compare>
-		inline bool containsOtherThan( const substring& sub, const compare_T& cmp = FastChrCompare ) const noexcept {
-			return static_cast<bool>( findFirstNotOf( sub, cmp ) ); }
+		inline bool containsNoneOf( const substring& chararcters, const compare_T& cmp = FastChrCompare ) const noexcept {
+			return !static_cast<bool>( findFirstOf( chararcters, cmp ) ); }
 
 
 		// Find first occurrence of 'to_find' substring in 'this'.
-		// Both substrings must be 'low-to-high'! (No checking is done!)
-		// Returns the found substring within 'this' - ''false' substring if not found.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
+		// Returns the found substring ('low-to-high' ordering) within 'this' - ''false' substring if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
@@ -687,6 +794,10 @@ namespace eon
 		{
 			if( empty() || to_find.empty() )
 				return substring( End.getEnd() );
+			else if( isHighToLow() )
+				return lowToHigh().findFirst( to_find.isHighToLow() ? to_find.lowToHigh() : to_find, cmp );
+			else if( to_find.isHighToLow() )
+				return findFirst( to_find.lowToHigh(), cmp );
 			if( Beg.bytesOnly() && (void*)&cmp == (void*)&FastChrCompare )
 				return _optimizedFindFirst( to_find );
 			for( string_iterator i = begin(); i != end(); ++i )
@@ -701,7 +812,7 @@ namespace eon
 		}
 
 		// Find first occurrence of 'to_find' codepoint in 'this'.
-		// The substring must be 'low-to-high'! (No checking is done!)
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Returns the found codepoint as a substring - 'false' substring if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
@@ -710,6 +821,8 @@ namespace eon
 		{
 			if( empty() )
 				return substring( End.getEnd() );
+			else if( isHighToLow() )
+				return lowToHigh().findFirst( to_find, cmp );
 			if( Beg.bytesOnly() && &cmp == &FastChrCompare )
 				return _optimizedFindFirst( to_find );
 			for( string_iterator i = begin(); i != end(); ++i )
@@ -722,6 +835,7 @@ namespace eon
 
 
 		// Find the first number within the substring.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Will use 'custom_locale' if specified and the default Eon locale if not!
 		// Returns a substring wrapping only the found number, 'false' if not found.
 		// If the 'separator' iterator argument is specified, it will contain
@@ -731,8 +845,8 @@ namespace eon
 
 
 		// Find last occurrence of 'to_find' substring in 'this'.
-		// Both substrings must be 'high-to-low'! (No checking is done!)
-		// Returns the found substring - 'false' substring if not found.
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
+		// Returns the found substring ('low-to-high' ordering) - 'false' substring if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
@@ -740,22 +854,26 @@ namespace eon
 		{
 			if( empty() || to_find.empty() )
 				return substring( End.getEnd() );
+			else if( isLowToHigh() )
+				return highToLow().findLast( to_find.isLowToHigh() ? to_find.highToLow() : to_find, cmp );
+			else if( to_find.isLowToHigh() )
+				return findLast( to_find.highToLow(), cmp );
 			if( Beg.bytesOnly() && (void*)&cmp == (void*)&FastChrCompare )
 				return _optimizedFindLast( to_find );
-			for( string_iterator i = begin(); i != end(); --i )
+			for( string_iterator pos = begin(); pos != end(); --pos )
 			{
-				string_iterator i_beg = i, j = to_find.begin();
+				string_iterator i = pos, j = to_find.begin();
 				for( ; j != to_find.end() && i != end() && cmp( *i, *j ) == 0; --j, --i )
 					;
-				if( j )
-					return substring( i_beg, i );
+				if( j.atREnd() )
+					return substring( pos, i ).lowToHigh();
 			}
 			return substring( End.getEnd() );
 		}
 
 		// Find last occurrence of 'to_find' codepoint in 'this'.
-		// The substring must be 'high-to-low'! (No checking is done!)
-		// Returns the found codepoint as a substring - 'false' substring if not found.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
+		// Returns the found codepoint as a substring ('low-to-high' ordering) - 'false' substring if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
@@ -763,6 +881,8 @@ namespace eon
 		{
 			if( empty() )
 				return substring( End.getEnd() );
+			else if( isLowToHigh() )
+				return highToLow().findLast( to_find, cmp );
 			if( Beg.bytesOnly() && (void*)&cmp == (void*)&FastChrCompare )
 				return _optimizedFindLast( to_find );
 			for( string_iterator i = Beg; i != End; --i )
@@ -775,92 +895,116 @@ namespace eon
 
 
 		// Find first occurrence of any of the specified 'characters'.
-		// NOTE: 'this' substring must be 'low-to-high' ordered! (No checking is done!)
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		string_iterator findFirstOf( const substring& characters, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
+			if( empty() || characters.empty() )
+				return string_iterator( End.getEnd() );
+			else if( isHighToLow() )
+				return lowToHigh().findFirstOf( characters.isHighToLow() ? characters.lowToHigh() : characters, cmp );
+			else if( characters.isHighToLow() )
+				return findFirstOf( characters.lowToHigh(), cmp );
 			for( string_iterator i = begin(); i != end(); ++i )
 			{
 				if( characters.contains( *i, cmp ) )
 					return i;
 			}
-			return end().getEnd();
+			return End.getEnd();
 		}
 
 		// Find first occurrence of any character in the specified character class(es).
-		// NOTE: 'this' substring must be 'low-to-high' ordered! (No checking is done!)
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: Multiple classes can be or'ed together!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		string_iterator findFirstOf( charcat category ) const noexcept;
 
 
 		// Find last occurrence of any of the specified 'characters'.
-		// NOTE: 'this' substring must be 'high-to-low' ordered! (No checking is done!)
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		string_iterator findLastOf( const substring& characters, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			for( auto i = begin(); i != end(); --i )
+			if( empty() || characters.empty() )
+				return End.getEnd();
+			else if( isLowToHigh() )
+				return highToLow().findLastOf( characters.isHighToLow() ? characters.lowToHigh() : characters, cmp );
+			else if( characters.isHighToLow() )
+				return findLastOf( characters.lowToHigh(), cmp );
+			for( string_iterator i = begin(); i != end(); --i )
 			{
 				if( characters.contains( *i, cmp ) )
 					return i;
 			}
-			return end().getEnd();
+			return End.getEnd();
 		}
 
 		// Find last occurrence of any character in the specified character class(es).
-		// NOTE: 'this' substring must be 'high-to-low' ordered! (No checking is done!)
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// NOTE: Multiple classes can be or'ed together!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		string_iterator findLastOf( charcat category ) const noexcept;
 
 
 		// Find first occurrence of any character not among the specified 'characters'.
-		// NOTE: 'this' substring must be 'low-to-high' ordered! (No checking is done!)
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		string_iterator findFirstNotOf( const substring& characters, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			for( auto i = begin(); i != end(); ++i )
+			if( empty() || characters.empty() )
+				return End.getEnd();
+			else if( isHighToLow() )
+				return lowToHigh().findFirstNotOf( characters.isHighToLow() ? characters.lowToHigh() : characters, cmp );
+			else if( characters.isHighToLow() )
+				return findFirstNotOf( characters.lowToHigh(), cmp );
+			for( string_iterator i = begin(); i != end(); ++i )
 			{
 				if( !characters.contains( *i, cmp ) )
 					return i;
 			}
-			return end().getEnd();
+			return End.getEnd();
 		}
 
 		// Find first occurrence of any character not in the specified character class(es).
-		// NOTE: 'this' substring must be 'low-to-high' ordered! (No checking is done!)
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: Multiple classes can be or'ed together!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		string_iterator findFirstNotOf( charcat category ) const noexcept;
 
 
 		// Find last occurrence of any character not among the specified 'characters'.
-		// NOTE: 'this' substring must be 'high-to-low' ordered! (No checking is done!)
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		string_iterator findLastNotOf( const substring& characters, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			for( auto i = begin(); i != end(); --i )
+			if( empty() || characters.empty() )
+				return End.getEnd();
+			else if( isLowToHigh() )
+				return highToLow().findLastNotOf( characters.isLowToHigh() ? characters.highToLow() : characters, cmp );
+			else if( characters.isLowToHigh() )
+				return findLastNotOf( characters.highToLow(), cmp );
+			for( string_iterator i = begin(); i != end(); --i )
 			{
 				if( !characters.contains( *i, cmp ) )
 					return i;
 			}
-			return end().getEnd();
+			return End.getEnd();
 		}
 
 		// Find last occurrence of any character not in the specified character class(es).
-		// NOTE: 'this' substring must be 'high-to-low' ordered! (No checking is done!)
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// NOTE: Multiple classes can be or'ed together!
 		// Returns iterator for the found character - 'false' iterator if not found.
 		string_iterator findLastNotOf( charcat category ) const noexcept;
@@ -868,12 +1012,18 @@ namespace eon
 
 		// Find the first character in 'this' substring that differs from 'other',
 		// 'false' iterator if none (equal substrings).
-		// Both substrings must be 'low-to-high'!
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Comparison is done using a binary char_t predicate.
 		template<typename compare_T = fast_chr_compare>
 		string_iterator findFirstDiff( const substring& other, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			auto i = begin(), j = other.begin();
+			if( empty() || other.empty() )
+				return End.getEnd();
+			else if( isHighToLow() )
+				return lowToHigh().findFirstDiff( other.isHighToLow() ? other.lowToHigh() : other, cmp );
+			else if( other.isHighToLow() )
+				return findFirstDiff( other.lowToHigh(), cmp );
+			string_iterator i = begin(), j = other.begin();
 			for( ; i != end() && j != other.end(); ++i, ++j )
 			{
 				if( cmp( *i, *j ) != 0 )
@@ -882,7 +1032,7 @@ namespace eon
 			if( i != end() )
 				return i;
 			else
-				return end().getEnd();
+				return End.getEnd();
 		}
 
 
@@ -892,7 +1042,7 @@ namespace eon
 		// NOTE: If 'start_sect' is different from 'end_sect', nested occurrences will be accounted for!
 		// NOTE: If 'start_sect' is identical to 'end_sect', escaped versions of the character within or
 		//       outside an enclosed section will not be interpreted as neither 'start_sect' nor 'end_sect'!
-		// NOTE: Both substrings must be 'low-to-high'!
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: if 'end_sect' is 'same_char', it will be the same as 'start_sect'!
 		// Comparison is done using a binary substring predicate.
 		template<typename compare_T = fast_chr_compare>
@@ -902,6 +1052,12 @@ namespace eon
 			char_t end_sect = same_char,
 			const compare_T& cmp = FastChrCompare ) const noexcept
 		{
+			if( empty() || other.empty() )
+				return substring( End.getEnd() );
+			else if( isHighToLow() )
+				return lowToHigh().findFirstIgnoreSections( other.isHighToLow() ? other.lowToHigh() : other, start_sect, end_sect, cmp );
+			else if( other.isHighToLow() )
+				return findFirstIgnoreSections( other.lowToHigh(), start_sect, end_sect, cmp );
 			end_sect = end_sect == same_char ? start_sect : end_sect;
 			bool escaped = false;
 			for( string_iterator i = begin(); i < end(); ++i )
@@ -933,7 +1089,7 @@ namespace eon
 		// NOTE: If 'start_sect' is different from 'end_sect', nested occurrences will be accounted for!
 		// NOTE: If 'start_sect' is identical to 'end_sect', escaped versions of the character within or
 		//       outside an enclosed section will not be interpreted as neither 'start_sect' nor 'end_sect'!
-		// NOTE: Both substrings must be 'low-to-high'!
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: if 'end_sect' is 'same_char', it will be the same as 'start_sect'!
 		// Comparison is done using a binary char_t predicate.
 		template<typename compare_T = fast_chr_compare>
@@ -943,6 +1099,10 @@ namespace eon
 			char_t end_sect = same_char,
 			const compare_T& cmp = FastChrCompare ) const noexcept
 		{
+			if( empty() )
+				return substring( End.getEnd() );
+			else if( isHighToLow() )
+				return lowToHigh().findFirstIgnoreSections( codepoint, start_sect, end_sect, cmp );
 			end_sect = end_sect == same_char ? start_sect : end_sect;
 			bool escaped = false;
 			for( string_iterator i = begin(); i != end(); ++i )
@@ -963,32 +1123,25 @@ namespace eon
 		}
 
 
-		// Find first occurrence of a character not from a [charcat] character 'category'.
-		// NOTE: The substring must be 'low-to-high'!
-		string_iterator findFirstOtherThan( charcat category ) const noexcept;
-
-		// Find last occurrence of a character not from a [charcat] character 'category'.
-		// NOTE: The substring must be 'high-to-low'!
-		string_iterator findLastOtherThan( charcat category ) const noexcept;
-
-
 		// Get as new substring everything inside 'this' substring that appears
 		// before the first occurrence of 'delimiter' substring.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = fast_compare>
-		substring beforeFirst( const substring& delimiter, const compare_T& cmp = FastCompare ) const noexcept
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = fast_chr_compare>
+		substring beforeFirst( const substring& delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
 			auto found = findFirst( delimiter, cmp );
 			if( found )
 				return substring( begin(), found.begin() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 		// Get as new substring everything inside 'this' substring that appears
 		// before the first occurrence of 'delimiter' character.
 		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		substring beforeFirst( char_t delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
@@ -997,56 +1150,60 @@ namespace eon
 			if( found )
 				return substring( begin(), found.begin() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 
 		// Get as new substring everything inside 'this' substring appearing
 		// before the last occurrence of 'delimiter' substring.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = fast_compare>
-		substring beforeLast( const substring& delimiter, const compare_T& cmp = FastCompare ) const noexcept
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = fast_chr_compare>
+		substring beforeLast( const substring& delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			auto found = highToLow().findLast( delimiter, cmp );
+			auto found = findLast( delimiter, cmp );
 			if( found )
-				return substring( begin(), found.begin() );
+				return isHighToLow() ? substring( End, found.begin() ) : substring( Beg, found.begin() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 		// Get as new substring everything inside 'this' substring appearing
 		// before the last occurrence of 'delimiter' character.
 		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		substring beforeLast( char_t delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
-			auto found = highToLow().findLast( delimiter, cmp );
+			auto found = findLast( delimiter, cmp );
 			if( found )
 				return substring( begin(), found.begin() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 
 		// Get as new substring everything inside 'this' substring appearing
 		// after the first occurrence of 'delimiter' substring.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = fast_compare>
-		substring afterFirst( const substring& delimiter, const compare_T& cmp = FastCompare ) const noexcept
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = fast_chr_compare>
+		substring afterFirst( const substring& delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
 			auto found = findFirst( delimiter, cmp );
 			if( found )
 				return substring( found.end(), end() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 		// Get as new substring everything inside 'this' substring appearing
 		// after the first occurrence of 'delimiter' character.
 		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		substring afterFirst( char_t delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
@@ -1055,27 +1212,29 @@ namespace eon
 			if( found )
 				return substring( found.end(), end() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 
 		// Get as new substring everything inside 'this' substring appearing
 		// after the last occurrence of 'delimiter' substring.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = fast_compare>
-		substring afterLast( const substring& delimiter, const compare_T& cmp = FastCompare ) const noexcept
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = fast_chr_compare>
+		substring afterLast( const substring& delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
 			auto found = highToLow().findLast( delimiter, cmp );
 			if( found )
 				return substring( found.end(), end() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 		// Get as new substring everything inside 'this' substring appearing
 		// after the last occurrence of 'delimiter' character.
 		// Comparison is done using a binary char_t predicate.
+		// NOTE: Search is done in 'high-to-low' ordering regardless of current settings!
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = fast_chr_compare>
 		substring afterLast( char_t delimiter, const compare_T& cmp = FastChrCompare ) const noexcept
@@ -1084,7 +1243,7 @@ namespace eon
 			if( found )
 				return substring( found.end(), end() );
 			else
-				return substring( end() );
+				return substring( End.getEnd() );
 		}
 
 
@@ -1096,34 +1255,42 @@ namespace eon
 		//
 	public:
 
+		// Count occurrences of a sub-string.
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
+		// NOTE: All occurrences are counted, including overlaps!
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = fast_chr_compare>
+		index_t count( const substring& to_count, const compare_T& cmp = FastChrCompare ) const noexcept
+		{
+			if( numBytes() > 0 && numBytes() < to_count.numChars() )
+				return 0;
+			else if( isHighToLow() )
+				return lowToHigh().count( to_count.isHighToLow() ? to_count.lowToHigh() : to_count, cmp );
+			else if( to_count.isHighToLow() )
+				return count( to_count.lowToHigh(), cmp );
+			index_t cnt = 0;
+			auto found = findFirst( to_count, cmp );
+			for( ; found; ++cnt )
+				found = substring( found.begin() + 1, end() ).findFirst( to_count, cmp );
+			return cnt;
+		}
+
 		// Count occurrences of a character.
-		// The substring must be 'low-to-high'!
+		// NOTE: Search is done in 'low-to-high' ordering regardless of current settings!
 		// Comparison is done using a binary char_t predicate.
 		template<typename compare_T = fast_chr_compare>
 		index_t count( char_t to_count, const compare_T& cmp = FastChrCompare ) const noexcept
 		{
+			if( numBytes() == 0 )
+				return 0;
+			else if( isHighToLow() )
+				return lowToHigh().count( to_count, cmp );
 			index_t cnt = 0;
 			for( string_iterator i = begin(); i != end(); ++i )
 			{
 				if( cmp( *i, to_count ) == 0 )
 					++cnt;
 			}
-			return cnt;
-		}
-
-		// Count occurrences of a sub-string.
-		// Both substrings must be 'low-to-high'!
-		// NOTE: All occurrences are counted, including overlaps!
-		// Comparison is done using a binary substring predicate.
-		template<typename compare_T = fast_compare>
-		index_t count( const substring& to_count, const compare_T& cmp = FastCompare ) const noexcept
-		{
-			if( numBytes() > 0 && numBytes() < to_count.numChars() )
-				return 0;
-			index_t cnt = 0;
-			auto found = findFirst( to_count, cmp );
-			for( ; found; ++cnt )
-				found = substring( found.begin() + 1, end() ).findFirst( to_count, cmp );
 			return cnt;
 		}
 
@@ -1136,84 +1303,24 @@ namespace eon
 		//
 	private:
 
-		inline substring _optimizedFindFirst( const substring& to_find ) const noexcept
-		{
-			// If the sub-string isn't bytes-only, we know it cannot exist within the source!
-			if( !to_find.begin().bytesOnly() )
-				return substring( End.getEnd() );
-
-			auto found = _findFirst( Beg.Pos, numBytes(), to_find.begin().Pos, to_find.numBytes() );
-			if( found != nullptr )
-			{
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + to_find.numBytes(), ( found + to_find.numBytes() ) - Beg.Source ) );
-			}
-			else
-				return substring( End.getEnd() );
-		}
-
-		inline substring _optimizedFindFirst( char_t to_find ) const noexcept
-		{
-			// If the codepoint isn't ASCII, then only accept search if 'this' also isn't UTF-8!
-			if( to_find > 127 && Beg.ValidUTF8 )
-				return substring( End.getEnd() );
-
-			auto found = _findFirst( Beg.Pos, numBytes(), static_cast<char>( to_find ) );
-			if( found != nullptr )
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + 1, ( found + 1 ) - Beg.Source ) );
-			else
-				return substring( End.getEnd() );
-		}
-
-		inline substring _optimizedFindLast( const substring& to_find ) const noexcept
-		{
-			// If the sub-string isn't bytes-only, we know it cannot exist within the source!
-			if( !to_find.begin().bytesOnly() )
-				return substring( End.getEnd() );
-
-			auto found = _findLast( Beg.Pos, numBytes(), to_find.begin().Pos, to_find.numBytes() );
-			if( found != nullptr )
-			{
-				return substring( string_iterator( Beg, found, found - Beg.Source ),
-					string_iterator( Beg, found + to_find.numBytes(), ( found + to_find.numBytes() ) - Beg.Source ) );
-			}
-			else
-				return substring( End.getEnd() );
-		}
-
-		inline substring _optimizedFindLast( char_t to_find ) const noexcept
-		{
-			// If the codepoint isn't ASCII, then only accept search if 'this' also isn't UTF-8!
-			if( to_find > 127 && Beg.ValidUTF8 )
-				return substring( End.getEnd() );
-
-			auto found = _findLast( Beg.Pos, numBytes(), static_cast<char>( to_find ) );
-			if( found != nullptr )
-			{
-				if( found < Beg.SourceEnd )
-					return substring( string_iterator( Beg, found, found - Beg.Source ),
-						string_iterator( Beg, found + 1, ( found + 1 ) - Beg.Source ) );
-				else
-					return substring( string_iterator( Beg, found,
-						found - Beg.Source ), End );
-			}
-			else
-				return substring( End.getEnd() );
-		}
+		substring _optimizedFindFirst( const substring& to_find ) const noexcept;
+		substring _optimizedFindFirst( char_t to_find ) const noexcept;
+		substring _optimizedFindLast( const substring& to_find ) const noexcept;
+		substring _optimizedFindLast( char_t to_find ) const noexcept;
 
 		void _bypassSection( char_t start_sect, char_t end_sect, string_iterator& i ) const;
 
 		static inline const char* _findFirst( const char* str, index_t str_size, char c ) noexcept {
 			return (char*)memchr( str, c, str_size ); }
-		const char* _findFirst( const char* source, index_t source_size, const char* substr, index_t substr_size )
-			const noexcept;
+		const char* _findFirst(
+			const char* source, index_t source_size, const char* substr, index_t substr_size ) const noexcept;
 
 		static const char* _findLast( const char* str, index_t str_size, char chr ) noexcept;
-		const char* _findLast( const char* source, index_t source_size, const char* substr, index_t substr_size )
-			const noexcept;
+		const char* _findLast(
+			const char* source, index_t source_size, const char* substr, index_t substr_size ) const noexcept;
 
 		std::string _getReverse() const;
+
 
 
 

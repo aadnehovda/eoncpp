@@ -12,6 +12,33 @@ namespace eon
 	// Modifier Methods
 	//
 
+	EON_TEST_3STEP( string, clear, basic,
+		string obj( "abcdef" ),
+		obj.clear(),
+		EON_EQ( "", obj ) );
+
+	EON_NO_TEST( string, reserve );		// Cannot predict what std::string will do here!
+
+	EON_TEST_2STEP( string, operator_lsh, string,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj << string( "def" ) ) );
+	EON_TEST_2STEP( string, operator_lsh, substring,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj << substring( "def" ) ) );
+	EON_TEST_2STEP( string, operator_lsh, stdstring,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj << std::string( "def" ) ) );
+	EON_TEST_2STEP( string, operator_lsh, cstring,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj << "def" ) );
+	EON_TEST_2STEP( string, operator_lsh, template,
+		string obj = "abc",
+		EON_EQ( "abc99", obj << static_cast<index_t>( 99 ) ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, string,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj += string( "def" ) ) );
+
 	string& string::operator+=( const substring& input )
 	{
 		if( input.validUTF8() )
@@ -35,6 +62,26 @@ namespace eon
 	EON_TEST_2STEP( string, substring_plusasgn, something_to_something,
 		string obj( "ab" ),
 		EON_EQ( string( "abcd" ), obj += substring( "cd" ) ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, stdstring,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj += std::string( "def" ) ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, cstring,
+		string obj = "abc",
+		EON_EQ( "abcdef", obj += "def" ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, char_t,
+		string obj = "abc",
+		EON_EQ( "abcd", obj += char_t( 'd' ) ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, char,
+		string obj = "abc",
+		EON_EQ( "abcd", obj += 'd' ) );
+
+	EON_TEST_2STEP( string, operator_plusasgn, unsigned_char,
+		string obj = "abc",
+		EON_EQ( "abcd", obj += (unsigned char)'d' ) );
 
 	string::iterator string::insert( const iterator& pos, const string& substr )
 	{
@@ -64,6 +111,11 @@ namespace eon
 		string obj( "ab" ),
 		obj.insert( obj.begin() + 1, "cd" ),
 		EON_EQ( string( "acdb" ), obj ) );
+
+	EON_TEST_3STEP( string, insert, char_t,
+		string obj( "abde" ),
+		obj.insert( obj.begin() + 2, char_t( 'c' ) ),
+		EON_EQ( "abcde", obj ) );
 
 	string& string::erase( const substring& sub ) noexcept
 	{

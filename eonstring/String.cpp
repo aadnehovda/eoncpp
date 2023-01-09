@@ -12,6 +12,99 @@ namespace eon
 
 
 
+	///////////////////////////////////////////////////////////////////////
+	//
+	// Basic Read-only Methods
+	//
+
+	EON_TEST( string, numChars, zero,
+		EON_EQ( 0, string().numChars() ) );
+	EON_TEST( string, numChars, ASCII,
+		EON_EQ( 6, string( "abcdef" ).numChars() ) );
+	EON_TEST( string, numChars, UTF8,
+		EON_EQ( 6, string( u8"ábcdèf" ).numChars() ) );
+
+	EON_TEST( string, length, zero,
+		EON_EQ( 0, string().length() ) );
+	EON_TEST( string, length, several,
+		EON_EQ( 6, string( "abcdef" ).length() ) );
+	EON_TEST( string, length, UTF8,
+		EON_EQ( 6, string( u8"ábcdèf" ).length() ) );
+
+	EON_TEST( string, numBytes, zero,
+		EON_EQ( 0, string().numBytes() ) );
+	EON_TEST( string, numBytes, ASCII,
+		EON_EQ( 6, string( "abcdef" ).numBytes() ) );
+	EON_TEST( string, numBytes, UTF8,
+		EON_EQ( 8, string( u8"ábcdèf" ).numBytes() ) );
+
+	EON_NO_TEST( string, bufferSize );
+
+	EON_TEST( string, empty, empty,
+		EON_TRUE( string().empty() ) );
+	EON_TEST( string, empty, nonempty,
+		EON_FALSE( string( "1" ).empty() ) );
+
+	EON_NO_TEST( string, stdstr );
+	EON_NO_TEST( string, c_str );
+
+	EON_TEST( string, byte, ASCII,
+		EON_EQ( 'b', string( "abcd" ).byte( 1 ) ) );
+	EON_TEST( string, byte, UTF8,
+		EON_EQ( -93, string( u8"ãâà" ).byte( 1 ) ) );
+
+	EON_TEST( string, isDoubleQuoted, is,
+		EON_TRUE( string( "\"abc\"" ).isDoubleQuoted() ) );
+	EON_TEST( string, isDoubleQuoted, partial_left,
+		EON_FALSE( string( "\"abc" ).isDoubleQuoted() ) );
+	EON_TEST( string, isDoubleQuoted, partial_right,
+		EON_FALSE( string( "abc\"" ).isDoubleQuoted() ) );
+	EON_TEST( string, isDoubleQuoted, not,
+		EON_FALSE( string( "abc" ).isDoubleQuoted() ) );
+
+	EON_TEST_2STEP( string, isDoubleQuoted, substring_is,
+		string obj = "ab\"cd\"ef",
+		EON_TRUE( obj.isDoubleQuoted( obj.substr( obj.begin() + 2, obj.end() - 2 ) ) ) );
+	EON_TEST_2STEP( string, isDoubleQuoted, substring_not,
+		string obj = "ab\"cd\"ef",
+		EON_FALSE( obj.isDoubleQuoted( obj.substr( obj.begin() + 2, obj.end() - 3 ) ) ) );
+
+	EON_TEST_2STEP( string, isSingleQuoted, substring_is,
+		string obj = "ab'cd'ef",
+		EON_TRUE( obj.isSingleQuoted( obj.substr( obj.begin() + 2, obj.end() - 2 ) ) ) );
+	EON_TEST_2STEP( string, isSingleQuoted, substring_not,
+		string obj = "ab'cd'ef",
+		EON_FALSE( obj.isSingleQuoted( obj.substr( obj.begin() + 2, obj.end() - 3 ) ) ) );
+
+	EON_TEST( string, blank, blank,
+		EON_TRUE( string( "  " ).blank() ) );
+	EON_TEST( string, blank, not_blank,
+		EON_FALSE( string( " l " ).blank() ) );
+
+	EON_TEST( string, indentationLevel, zero,
+		EON_EQ( 0, string( "abc" ).indentationLevel() ) );
+	EON_TEST( string, indentationLevel, not_sero,
+		EON_EQ( 2, string( "\t\tabc" ).indentationLevel() ) );
+
+	EON_TEST_2STEP( string, characters, ASCII,
+		std::vector<char_t> exp EON_CSC( 'a', 'b', 'c' ),
+		EON_EQ( exp, string( "abc" ).characters<std::vector<char_t>>() ) );
+	EON_TEST_2STEP( string, characters, UTF8,
+		std::vector<char_t> exp EON_CSC( 'a', char_t( 0xFF ), 'c' ),
+		EON_EQ( exp, string( u8"aÿc" ).characters<std::vector<char_t>>() ) );
+
+	EON_TEST_3STEP( string, characters, substr_ASCII,
+		std::vector<char_t> exp EON_CSC( 'b', 'c' ),
+		string obj = "abcd",
+		EON_EQ( exp, obj.characters<std::vector<char_t>>( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+	EON_TEST_3STEP( string, characters, substr_HighToLow,
+		std::vector<char_t> exp EON_CSC( 'c', 'b' ),
+		string obj = "abcd",
+		EON_EQ( exp, obj.characters<std::vector<char_t>>( obj.substr( obj.begin() + 1, obj.end() - 1 ).highToLow() ) ) );
+
+
+
+
 	///////////////////////////////////////////////////////////////////////////
 	//
 	// String hashing
@@ -194,7 +287,7 @@ namespace eon
 
 	string& string::orderList( const string& separator )
 	{
-		auto elements = substr().splitNonsequential<std::set<substring>>( separator.substr() );
+		auto elements = substr().splitNonSequential<std::set<substring>>( separator.substr() );
 		return *this = separator.join( elements );
 	}
 	EON_TEST( string, orderList, empty,

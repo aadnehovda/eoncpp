@@ -15,6 +15,9 @@ namespace eonitest
 	{
 	public:
 		static eon::string toString( const eon::string& value ) { return "\"" + value.escapeAll() + "\""; }
+		static eon::string toString( const eon::substring& value ) {
+			return "\"" + eon::string( value ).escapeAll() + "\""; }
+		static eon::string toString( const eon::string_iterator& value ) { return  value.encode(); }
 		static eon::string toString( const std::string& value ) { return "\"" + eon::string( value ).escapeAll() + "\""; }
 		static eon::string toString( const char* value ) { return "\"" + eon::string( value ).escapeAll() + "\""; }
 		static eon::string toString( eon::char_t value )
@@ -49,8 +52,10 @@ namespace eonitest
 		}
 		static eon::string toString( eon::int_t value ) { return eon::string( value ); }
 		static eon::string toString( eon::long_t value ) { return eon::string( value ); }
+		static eon::string toString( eon::short_t value ) { return eon::string( value ); }
 		static eon::string toString( eon::flt_t value ) { return eon::string( value ); }
 		static eon::string toString( eon::high_t value ) { return eon::string( value ); }
+		static eon::string toString( eon::low_t value ) { return eon::string( value ); }
 		static eon::string toString( eon::index_t value ) { return eon::string( value ); }
 		static eon::string toString( eon::name_t value ) { return eon::str( value ); }
 

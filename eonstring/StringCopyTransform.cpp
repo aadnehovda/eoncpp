@@ -12,35 +12,55 @@ namespace eon
 	// Copy and Transform
 	//
 
+	EON_TEST_2STEP( string, transform, basic,
+		string obj = "abcdef",
+		EON_EQ( "bcdefg", obj.transform( obj.substr(), []( char_t c, const eon::locale& loc ) { return c + 1; } ) ) );
+
+	EON_TEST_2STEP( string, transform, find,
+		string obj = "abcdef",
+		EON_EQ( "aBcDeF", obj.transform( obj.substr(),
+			[]( string_iterator begin, string_iterator end ) { for( auto c = begin; c != end; ++c ) if( *c % 2 == 0 ) return c; return end; },
+			[]( char_t c, const eon::locale& loc ) { return c - 32; } ) ) );
+
 	EON_TEST_2STEP( string, upper, empty,
 		string obj,
 		EON_EQ( "", obj.upper( obj.substr() ) ) );
-	EON_TEST_2STEP( string, upper, all,
+	EON_TEST_2STEP( string, upper, ASCII,
 		string obj( "aBcDeFgH" ),
 		EON_EQ( "ABCDEFGH", obj.upper( obj.substr() ) ) );
-	EON_TEST_2STEP( string, upper, substr,
-		string obj( "aBcDeFgH" ),
-		EON_EQ( "aBcDEFgH", obj.upper( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
-	EON_TEST_3STEP( string, upper, utf8,
+	EON_TEST_3STEP( string, upper, UTF8,
 		eon::locale loc( "nb_NO.utf8" ),
 		string obj( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
 		EON_EQ( string( EON_CSC( char_t( 198 ), char_t( 216 ), char_t( 197 ), char_t( 198 ), char_t( 216 ) ) ),
 			obj.upper( obj.substr(), &loc ) ) );
 
+	EON_TEST_2STEP( string, upper, substr,
+		string obj( "aBcDeFgH" ),
+		EON_EQ( "aBcDEFgH", obj.upper( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
+
 	EON_TEST_2STEP( string, lower, empty,
 		string obj,
 		EON_EQ( "", obj.lower( obj.substr() ) ) );
-	EON_TEST_2STEP( string, lower, all,
+	EON_TEST_2STEP( string, lower, ASCII,
 		string obj( "aBcDeFgH" ),
 		EON_EQ( "abcdefgh", obj.lower( obj.substr() ) ) );
-	EON_TEST_2STEP( string, lower, substr,
-		string obj( "aBcDeFgH" ),
-		EON_EQ( "aBcdeFgH", obj.lower( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
 	EON_TEST_3STEP( string, lower, utf8,
 		eon::locale loc( "nb_NO.utf8" ),
 		string obj( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
 		EON_EQ( string( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 230 ), char_t( 248 ) ) ),
 			obj.lower( obj.substr(), &loc ) ) );
+
+	EON_TEST_2STEP( string, lower, substr,
+		string obj( "aBcDeFgH" ),
+		EON_EQ( "aBcdeFgH", obj.lower( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
+
+	EON_TEST( string, ucFirst, empty,
+		EON_EQ( "", string().ucFirst() ) );
+	EON_TEST( string, ucFirst, ASCII,
+		EON_EQ( "Abcdef", string( "abcdef" ).ucFirst() ) );
+	EON_TEST_2STEP( string, ucFirst, UTF8,
+		eon::locale loc( "nb_NO.utf8" ),
+		EON_EQ( u8"Åbcdef", string( u8"åbcdef" ).ucFirst( &loc ) ) );
 
 	string string::ucFirst( const substring& sub, const eon::locale* custom_locale ) const
 	{
@@ -56,32 +76,25 @@ namespace eon
 				+ string( substr( area.begin() + 1 ) );
 		}
 	}
-	EON_TEST_2STEP( string, ucFirst, empty,
-		string obj,
-		EON_EQ( "", obj.ucFirst( obj.substr() ) ) );
-	EON_TEST_2STEP( string, ucFirst, all,
-		string obj( "abcde" ),
-		EON_EQ( "Abcde", obj.ucFirst( obj.substr() ) ) );
 	EON_TEST_2STEP( string, ucFirst, substr,
 		string obj( "abcde" ),
 		EON_EQ( "aBcde", obj.ucFirst( obj.substr( obj.begin() + 1 ) ) ) );
 
-	EON_TEST_2STEP( string, ucWords, empty,
-		string obj,
-		EON_EQ( "", obj.ucWords( obj.substr() ) ) );
-	EON_TEST_2STEP( string, ucWords, all,
+	EON_TEST( string, ucWords, empty,
+		EON_EQ( "", string().ucWords() ) );
+	EON_TEST_2STEP( string, ucWords, ASCII,
 		string obj( "abc def ghi jkl" ),
-		EON_EQ( "Abc Def Ghi Jkl", obj.ucWords( obj.substr() ) ) );
+		EON_EQ( "Abc Def Ghi Jkl", obj.ucWords() ) );
+
 	EON_TEST_2STEP( string, ucWords, substr,
 		string obj( "abc def ghi jkl" ),
 		EON_EQ( "abc Def Ghi jkl", obj.ucWords( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
 
-	EON_TEST_2STEP( string, ucSentences, empty,
-		string obj,
-		EON_EQ( "", obj.ucSentences( obj.substr() ) ) );
-	EON_TEST_2STEP( string, ucSentences, all,
-		string obj( "abc def. ghi jkl: mno" ),
-		EON_EQ( "Abc def. Ghi jkl: Mno", obj.ucSentences( obj.substr() ) ) );
+	EON_TEST( string, ucSentences, empty,
+		EON_EQ( "", string().ucSentences() ) );
+	EON_TEST( string, ucSentences, ASCII,
+		EON_EQ( "Abc def. Ghi jkl: Mno", string( "abc def. ghi jkl: mno" ).ucSentences() ) );
+
 	EON_TEST_2STEP( string, ucSentences, substr,
 		string obj( "abc def. ghi jkl: mno" ),
 		EON_EQ( "abc def. Ghi jkl: mno", obj.ucSentences( obj.substr( obj.begin() + 3, obj.end() - 3 ) ) ) );
@@ -92,9 +105,11 @@ namespace eon
 	EON_TEST_2STEP( string, substr, all,
 		string obj( "abcde" ),
 		EON_EQ( substring( "abcde" ), obj.substr() ) );
+
 	EON_TEST_2STEP( string, substr, start,
 		string obj( "abcde" ),
 		EON_EQ( substring( "cde" ), obj.substr( obj.begin() + 2 ) ) );
+
 	EON_TEST_2STEP( string, substr, start_end,
 		string obj( "abcde" ),
 		EON_EQ( substring( "bc" ), obj.substr( obj.begin() + 1, obj.end() - 2 ) ) );
@@ -102,9 +117,8 @@ namespace eon
 		string obj( "abcde" ),
 		EON_EQ( "dc", string( obj.substr( obj.end() - 2, obj.begin() + 1 ) ) ) );
 
-	EON_TEST_2STEP( string, substr_indices, basic,
-		string obj( "abcde" ),
-		EON_EQ( substring( "cde" ), obj.substr( 2, 3 ) ) );
+	EON_TEST( string, substr_indices, basic,
+		EON_EQ( substring( "cde" ), string( "abcde" ).substr( 2, 3 ) ) );
 
 
 	substring string::slice( int64_t start, int64_t end ) const
@@ -118,15 +132,12 @@ namespace eon
 		auto sub = substr();
 		return substring( sub.iterator( s ), sub.iterator( e ) );
 	}
-	EON_TEST_2STEP( string, slice, empty,
-		string obj,
-		EON_EQ( substring(), obj.slice( 0, -1 ) ) );
-	EON_TEST_2STEP( string, slice, basic,
-		string obj( "abcde" ),
-		EON_EQ( substring( "cd" ), obj.slice( 2, -2 ) ) );
-	EON_TEST_2STEP( string, slice, reverse,
-		string obj( "abcde" ),
-		EON_EQ( "dc", string( obj.slice( -2, 2 ) ) ) );
+	EON_TEST( string, slice, empty,
+		EON_EQ( substring(), string().slice( 0, -1 ) ) );
+	EON_TEST( string, slice, basic,
+		EON_EQ( substring( "cd" ), string( "abcde" ).slice( 2, -2 ) ) );
+	EON_TEST( string, slice, reverse,
+		EON_EQ( "dc", string( string( "abcde" ).slice( -2, 2 ) ) ) );
 
 
 	EON_TEST( string, beforeFirst, str_none,
@@ -288,6 +299,36 @@ namespace eon
 		EON_EQ( "abcdxefagh", obj.replace( std::map<char_t, char_t>EON_CSC( EON_CSC( 'a', 'x' ) ), obj.substr(
 			obj.begin() + 3, obj.end() - 3 ) ) ) );
 
+	EON_TEST( string, remove, str_empty,
+		EON_EQ( "", string().remove( string( "something" ) ) ) );
+	EON_TEST( string, remove, str_something,
+		EON_EQ( " wonderful", string( "something wonderful" ).remove( string( "something" ) ) ) );
+
+	EON_TEST_2STEP( string, remove, str_substr,
+		string obj = "abcdabefabghab",
+		EON_EQ( "abcdefghab", obj.remove( string( "ab" ), obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+
+	EON_TEST_2STEP( string, remove, chr_basic,
+		string obj = "abacadaeafa",
+		EON_EQ( "bcdef", obj.remove( char_t( 'a' ) ) ) );
+
+	EON_TEST_2STEP( string, remove, chr_substr,
+		string obj = "abacadaeafa",
+		EON_EQ( "abcdefa", obj.remove( char_t( 'a' ), obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+
+	EON_TEST_2STEP( string, remove, char_basic,
+		string obj = "a1b1c1d1e1f1",
+		EON_EQ( "abcdef", obj.remove( '1' ) ) );
+
+	EON_TEST_2STEP( string, remove, char_substr,
+		string obj = "abacadaeafa",
+		EON_EQ( "abcdefa", obj.remove( 'a', obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+
+
+	EON_TEST( string, escape, empty,
+		EON_EQ( "", string().escape() ) );
+	EON_TEST( string, escape, ASCII,
+		EON_EQ( "a\t\\b\\v\\\"'?\\nb", string( "a\t\b\v\"\'\?\nb" ).escape() ) );
 
 	string string::escape( const substring& sub ) const
 	{
@@ -297,7 +338,7 @@ namespace eon
 			{ '\r', 'r' }, { '\t', nochar }, { '\v', 'v' } };
 		return _escape( sub, singletons );
 	}
-	EON_TEST_3STEP( string, escape, mix,
+	EON_TEST_3STEP( string, escape, substr_mix,
 		string input( u8"a\tb\nc?d\u0600e\"f\'g\\h" ),
 		string output = input.escape(),
 		EON_EQ( "a\tb\\nc?d\\u0600;e\\\"f'g\\\\h", output ) );
@@ -433,6 +474,22 @@ namespace eon
 		string output = input.escapeAll(),
 		EON_EQ( "a\\tb\\nc\\?d\\u0600;e\\\"f\\'g\\\\h", output ) );
 
+	EON_TEST_3STEP( string, escapeAll, substr_mix,
+		string input( u8"a\tb\nc?d\u0600e\"f\'g\\h" ),
+		string output = input.escapeAll( input.substr( input.begin() + 2, input.end() - 2 ) ),
+		EON_EQ( "a\tb\\nc\\?d\\u0600;e\\\"f\\'g\\h", output ) );
+
+	EON_TEST( string, unecape, empty,
+		EON_EQ( "", string().unescape() ) );
+	EON_TEST( string, unecape, escaped,
+		EON_EQ( "\b\v", string( "\\b\\v" ).unescape() ) );
+	EON_TEST( string, unecape, not_escaped,
+		EON_EQ( "a\bc\v", string( "a\bc\v" ).unescape() ) );
+	EON_TEST_3STEP( string, unescape, UTF8,
+		string input( "a\\tb\\nc\\?d\\u0600;e\\\"f\\'g\\\\h" ),
+		string output = input.unescape(),
+		EON_EQ( string( u8"a\tb\nc?d\u0600e\"f\'g\\h" ), output ) );
+
 	string string::unescape( const substring& sub ) const
 	{
 		static std::unordered_map<char_t, char_t> singletons{
@@ -441,14 +498,10 @@ namespace eon
 			{ 'r', '\r' }, { 't', '\t' }, { 'v', '\v' } };
 		return _unescape( sub, singletons );
 	}
-	EON_TEST_3STEP( string, unescape, mix,
-		string input( "a\tb\\nc?d\\u0600;e\\\"f'g\\\\h" ),
-		string output = input.unescape(),
-		EON_EQ( string( u8"a\tb\nc?d\u0600e\"f\'g\\h" ), output ) );
-	EON_TEST_3STEP( string, unescape, all,
-		string input( "a\\tb\\nc\\?d\\u0600;e\\\"f\\'g\\\\h" ),
-		string output = input.unescape(),
-		EON_EQ( string( u8"a\tb\nc?d\u0600e\"f\'g\\h" ), output ) );
+	EON_TEST_3STEP( string, unescape, substr_UTF8,
+		string input( u8"a\tb\\nc?d\\u0600;e\\\"f'g\\\\h" ),
+		string output = input.unescape( input.substr( input.begin() + 2, input.end() - 2 ) ),
+		EON_EQ( string( u8"a\tb\nc?d\u0600e\"f\'g\\\\h" ), output ) );
 
 	string string::_unescape( const substring& sub, const std::unordered_map<char_t, char_t>& singletons ) const
 	{
@@ -660,8 +713,10 @@ namespace eon
 	string string::_unescape(
 		const substring& area, string output, const std::unordered_map<char_t, char_t>& singletons ) const
 	{
-		for( string::iterator c = area.begin(); c != area.end(); ++c )
+		for( string::iterator c = area.begin(); c < area.end(); ++c )
 			_unescapeChar( c, output, singletons );
+		if( area.end() < end() )
+			output += substr( area.end(), end() );
 		return output;
 	}
 	EON_TEST_3STEP( string, _unescape, empty,
@@ -690,10 +745,10 @@ namespace eon
 		EON_EQ( "abcdef", output ) );
 
 
-	EON_TEST_2STEP( string, toHtml, all_ascii_only,
+	EON_TEST_2STEP( string, toHtml, ASCII,
 		string input( "abc" ),
 		EON_EQ( "abc", input.toHtml() ) );
-	EON_TEST_2STEP( string, toHtml, all_mix,
+	EON_TEST_2STEP( string, toHtml, UTF8,
 		string input( u8"a\u00E6b\tc" ),
 		EON_EQ( "a&#230;b&#9;c", input.toHtml() ) );
 
@@ -722,19 +777,18 @@ namespace eon
 			output += substr( area.end(), end() );
 		return output;
 	}
-	EON_TEST_2STEP( string, toHtml, sub_ascii_only,
+	EON_TEST_2STEP( string, toHtml, substr_ASCII,
 		string input( "abcdef" ),
 		EON_EQ( "abcdef", input.toHtml( input.substr( input.begin() + 2, input.last() - 1 ) ) ) );
-	EON_TEST_2STEP( string, toHtml, sub_mix,
+	EON_TEST_2STEP( string, toHtml, substr_UTF8,
 		string input( u8"a\u00E6b\tc\vd\be\rf" ),
 		EON_EQ( string( u8"a\u00E6b&#9;c&#11;d&#8;e\rf" ),
 			input.toHtml( input.substr( input.begin() + 2, input.last() - 1 ) ) ) );
 
-
-	EON_TEST_2STEP( string, fromHtml, all_ascii_only,
+	EON_TEST_2STEP( string, fromHtml, ASCII,
 		string input( "abc" ),
 		EON_EQ( "abc", input.fromHtml() ) );
-	EON_TEST_2STEP( string, fromHtml, all_mix,
+	EON_TEST_2STEP( string, fromHtml, UTF8,
 		string input( "a&#230;b&#9;c" ),
 		EON_EQ( string( u8"a\u00E6b\tc" ), input.fromHtml() ) );
 
@@ -748,7 +802,7 @@ namespace eon
 		if( end )
 		{
 			auto num = substring( i + 2, end.begin() );
-			if( !num.findFirstOtherThan( charcat::number_ascii_digit ) )
+			if( !num.findFirstNotOf( charcat::number_ascii_digit ) )
 			{
 				output += static_cast<char_t>( num.toUInt32() );
 				i = end.begin();
@@ -778,18 +832,18 @@ namespace eon
 			output += substr( area.end(), end() );
 		return output;
 	}
-	EON_TEST_2STEP( string, fromHtml, sub_ascii_only,
+	EON_TEST_2STEP( string, fromHtml, substr_ASCII,
 		string input( "abcdef" ),
 		EON_EQ( "abcdef", input.fromHtml( input.substr( input.begin() + 2, input.last() - 1 ) ) ) );
-	EON_TEST_2STEP( string, fromHtml, sub_mix,
+	EON_TEST_2STEP( string, fromHtml, substr_UTF8,
 		string input( u8"a\u00E6b&#9;c&#11;d&#8;e\rf" ),
 		EON_EQ( string( u8"a\u00E6b\tc\vd\be\rf" ),
 			input.fromHtml( input.substr( input.begin() + 2, input.last() - 1 ) ) ) );
 
 
-	EON_TEST( string, doubleQuote, all,
+	EON_TEST( string, doubleQuote, basic,
 		EON_EQ( "\" text\"", string( " text" ).doubleQuote() ) );
-	EON_TEST( string, doubleQuote, all_prequoted,
+	EON_TEST( string, doubleQuote, prequoted,
 		EON_EQ( "\" text\"", string( "\" text\"" ).doubleQuote() ) );
 
 	string string::doubleQuote( const substring& sub ) const
@@ -816,9 +870,9 @@ namespace eon
 		string input( "one 'two 'three" ),
 		EON_EQ( "one \"'two '\"three", input.doubleQuote( input.substr( input.begin() + 4, input.end() - 5 ) ) ) );
 
-	EON_TEST( string, singleQuote, all,
+	EON_TEST( string, singleQuote, basic,
 		EON_EQ( "' text'", string( " text" ).singleQuote() ) );
-	EON_TEST( string, singleQuote, all_prequoted, EON_EQ( "' text'", string( "' text'" ).singleQuote() ) );
+	EON_TEST( string, singleQuote, prequoted, EON_EQ( "' text'", string( "' text'" ).singleQuote() ) );
 
 	string string::singleQuote( const substring& sub ) const
 	{
@@ -844,11 +898,11 @@ namespace eon
 		string input( "one \"two \"three" ),
 		EON_EQ( "one '\"two \"'three", input.singleQuote( input.substr( input.begin() + 4, input.end() - 5 ) ) ) );
 
-	EON_TEST( string, unQuote, all_unquoted,
+	EON_TEST( string, unQuote, unquoted,
 		EON_EQ( " text", string( " text" ).unQuote() ) );
-	EON_TEST( string, unQuote, all_doublequoted,
+	EON_TEST( string, unQuote, doublequoted,
 		EON_EQ( " text", string( "\" text\"" ).unQuote() ) );
-	EON_TEST( string, unQuote, all_singlequoted,
+	EON_TEST( string, unQuote, singlequoted,
 		EON_EQ( " text", string( "' text'" ).unQuote() ) );
 
 	string string::unQuote( const substring& sub ) const
@@ -876,7 +930,7 @@ namespace eon
 		EON_EQ( "one two three", input.unQuote( input.substr( input.begin() + 4, input.end() - 5 ) ) ) );
 
 
-	EON_TEST( string, reverse, all,
+	EON_TEST( string, reverse, basic,
 		EON_EQ( "fedcba", string( "abcdef" ).reverse() ) );
 
 	string string::reverse( const substring& sub ) const
@@ -895,6 +949,137 @@ namespace eon
 	EON_TEST_2STEP( string, reverse, substr,
 		string input( "abcdef" ),
 		EON_EQ( "aedcbf", input.reverse( input.substr( input.begin() + 1, input.end() - 1 ) ) ) );
+
+
+	EON_TEST_3STEP( string, splitSequential, string_empty,
+		string source = "",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 0, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, string_singleton,
+		string source = "one",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 1, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, string_duo,
+		string source = "one;;two",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 2, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, string_many,
+		string source = "one;;two;;three;four;;five",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 4, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, string_empty_first,
+		string source = ";;two;;three",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 3, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, string_empty_last,
+		string source = "one;;two;;",
+		auto output = source.splitSequential<std::vector<string>>( string( ";;" ) ),
+		EON_EQ( 3, output.size() ) );
+
+	EON_TEST_3STEP( string, splitSequential, char_empty,
+		string source = "",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 0, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, char_singleton,
+		string source = "one",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 1, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, char_duo,
+		string source = "one;two",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 2, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, char_many,
+		string source = "one;two;three;four",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 4, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, char_empty_first,
+		string source = ";two;three",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 3, output.size() ) );
+	EON_TEST_3STEP( string, splitSequential, char_empty_last,
+		string source = "one;two;",
+		auto output = source.splitSequential<std::vector<string>>( ';' ),
+		EON_EQ( 3, output.size() ) );
+
+	EON_TEST_3STEP( string, splitNonSequential, string_empty,
+		string source = "",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 0, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, string_singleton,
+		string source = "one",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 1, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, string_duo,
+		string source = "one;;two",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 2, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, string_many,
+		string source = "one;;two;;three;four;;five",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 4, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, string_empty_first,
+		string source = ";;two;;three",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 3, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, string_empty_last,
+		string source = "one;;two;;",
+		auto output = source.splitNonSequential<std::set<string>>( string( ";;" ) ),
+		EON_EQ( 3, output.size() ) );
+
+	EON_TEST_3STEP( string, splitNonSequential, char_empty,
+		string source = "",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 0, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, char_singleton,
+		string source = "one",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 1, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, char_duo,
+		string source = "one;two",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 2, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, char_many,
+		string source = "one;two;three;four",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 4, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, char_empty_first,
+		string source = ";two;three",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 3, output.size() ) );
+	EON_TEST_3STEP( string, splitNonSequential, char_empty_last,
+		string source = "one;two;",
+		auto output = source.splitNonSequential<std::set<string>>( ';' ),
+		EON_EQ( 3, output.size() ) );
+
+
+	EON_TEST_2STEP( string, join, iterator,
+		std::vector<string> input EON_CSC( "a", "b", "c", "d", "e", "f" ),
+		EON_EQ( "b;;c;;d;;e", string( ";;" ).join( input.begin() + 1, input.end() - 1 ) ) );
+
+	EON_TEST( string, join, empty,
+		EON_EQ( "", string( "" ).join( std::vector<string>() ) ) );
+	EON_TEST( string, join, singleton,
+		EON_EQ( "a", string( ";" ).join( std::vector<string>EON_CSC( "a" ) ) ) );
+	EON_TEST( string, join, duo,
+		EON_EQ( "a;b", string( ";" ).join( std::vector<string>EON_CSC( "a", "b" ) ) ) );
+	EON_TEST( string, join, many,
+		EON_EQ( "a;b;c;d;e;f", string( ";" ).join( std::vector<string>EON_CSC( "a", "b", "c", "d", "e", "f" ) ) ) );
+	EON_TEST( string, join, empty_first,
+		EON_EQ( ";b;c", string( ";" ).join( std::vector<string>EON_CSC( "", "b", "c" ) ) ) );
+	EON_TEST( string, join, empty_last,
+		EON_EQ( "a;b;", string( ";" ).join( std::vector<string>EON_CSC( "a", "b", "" ) ) ) );
+	EON_TEST( string, join, no_delimiter,
+		EON_EQ( "abc", string().join( std::vector<string>EON_CSC( "a", "b", "c" ) ) ) );
+
+
+	EON_TEST( string, trim, basic,
+		EON_EQ( "abc", string( string( "  abc   " ).trim() ) ) );
+
+	EON_TEST( string, trimLeading, basic,
+		EON_EQ( "abc   ", string( string( "  abc   " ).trimLeading() ) ) );
+
+	EON_TEST( string, trimTrailing, basic,
+		EON_EQ( "  abc", string( string( "  abc   " ).trimTrailing() ) ) );
 
 
 	EON_TEST( string, padLeft, shorter,
@@ -998,4 +1183,32 @@ namespace eon
 	EON_TEST( string, indentlines, multiline_second_indented,
 		EON_EQ( "\t\tone two\n\t\t\t\tthree four\n\t\tfive six",
 			string( "one two\n\t\tthree four\nfive six" ).indentLines( 2 ) ) );
+
+
+	EON_TEST( string, operator_plus, string_string,
+		EON_EQ( "abcdef", string( "abc" ) + string( "def" ) ) );
+
+	EON_TEST( string, operator_plus, string_substring,
+		EON_EQ( "abcdef", string( "abc" ) + substring( "def" ) ) );
+
+	EON_TEST( string, operator_plus, substring_string,
+		EON_EQ( "abcdef", substring( "abc" ) + string( "def" ) ) );
+
+	EON_TEST( string, operator_plus, string_stdstring,
+		EON_EQ( "abcdef", string( "abc" ) + std::string( "def" ) ) );
+
+	EON_TEST( string, operator_plus, stdstring_string,
+		EON_EQ( "abcdef", std::string( "abc" ) + string( "def" ) ) );
+
+	EON_TEST( string, operator_plus, string_cstring,
+		EON_EQ( "abcdef", string( "abc" ) + "def" ) );
+
+	EON_TEST( string, operator_plus, cstring_string,
+		EON_EQ( "abcdef", "abc" + string( "def" ) ) );
+
+	EON_TEST( string, operator_plus, string_char_t,
+		EON_EQ( "abcd", string( "abc" ) + char_t( 'd' ) ) );
+
+	EON_TEST( string, operator_plus, char_t_string,
+		EON_EQ( "adef", char_t( 'a' ) + string( "def" ) ) );
 }

@@ -168,9 +168,9 @@
 	Details.Log << "  " << eonitest::style::key_1 << "lower" << eonitest::style::value << u8#lower << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "value" << eonitest::style::value << u8#actual_value << '\n';\
 	Details.Log << "  " << eonitest::style::key_3 << "upper" << eonitest::style::value << u8#upper << '\n';\
-	auto l = ( left );\
+	auto l = ( lower );\
 	auto v = ( actual_value );\
-	auto u = ( right );\
+	auto u = ( upper );\
 	Details.Success = (l <= v && v <= u );\
 	if( !Details.Success )\
 	{\

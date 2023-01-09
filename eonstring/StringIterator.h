@@ -336,7 +336,7 @@ namespace eon
 
 		// Get a copy of the iterator, reset to end of source.
 		inline string_iterator getEnd() const noexcept {
-			if( !*this ) return *this; auto end = *this; return end.resetToEnd(); }
+			if( !hasSource() ) return *this; string_iterator end = *this; return end.resetToEnd(); }
 
 		// Get a copy of the iterator, reset to start of source.
 		inline string_iterator getBegin() const noexcept {

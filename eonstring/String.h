@@ -409,7 +409,6 @@ namespace eon
 
 
 		// Get characters as a sequential container of codepoint elements.
-		// High-to-low range will give characters in reverse!
 		// NOTE: Container must support 'push_back( char_t )'!
 		template<typename container>
 		inline container characters() const { return substr().characters<container>(); }
@@ -418,7 +417,7 @@ namespace eon
 		// High-to-low range will give characters in reverse!
 		// NOTE: Container must support 'push_back( char_t )'!
 		template<typename container>
-		inline container characters( const substring& sub ) const { return sub.lowToHigh().characters<container>(); }
+		inline container characters( const substring& sub ) const { return sub.characters<container>(); }
 
 
 
@@ -501,426 +500,6 @@ namespace eon
 		// NOTE: This is useful for streaming, serializing, and storing.
 		// (See matching [eon::string::decodeIterator] method.)
 		static inline string encode( const substring& sub ) { return encode( sub.begin() ) + "-" + encode( sub.end() ); }
-
-
-
-
-		///////////////////////////////////////////////////////////////////////
-		//
-		// Searching
-		//
-		// Methods searching for substrings will return [eon::substring] objects
-		// as result. These will be "false" for unsuccessful searches.
-		//
-	public:
-
-		// Check if substring contains the specified codepoint.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline bool contains( char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().contains( codepoint, cmp ); }
-
-		// Check if string contains the specified string.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
-		inline bool contains( const string& sub, const compare_T& cmp = substring::FastCompare ) const noexcept {
-			return substr().contains( sub.substr(), cmp ); }
-
-		// Check if string contains any of the characters in the specified string.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline bool containsAnyOf(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().containsAnyOf( characters.substr(), cmp ); }
-
-		// Check if string contains any characters other than the ones in the specified string.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline bool containsOtherThan(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().containsOtherThan( characters.substr(), cmp ); }
-
-
-		// Find first occurrence of 'to_find' string in 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst( const string& to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirst( to_find.substr(), cmp ); }
-
-		// Find first occurrence of 'to_find' string in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst(
-			const string& to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst( to_find.substr(), cmp ); }
-
-		// Find first occurrence of 'to_find' codepoint in 'this'.
-		// Returns the found codepoint as a substring - 'false' substring if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst( char_t to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirst( to_find, cmp ); }
-
-		// Find first occurrence of 'to_find' codepoint in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst(
-			char_t to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst( to_find, cmp ); }
-
-		// Find first occurrence of 'to_find' ASCII character in 'this'.
-		// Returns the found codepoint as a substring - 'false' substring if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst( char to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirst( static_cast<char_t>( to_find ), cmp ); }
-
-		// Find first occurrence of 'to_find' ASCII character in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirst(
-			char to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst(
-				static_cast<char_t>( to_find ), cmp ); }
-
-		// Find the first number within the string.
-		// Will use 'custom_locale' if specified and the default Eon locale if not!
-		// Returns a substring wrapping only the found number, 'false' if not found.
-		// If the 'separator' iterator argument is specified, it will contain
-		// the position of the decimal separator - if it exists.
-		// NOTE: If the decimal separator appears before the first numeral, it will not be counted as part of the number!
-		inline substring findFirstNumber(
-			iterator* separator = nullptr, const locale* custom_locale = nullptr ) const noexcept {
-			return substr().findFirstNumber( separator, custom_locale ); }
-
-		// Find the first number in 'sub' substring of 'this'.
-		// Will use 'custom_locale' if specified and the default Eon locale if not!
-		// Returns a substring wrapping only the found number, 'false' if not found.
-		// If the 'separator' iterator argument is specified, it will contain
-		// the position of the decimal separator - if it exists.
-		// NOTE: If the decimal separator appears before the first numeral, it will not be counted as part of the number!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		inline substring findFirstNumber(
-			const substring& sub, iterator* separator = nullptr, const locale* custom_locale = nullptr ) {
-			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirstNumber( separator, custom_locale ); }
-
-
-		// Find first occurrence of any of the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstOf(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstOf( characters.substr(), cmp ); }
-
-		// Find first occurrence of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		inline iterator findFirstOf( charcat category ) const noexcept { return substr().findFirstOf( category ); }
-
-		// Find first occurrence in 'sub' substring of 'this' of any of the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstOf(
-			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstOf( characters.substr(), cmp ); }
-
-		// Find first occurrence of any character in the specified character class(es) in 'sub' substring of 'this'.
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		inline iterator findFirstOf( charcat characters, substring sub ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstOf( characters ); }
-
-
-		// Find first occurrence of any character not among the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstNotOf(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstNotOf( characters.substr(), cmp ); }
-
-		// Find first occurrence of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		inline iterator findFirstNotOf( charcat characters ) const noexcept {
-			return substr().findFirstNotOf( characters ); }
-
-		// Find first occurrence in 'sub' substring of 'this' of any character not among the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstNotOf(
-			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstNotOf( characters.substr(), cmp ); }
-
-		// Find first occurrence in 'sub' substring of 'this' of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		inline iterator findFirstNotOf( charcat characters, substring sub ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstNotOf( characters ); }
-
-
-		// Similar to [findFirst] for string argument but sections enclosed by double quotes will be skipped.
-		// NOTE: Escaped double quote characters within or outside an enclosed section will not be interpreted
-		//       as neither start nor end of section!
-		// Comparison is done using a binary substring predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirstNotDoubleQuoted(
-			const string& other, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstIgnoreSections( other.substr(), DblQuoteChr, DblQuoteChr, cmp ); }
-
-		// Similar to [findFirst] for char_t argument but sections enclosed by double quotes will be skipped.
-		// NOTE: Escaped double quote characters within or outside an enclosed section will not be interpreted
-		//       as neither start nor end of section!
-		// Comparison is done using a binary char_t predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirstNotDoubleQuoted(
-			char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstIgnoreSections( codepoint, DblQuoteChr, DblQuoteChr, cmp ); }
-
-		// Similar to [findFirst] for string argument but sections enclosed by single quotes will be skipped.
-		// NOTE: Escaped single quote characters within or outside an enclosed section will not be interpreted
-		//       as neither start nor end of section!
-		// Comparison is done using a binary substring predicate.
-		template<typename compare_T = substring::fast_compare>
-		inline substring findFirstNotSingleQuoted(
-			const string& other, const compare_T& cmp = substring::FastCompare ) const noexcept {
-			return substr().findFirstIgnoreSections( other.substr(), SglQuoteChr, SglQuoteChr, cmp ); }
-
-		// Similar to [findFirst] for char_t argument but sections enclosed by single quotes will be skipped.
-		// NOTE: Escaped single quote characters within or outside an enclosed section will not be interpreted
-		//       as neither start nor end of section!
-		// Comparison is done using a binary char_t predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirstNotSingleQuoted(
-			char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstIgnoreSections( codepoint, SglQuoteChr, SglQuoteChr, cmp ); }
-
-		// Similar to [findFirst] for string argument but sections enclosed by
-		// 'double'(' and ')', or '[' and ']', or '{' and '}' will be skipped.
-		// NOTE: Nested enclosures will be accounted for.
-		// Comparison is done using a binary substring predicate.
-		template<typename compare_T = substring::fast_compare>
-		inline substring findFirstNotBraced(
-			const string& other, char_t brace = '(', const compare_T& cmp = substring::FastCompare ) const noexcept {
-			return substr().findFirstIgnoreSections( other.substr(), brace,
-				brace == '(' ? ')' : brace == '[' ? ']' : brace == '{' ? '}' : brace, cmp ); }
-
-		// Similar to [findFirst] for char_t argument but sections enclosed by
-		// 'double'(' and ')', or '[' and ']', or '{' and '}' will be skipped.
-		// NOTE: Nested enclosures will be accounted for.
-		// Comparison is done using a binary char_t predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findFirstNotBraced(
-			char_t codepoint, char_t brace = '(', const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstIgnoreSections(
-				codepoint, brace, brace == '(' ? ')' : brace == '[' ? ']' : brace == '{' ? '}' : brace, cmp ); }
-
-
-		// Find the first character in 'this' string that differs from 'other',
-		// 'false' iterator if none (equal substrings).
-		// Comparison is done using a binary char_t predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstDiff(
-			const string& other, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().findFirstDiff( other.substr(), cmp ); }
-
-		// Find the first character in 'sub' substring in 'this' string that differs from 'other',
-		// 'false' iterator if none (equal substrings).
-		// Comparison is done using a binary char_t predicate.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findFirstDiff( const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return substr().findFirstDiff( sub, cmp ); }
-
-
-
-		// Find last occurrence of 'to_find' string in 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
-		inline substring findLast( const string& to_find, const compare_T& cmp = substring::FastCompare ) const noexcept {
-			return substr().highToLow().findLast( to_find.substr(), cmp ); }
-
-		// Find last occurrence of 'to_find' string in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_compare>
-		inline substring findLast(
-			const string& to_find, const substring& sub, const compare_T& cmp = substring::FastCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast( to_find.substr().highToLow(), cmp ); }
-
-		// Find last occurrence of 'to_find' codepoint in 'this'.
-		// Returns the found codepoint as a substring - 'false' substring if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findLast( char_t to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().highToLow().findLast( to_find, cmp ); }
-
-		// Find last occurrence of 'to_find' codepoint in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findLast(
-			char_t to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast( to_find, cmp ); }
-
-		// Find last occurrence of 'to_find' ASCII character in 'this'.
-		// Returns the found codepoint as a substring - 'false' substring if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findLast( char to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().highToLow().findLast( static_cast<char_t>( to_find ), cmp ); }
-
-		// Find last occurrence of 'to_find' ASCII character in 'sub' substring of 'this'.
-		// Returns the found substring within 'this' - 'false' substring if not found.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline substring findLast(
-			char to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast(
-				static_cast<char_t>( to_find ), cmp ); }
-
-
-		// Find last occurrence of any of the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findLastOf(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().highToLow().findLastOf( characters.substr(), cmp ); }
-
-		// Find last occurrence of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		inline iterator findLastOf( charcat category ) const noexcept {
-			return substr().highToLow().findLastOf( category ); }
-
-		// Find last occurrence in 'sub' substring of 'this' of any of the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findLastOf(
-			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastOf( characters.substr(), cmp ); }
-
-		// Find last occurrence of any character in the specified character class(es) in 'sub' substring of 'this'.
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		inline iterator findLastOf( charcat characters, substring sub ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastOf( characters ); }
-
-
-		// Find last occurrence of any character not among the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findLastNotOf(
-			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().highToLow().findLastNotOf( characters.substr(), cmp ); }
-
-		// Find last occurrence of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		inline iterator findLastNotOf( charcat characters ) const noexcept {
-			return substr().highToLow().findLastNotOf( characters ); }
-
-		// Find last occurrence in 'sub' substring of 'this' of any character not among the specified 'characters'.
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Comparison is done using a binary char_t predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline iterator findLastNotOf(
-			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastNotOf( characters.substr(), cmp ); }
-
-		// Find last occurrence in 'sub' substring of 'this' of any character in the specified character class(es).
-		// NOTE: Multiple classes can be or'ed together!
-		// Returns iterator for the found character - 'false' iterator if not found.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		inline iterator findLastNotOf( charcat characters, substring sub ) const {
-			sub.assertSameSource( Bytes.c_str() );  return sub.highToLow().findLastNotOf( characters ); }
-
-
-
-
-		///////////////////////////////////////////////////////////////////////
-		//
-		// Counting
-		//
-	public:
-
-		// Count occurrences of a character.
-		// Comparison is done using a binary char_t predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		index_t count( char_t to_count, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().count( to_count, cmp ); }
-
-		// Count occurrences of a character in 'sub' substring of 'this'.
-		// Comparison is done using a binary char_t predicate.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline index_t count(
-			char_t to_count, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.count( to_count, cmp ); }
-
-		// Count occurrences of a (sub)string.
-		// NOTE: All occurrences are counted, including overlaps!
-		// Comparison is done using a binary substring predicate.
-		template<typename compare_T = substring::fast_chr_compare>
-		inline index_t count( const string& to_count, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
-			return substr().count( to_count.substr(), cmp ); }
-
-		// Count occurrences of a (sub)string in 'sub' substring of 'this'.
-		// NOTE: All occurrences are counted, including overlaps!
-		// Comparison is done using a binary substring predicate.
-		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
-		template<typename compare_T = substring::fast_chr_compare>
-		inline index_t count(
-			const string& to_count, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
-			sub.assertSameSource( Bytes.c_str() ); return sub.count( to_count.substr(), cmp ); }
 
 
 
@@ -1027,7 +606,7 @@ namespace eon
 
 		// Generic transformation.
 		// Get a copy of the string with all letters in the specified range
-		// transformed by the transformation function.
+		// transformed by the transformation function 'op'.
 		template<typename func>
 		string transform( const substring& area, func op, const eon::locale* custom_locale = nullptr ) const
 		{
@@ -1050,8 +629,8 @@ namespace eon
 
 		// Generic transformation.
 		// Get a copy of the string with letters in the specified range that
-		// are identified by the 'find' callable transformed by the
-		// transformation function.
+		// are identified by the 'find' callable and then transformed by the
+		// transformation function 'op'.
 		// Will use 'custom_locale' if specified and the default Eon locale if not!
 		template<typename finder, typename func>
 		string transform( const substring& area, finder find, func op, const eon::locale* custom_locale = nullptr ) const
@@ -1149,8 +728,7 @@ namespace eon
 		// NOTE: If 'start' is after 'end', a 'high-to-low' ordered substring is returned!
 		// Throws [eon::WrongSource] if 'start' or 'end' are not iterators of 'this'!
 		inline substring substr( const iterator& start, const iterator& end ) const {
-			start.assertSameSource( Bytes.c_str() ); end.assertSameSource( Bytes.c_str() );
-			return substring( start, end ); }
+			start.assertSameSource( Bytes.c_str() ); return substring( start, end ); }
 
 
 		// Get substring based on character position and count.
@@ -1325,29 +903,29 @@ namespace eon
 			return replace( static_cast<char_t>( find ), static_cast<char_t>( replacement ), sub, cmp ); }
 
 		// Get a copy of the entire string with 'sub' substring replaced with 'replacement'.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
 		inline string replace(
-			const substring& sub, const string& replacement, const compare_T& cmp = substring::FastCompare ) const {
+			const substring& sub, const string& replacement, const compare_T& cmp = substring::FastChrCompare ) const {
 			return string( substr( begin(), sub.begin() ) ) + replacement + string( substr( sub.end() ) ); }
 
 		// Get a copy of the entire string with 'sub' substring replaced with 'replacement'.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
 		inline string replace(
-			const substring& sub, char_t replacement, const compare_T& cmp = substring::FastCompare ) const {
+			const substring& sub, char_t replacement, const compare_T& cmp = substring::FastChrCompare ) const {
 			return string( substr( begin(), sub.begin() ) ) + replacement + string( substr( sub.end() ) ); }
 
 
 		// Get a copy of the entire string with each occurrence of any map
 		// 'key' replaced by the corresponding map 'value'.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
 		inline string replace(
-			const std::map<string, string>& find_replace, const compare_T& cmp = substring::FastCompare ) const {
+			const std::map<string, string>& find_replace, const compare_T& cmp = substring::FastChrCompare ) const {
 			return replace( find_replace, substr() ); }
 
 		// Get a copy of the entire string with each occurrence of any map 'key' within
@@ -1365,7 +943,7 @@ namespace eon
 
 
 		// Get a copy of the entire string with all occurrences of 'to_remove' removed.
-		// Comparison is done using a binary substring predicate.
+		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = substring::fast_chr_compare>
 		inline string remove( const string& to_remove, const compare_T& cmp = substring::FastChrCompare ) const {
@@ -1373,7 +951,7 @@ namespace eon
 
 		// Get a copy of the entire string with all occurrences of 'to_remove'
 		// within 'sub' substring of 'this' removed.
-		// Comparison is done using a binary substring predicate.
+		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = substring::fast_chr_compare>
 		inline string remove(
@@ -1381,23 +959,23 @@ namespace eon
 			return replace( to_remove, string::Empty, sub, cmp ); }
 
 		// Get a copy of the entire string with all occurrences of 'to_remove' removed.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
-		inline string remove( char_t to_remove, const compare_T& cmp = substring::FastCompare ) const {
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline string remove( char_t to_remove, const compare_T& cmp = substring::FastChrCompare ) const {
 			return replace( string( to_remove ), string::Empty, substr(), cmp ); }
 
 		// Get a copy of the entire string with all occurrences of 'to_remove'
 		// within 'sub' substring of 'this' removed.
-		// Comparison is done using a binary substring predicate.
-		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
-		template<typename compare_T = substring::fast_compare>
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
 		inline string remove(
-			char_t to_remove, const substring& sub, const compare_T& cmp = substring::FastCompare ) const {
+			char_t to_remove, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
 			return replace( string( to_remove ), string::Empty, sub, cmp ); }
 
 		// Get a copy of the entire string with all occurrences of 'to_remove' removed.
-		// Comparison is done using a binary substring predicate.
+		// Comparison is done using a binary char_t predicate.
 		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
 		template<typename compare_T = substring::fast_chr_compare>
 		inline string remove( char to_remove, const compare_T& cmp = substring::FastChrCompare ) const {
@@ -1528,7 +1106,7 @@ namespace eon
 			return substr().splitNonSequential<container_t>( delimiter ); }
 
 
-		// Get a string that joins the elements from 'start' to 'end' using 'this' string as 'glue' in-between.
+		// Get a string that joins the elements from 'start' to 'end' using 'this' string as 'glue' in between.
 		template<typename iterator_t>
 		string join( iterator_t start, iterator_t end ) const
 		{
@@ -1542,7 +1120,7 @@ namespace eon
 			return str;
 		}
 
-		// Get a string that joins the elements of the 'source' container using 'this' string as 'glue' in-between.
+		// Get a string that joins the elements of the 'source' container using 'this' string as 'glue' in between.
 		template<typename container_t>
 		string join( const container_t& source ) const {
 			return join<typename container_t::const_iterator>( source.begin(), source.end() ); }
@@ -2089,6 +1667,426 @@ namespace eon
 		inline friend bool operator>=( char c, const string& str ) noexcept { return str < c; }
 		inline friend bool operator==( char c, const string& str ) noexcept { return str == c; }
 		inline friend bool operator!=( char c, const string& str ) noexcept { return str != c; }
+
+
+
+
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Searching
+		//
+		// Methods searching for substrings will return [eon::substring] objects
+		// as result. These will be "false" for unsuccessful searches.
+		//
+	public:
+
+		// Check if substring contains the specified codepoint.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline bool contains( char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().contains( codepoint, cmp ); }
+
+		// Check if string contains the specified string.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		template<typename compare_T = substring::fast_compare>
+		inline bool contains( const string& sub, const compare_T& cmp = substring::FastCompare ) const noexcept {
+			return substr().contains( sub.substr(), cmp ); }
+
+		// Check if string contains any of the characters in the specified string.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline bool containsAnyOf(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().containsAnyOf( characters.substr(), cmp ); }
+
+		// Check if string contains any characters other than the ones in the specified string.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline bool containsOtherThan(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().containsOtherThan( characters.substr(), cmp ); }
+
+
+		// Find first occurrence of 'to_find' string in 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst( const string& to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirst( to_find.substr(), cmp ); }
+
+		// Find first occurrence of 'to_find' string in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst(
+			const string& to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst( to_find.substr(), cmp ); }
+
+		// Find first occurrence of 'to_find' codepoint in 'this'.
+		// Returns the found codepoint as a substring - 'false' substring if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst( char_t to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirst( to_find, cmp ); }
+
+		// Find first occurrence of 'to_find' codepoint in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst(
+			char_t to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst( to_find, cmp ); }
+
+		// Find first occurrence of 'to_find' ASCII character in 'this'.
+		// Returns the found codepoint as a substring - 'false' substring if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst( char to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirst( static_cast<char_t>( to_find ), cmp ); }
+
+		// Find first occurrence of 'to_find' ASCII character in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirst(
+			char to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirst(
+				static_cast<char_t>( to_find ), cmp ); }
+
+		// Find the first number within the string.
+		// Will use 'custom_locale' if specified and the default Eon locale if not!
+		// Returns a substring wrapping only the found number, 'false' if not found.
+		// If the 'separator' iterator argument is specified, it will contain
+		// the position of the decimal separator - if it exists.
+		// NOTE: If the decimal separator appears before the first numeral, it will not be counted as part of the number!
+		inline substring findFirstNumber(
+			iterator* separator = nullptr, const locale* custom_locale = nullptr ) const noexcept {
+			return substr().findFirstNumber( separator, custom_locale ); }
+
+		// Find the first number in 'sub' substring of 'this'.
+		// Will use 'custom_locale' if specified and the default Eon locale if not!
+		// Returns a substring wrapping only the found number, 'false' if not found.
+		// If the 'separator' iterator argument is specified, it will contain
+		// the position of the decimal separator - if it exists.
+		// NOTE: If the decimal separator appears before the first numeral, it will not be counted as part of the number!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		inline substring findFirstNumber(
+			const substring& sub, iterator* separator = nullptr, const locale* custom_locale = nullptr ) {
+			sub.assertSameSource( Bytes.c_str() ); return sub.lowToHigh().findFirstNumber( separator, custom_locale ); }
+
+
+		// Find first occurrence of any of the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstOf(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstOf( characters.substr(), cmp ); }
+
+		// Find first occurrence of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		inline iterator findFirstOf( charcat category ) const noexcept { return substr().findFirstOf( category ); }
+
+		// Find first occurrence in 'sub' substring of 'this' of any of the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstOf(
+			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstOf( characters.substr(), cmp ); }
+
+		// Find first occurrence of any character in the specified character class(es) in 'sub' substring of 'this'.
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		inline iterator findFirstOf( charcat characters, substring sub ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstOf( characters ); }
+
+
+		// Find first occurrence of any character not among the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstNotOf(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstNotOf( characters.substr(), cmp ); }
+
+		// Find first occurrence of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		inline iterator findFirstNotOf( charcat characters ) const noexcept {
+			return substr().findFirstNotOf( characters ); }
+
+		// Find first occurrence in 'sub' substring of 'this' of any character not among the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstNotOf(
+			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstNotOf( characters.substr(), cmp ); }
+
+		// Find first occurrence in 'sub' substring of 'this' of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		inline iterator findFirstNotOf( charcat characters, substring sub ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.findFirstNotOf( characters ); }
+
+
+		// Similar to [findFirst] for string argument but sections enclosed by double quotes will be skipped.
+		// NOTE: Escaped double quote characters within or outside an enclosed section will not be interpreted
+		//       as neither start nor end of section!
+		// Comparison is done using a binary substring predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirstNotDoubleQuoted(
+			const string& other, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstIgnoreSections( other.substr(), DblQuoteChr, DblQuoteChr, cmp ); }
+
+		// Similar to [findFirst] for char_t argument but sections enclosed by double quotes will be skipped.
+		// NOTE: Escaped double quote characters within or outside an enclosed section will not be interpreted
+		//       as neither start nor end of section!
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirstNotDoubleQuoted(
+			char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstIgnoreSections( codepoint, DblQuoteChr, DblQuoteChr, cmp ); }
+
+		// Similar to [findFirst] for string argument but sections enclosed by single quotes will be skipped.
+		// NOTE: Escaped single quote characters within or outside an enclosed section will not be interpreted
+		//       as neither start nor end of section!
+		// Comparison is done using a binary substring predicate.
+		template<typename compare_T = substring::fast_compare>
+		inline substring findFirstNotSingleQuoted(
+			const string& other, const compare_T& cmp = substring::FastCompare ) const noexcept {
+			return substr().findFirstIgnoreSections( other.substr(), SglQuoteChr, SglQuoteChr, cmp ); }
+
+		// Similar to [findFirst] for char_t argument but sections enclosed by single quotes will be skipped.
+		// NOTE: Escaped single quote characters within or outside an enclosed section will not be interpreted
+		//       as neither start nor end of section!
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirstNotSingleQuoted(
+			char_t codepoint, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstIgnoreSections( codepoint, SglQuoteChr, SglQuoteChr, cmp ); }
+
+		// Similar to [findFirst] for string argument but sections enclosed by
+		// 'double'(' and ')', or '[' and ']', or '{' and '}' will be skipped.
+		// NOTE: Nested enclosures will be accounted for.
+		// Comparison is done using a binary substring predicate.
+		template<typename compare_T = substring::fast_compare>
+		inline substring findFirstNotBraced(
+			const string& other, char_t brace = '(', const compare_T& cmp = substring::FastCompare ) const noexcept {
+			return substr().findFirstIgnoreSections( other.substr(), brace,
+				brace == '(' ? ')' : brace == '[' ? ']' : brace == '{' ? '}' : brace, cmp ); }
+
+		// Similar to [findFirst] for char_t argument but sections enclosed by
+		// 'double'(' and ')', or '[' and ']', or '{' and '}' will be skipped.
+		// NOTE: Nested enclosures will be accounted for.
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findFirstNotBraced(
+			char_t codepoint, char_t brace = '(', const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstIgnoreSections(
+				codepoint, brace, brace == '(' ? ')' : brace == '[' ? ']' : brace == '{' ? '}' : brace, cmp ); }
+
+
+		// Find the first character in 'this' string that differs from 'other',
+		// 'false' iterator if none (equal substrings).
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstDiff(
+			const string& other, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().findFirstDiff( other.substr(), cmp ); }
+
+		// Find the first character in 'sub' substring in 'this' string that differs from 'other',
+		// 'false' iterator if none (equal substrings).
+		// Comparison is done using a binary char_t predicate.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findFirstDiff( const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return substr().findFirstDiff( sub, cmp ); }
+
+
+
+		// Find last occurrence of 'to_find' string in 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		template<typename compare_T = substring::fast_compare>
+		inline substring findLast( const string& to_find, const compare_T& cmp = substring::FastCompare ) const noexcept {
+			return substr().highToLow().findLast( to_find.substr(), cmp ); }
+
+		// Find last occurrence of 'to_find' string in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_compare>
+		inline substring findLast(
+			const string& to_find, const substring& sub, const compare_T& cmp = substring::FastCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast( to_find.substr().highToLow(), cmp ); }
+
+		// Find last occurrence of 'to_find' codepoint in 'this'.
+		// Returns the found codepoint as a substring - 'false' substring if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findLast( char_t to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().highToLow().findLast( to_find, cmp ); }
+
+		// Find last occurrence of 'to_find' codepoint in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findLast(
+			char_t to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast( to_find, cmp ); }
+
+		// Find last occurrence of 'to_find' ASCII character in 'this'.
+		// Returns the found codepoint as a substring - 'false' substring if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findLast( char to_find, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().highToLow().findLast( static_cast<char_t>( to_find ), cmp ); }
+
+		// Find last occurrence of 'to_find' ASCII character in 'sub' substring of 'this'.
+		// Returns the found substring within 'this' - 'false' substring if not found.
+		// Comparison is done using a binary substring predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline substring findLast(
+			char to_find, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLast(
+				static_cast<char_t>( to_find ), cmp ); }
+
+
+		// Find last occurrence of any of the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findLastOf(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().highToLow().findLastOf( characters.substr(), cmp ); }
+
+		// Find last occurrence of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		inline iterator findLastOf( charcat category ) const noexcept {
+			return substr().highToLow().findLastOf( category ); }
+
+		// Find last occurrence in 'sub' substring of 'this' of any of the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findLastOf(
+			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastOf( characters.substr(), cmp ); }
+
+		// Find last occurrence of any character in the specified character class(es) in 'sub' substring of 'this'.
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		inline iterator findLastOf( charcat characters, substring sub ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastOf( characters ); }
+
+
+		// Find last occurrence of any character not among the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findLastNotOf(
+			const string& characters, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().highToLow().findLastNotOf( characters.substr(), cmp ); }
+
+		// Find last occurrence of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		inline iterator findLastNotOf( charcat characters ) const noexcept {
+			return substr().highToLow().findLastNotOf( characters ); }
+
+		// Find last occurrence in 'sub' substring of 'this' of any character not among the specified 'characters'.
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Comparison is done using a binary char_t predicate.
+		// NOTE: ASCII-only optimization is only done if [eon::substring::FastChrCompare] is used!
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline iterator findLastNotOf(
+			const string& characters, substring sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.highToLow().findLastNotOf( characters.substr(), cmp ); }
+
+		// Find last occurrence in 'sub' substring of 'this' of any character in the specified character class(es).
+		// NOTE: Multiple classes can be or'ed together!
+		// Returns iterator for the found character - 'false' iterator if not found.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		inline iterator findLastNotOf( charcat characters, substring sub ) const {
+			sub.assertSameSource( Bytes.c_str() );  return sub.highToLow().findLastNotOf( characters ); }
+
+
+
+
+		///////////////////////////////////////////////////////////////////////
+		//
+		// Counting
+		//
+	public:
+
+		// Count occurrences of a character.
+		// Comparison is done using a binary char_t predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		index_t count( char_t to_count, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().count( to_count, cmp ); }
+
+		// Count occurrences of a character in 'sub' substring of 'this'.
+		// Comparison is done using a binary char_t predicate.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline index_t count(
+			char_t to_count, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.count( to_count, cmp ); }
+
+		// Count occurrences of a (sub)string.
+		// NOTE: All occurrences are counted, including overlaps!
+		// Comparison is done using a binary substring predicate.
+		template<typename compare_T = substring::fast_chr_compare>
+		inline index_t count( const string& to_count, const compare_T& cmp = substring::FastChrCompare ) const noexcept {
+			return substr().count( to_count.substr(), cmp ); }
+
+		// Count occurrences of a (sub)string in 'sub' substring of 'this'.
+		// NOTE: All occurrences are counted, including overlaps!
+		// Comparison is done using a binary substring predicate.
+		// Throws [eon::WrongSource] if 'sub' is not a substring of 'this'!
+		template<typename compare_T = substring::fast_chr_compare>
+		inline index_t count(
+			const string& to_count, const substring& sub, const compare_T& cmp = substring::FastChrCompare ) const {
+			sub.assertSameSource( Bytes.c_str() ); return sub.count( to_count.substr(), cmp ); }
 
 
 

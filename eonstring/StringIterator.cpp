@@ -32,6 +32,7 @@ namespace eon
 		state = utf8d[ 256 + state * 16 + type ];
 		return state;
 	}
+	EON_NO_TEST( string_iterator, _utf8Decode );
 
 
 

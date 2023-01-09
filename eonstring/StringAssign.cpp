@@ -20,13 +20,18 @@ namespace eon
 			*this += input[ i ];
 		return *this;
 	}
-	EON_TEST_2STEP( string, utf8str_assign, empty,
-		char_t inp[ 1 ],
-		EON_EQ( "\0", string().assign( inp, 0 ) ) );
-	EON_TEST_3STEP( string, utf8str_assign, nonempty,
-		char_t inp[ 1 ],
-		inp[ 0 ] = char_t( 'a' ),
-		EON_EQ( "a", string().assign( "a", 1 ) ) );
+	EON_TEST_3STEP( string, assign, char_t_string_length_empty,
+		const char_t* source EON_CSC( 0 ),
+		string obj,
+		EON_EQ( 0, obj.assign( source, 0 ).length() ) );
+	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_length,
+		const char_t source[ 4 ] EON_CSC( 0x41, 0x42, 0x63, 0 ),
+		string obj,
+		EON_EQ( 3, obj.assign( source, 3 ).length() ) );
+	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_value,
+		const char_t source[ 4 ] EON_CSC( 0x41, 0x42, 0x63, 0 ),
+		string obj,
+		EON_EQ( "ABc", obj.assign( source, 3 ) ) );
 
 	string& string::assign( const char* input, index_t input_length )
 	{
@@ -36,10 +41,21 @@ namespace eon
 		Bytes.assign( input, input_length );
 		return *this;
 	}
-	EON_TEST( string, cstr_assign, empty,
-		EON_EQ( string(), string().assign( "", 0 ) ) );
-	EON_TEST( string, cstr_assign, nonempty,
-		EON_EQ( "abc", string().assign( "abc", 3 ) ) );
+	EON_TEST_3STEP( string, assign, cstr_length_empty_length,
+		const char* source = "",
+		string obj,
+		EON_EQ( 0, obj.assign( source, 0 ).length() ) );
+	EON_TEST_3STEP( string, assign, cstr_length_nonempty_length,
+		const char* source = "abcdef",
+		string obj,
+		EON_EQ( 4, obj.assign( source, 4 ).length() ) );
+	EON_TEST_3STEP( string, assign, cstr_length_nonempty_value,
+		const char* source = "abcdef",
+		string obj,
+		EON_EQ( "abcd", obj.assign( "abcdef", 4 ) ) );
+	EON_TEST_2STEP( string, assign, cstr_string_invalid_utf8,
+		const char source[ 4 ] EON_CSC( 0x41, -28, 0x63, 0 ),
+		EON_RAISE( string().assign( source, 3 ), InvalidUTF8 ) );
 
 	string& string::assign( index_t copies, char_t input )
 	{
@@ -51,12 +67,15 @@ namespace eon
 		NumChars = copies;
 		return *this;
 	}
-	EON_TEST( string, charcopies_assign, none,
-		EON_EQ( string(), string().assign( static_cast<index_t>( 0 ), static_cast<char_t>( 'a' ) ) ) );
-	EON_TEST( string, charcopies_assign, one,
-		EON_EQ( "a", string().assign( static_cast<index_t>( 1 ), static_cast<char_t>( 'a' ) ) ) );
-	EON_TEST( string, charcopies_assign, many,
-		EON_EQ( "aaaaaaaaaa", string().assign( static_cast<index_t>( 10 ), static_cast<char_t>( 'a' ) ) ) );
+	EON_TEST( string, assign, char_t_copies_none,
+		EON_EQ( "", string().assign( static_cast<index_t>( 0 ), char_t( 'a' ) ) ) );
+	EON_TEST( string, assign, char_t_copies_multiple,
+		EON_EQ( "aaaaa", string().assign( static_cast<index_t>( 5 ), char_t( 'a' ) ) ) );
+
+	EON_TEST( string, assign, char_copies_none,
+		EON_EQ( "", string().assign( static_cast<index_t>( 0 ), 'a' ) ) );
+	EON_TEST( string, assign, char_copies_multiple,
+		EON_EQ( "aaaaa", string().assign( static_cast<index_t>( 5 ), 'a' ) ) );
 
 	string& string::assign( index_t copies, const string& other )
 	{
@@ -72,11 +91,9 @@ namespace eon
 		else
 			return assign( copies, string( other ) );
 	}
-	EON_TEST( string, stringcopies_assign, none,
-		EON_EQ( string(), string().assign( static_cast<index_t>( 0 ), string( "ab" ) ) ) );
-	EON_TEST( string, stringcopies_assign, one,
-		EON_EQ( "ab", string().assign( static_cast<index_t>( 1 ), string( "ab" ) ) ) );
-	EON_TEST( string, stringcopies_assign, many,
+	EON_TEST( string, assign, string_copies_none,
+		EON_EQ( "", string().assign( static_cast<index_t>( 0 ), string( "ab" ) ) ) );
+	EON_TEST( string, assign, string_copies_multiple,
 		EON_EQ( "ababababab", string().assign( static_cast<index_t>( 5 ), string( "ab" ) ) ) );
 
 	string& string::assign( index_t copies, const std::string& input )
@@ -95,11 +112,9 @@ namespace eon
 		else
 			return assign( copies, std::string( input ) );
 	}
-	EON_TEST( string, stdstringcopies_assign, none,
-		EON_EQ( string(), string().assign( static_cast<index_t>( 0 ), std::string( "ab" ) ) ) );
-	EON_TEST( string, stdstringcopies_assign, one,
-		EON_EQ( "ab", string().assign( static_cast<index_t>( 1 ), std::string( "ab" ) ) ) );
-	EON_TEST( string, stdstringcopies_assign, many,
+	EON_TEST( string, assign, stdstring_copies_none,
+		EON_EQ( "", string().assign( static_cast<index_t>( 0 ), std::string( "ab" ) ) ) );
+	EON_TEST( string, assign, stdstring_copies_multiple,
 		EON_EQ( "ababababab", string().assign( static_cast<index_t>( 5 ), std::string( "ab" ) ) ) );
 
 	string& string::assign( index_t copies, const substring& input )
@@ -124,16 +139,34 @@ namespace eon
 	EON_TEST( string, assign, substringcopies_many,
 		EON_EQ( "ababababab", string().assign( static_cast<index_t>( 5 ), substring( "ab" ) ) ) );
 
+	EON_TEST_3STEP( string, operator_asgn, copy_1,
+		string source( "abcdef" ),
+		string obj = source,
+		EON_EQ( "abcdef", source ) );
+	EON_TEST_3STEP( string, operator_asgn, copy_2,
+		string source( "abcdef" ),
+		string obj = source,
+		EON_EQ( "abcdef", obj ) );
+
+	EON_TEST_3STEP( string, operator_asgn, move_1,
+		string source( "abcdef" ),
+		string obj = std::move( source ),
+		EON_EQ( "", source ) );
+	EON_TEST_3STEP( string, operator_asgn, move_2,
+		string source( "abcdef" ),
+		string obj = std::move( source ),
+		EON_EQ( "abcdef", obj ) );
+
 	string& string::operator=( const substring& input )
 	{
 		_assertValidUtf8( input );
 		return input.isLowToHigh() ? _assignLowToHigh( input ) : _assignHighToLow( input );
 	}
-	EON_TEST( string, substring_asgn, empty,
-		EON_EQ( string(), string() = substring() ) );
-	EON_TEST( string, substring_asgn, low2high,
+	EON_TEST( string, operator_asgn, substring_empty,
+		EON_EQ( "", string() = substring( "" ) ) );
+	EON_TEST( string, operator_asgn, substring_lowTohigh,
 		EON_EQ( "abc", string() = substring( "abc" ) ) );
-	EON_TEST_2STEP( string, substring_asgn, high2low,
+	EON_TEST_2STEP( string, operator_asgn, substring_highTolow,
 		auto inp = substring( "cba" ).highToLow(),
 		EON_EQ( "abc", string() = inp ) );
 
@@ -154,6 +187,11 @@ namespace eon
 	}
 	EON_NO_TEST( string, _assignLowToHigh );
 
+	EON_TEST( string, operator_asgn, stdstring_empty,
+		EON_EQ( "", string() = std::string( "" ) ) );
+	EON_TEST( string, operator_asgn, stdstring_something,
+		EON_EQ( "abcdef", string() = std::string( "abcdef" ) ) );
+
 	string& string::operator=( std::string&& input )
 	{
 		substring sub( input );
@@ -162,13 +200,34 @@ namespace eon
 		Bytes = std::move( input );
 		return *this;
 	}
-	EON_TEST_2STEP( string, move_asgn, basic,
-		string inp( "value" ),
-		EON_EQ( "value", string() = std::move( inp ) ) );
-	EON_TEST_3STEP( string, move_assign, moved,
-		string inp( "value" ),
-		string dummy = std::move( inp ),
-		EON_TRUE( inp.empty() ) );
+	EON_TEST_3STEP( string, operator_asgn, stdstring_move_1,
+		std::string source( "abcdef" ),
+		string obj = std::move( source ),
+		EON_EQ( "", source ) );
+	EON_TEST_3STEP( string, operator_asgn, stdstring_move_2,
+		std::string source( "abcdef" ),
+		string obj = std::move( source ),
+		EON_EQ( "abcdef", obj ) );
+
+	EON_TEST( string, operator_asgn, cstring_empty,
+		EON_EQ( "", string() = "" ) );
+	EON_TEST( string, operator_asgn, cstring_something,
+		EON_EQ( "abcdef", string() = "abcdef" ) );
+
+	EON_TEST( string, operator_asgn, char_t_ASCII,
+		EON_EQ( "a", string() = char_t( 'a' ) ) );
+	EON_TEST( string, operator_asgn, char_t_UTF8,
+		EON_EQ( u8"ã", string() = char_t( 0xE3 ) ) );
+
+	EON_TEST( string, operator_asgn, char,
+		EON_EQ( "a", string() = 'a' ) );
+	EON_TEST( string, operator_asgn, char_invalid_UTF8,
+		EON_RAISE( string() = static_cast<char>( -22 ), InvalidUTF8 ) );
+
+	EON_TEST( string, operator_asgn, unsigned_char,
+		EON_EQ( "a", string() = 'a' ) );
+	EON_TEST( string, operator_asgn, unsigned_char_invalid_UTF8,
+		EON_RAISE( string() = static_cast<char>( 0xEA ), InvalidUTF8 ) );
 
 	string& string::operator=( const std::initializer_list<char_t>& input )
 	{
@@ -178,7 +237,7 @@ namespace eon
 			*this += c;
 		return *this;
 	}
-	EON_TEST( string, charinit_asgn, basic,
+	EON_TEST( string, operator_asgn, char_t_initializer,
 		EON_EQ( "abc", string() = EON_CSC( char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) ) ) );
 
 	string& string::operator=( const std::vector<char_t>& input )
@@ -189,7 +248,7 @@ namespace eon
 			*this += c;
 		return *this;
 	}
-	EON_TEST( string, charvecinit_asgn, basic,
+	EON_TEST( string, operator_asgn, char_t_vector,
 		EON_EQ( "abc", string() = std::vector<char_t>EON_CSC( char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) ) ) );
 
 	string& string::operator=( const std::initializer_list<char>& input )
@@ -200,7 +259,7 @@ namespace eon
 			*this += static_cast<byte_t>( chr );
 		return *this;
 	}
-	EON_TEST( string, chrinit_asgn, basic,
+	EON_TEST( string, operator_asgn, char_initializer,
 		EON_EQ( "abc", string() = EON_CSC( 'a', 'b', 'c' ) ) );
 
 	string& string::operator=( const std::initializer_list<unsigned char>& input )
@@ -211,6 +270,11 @@ namespace eon
 			*this += static_cast<byte_t>( chr );
 		return *this;
 	}
-	EON_TEST( string, uchrinit_asgn, basic,
+	EON_TEST( string, operator_asgn, unsigned_char_initializer,
 		EON_EQ( "abc", string() = EON_CSC( unsigned char( 'a' ), unsigned char( 'b' ), unsigned char( 'c' ) ) ) );
+
+	EON_TEST( string, operator_asgn, bool_true,
+		EON_EQ( "true", string() = true ) );
+	EON_TEST( string, operator_asgn, bool_false,
+		EON_EQ( "false", string() = false ) );
 }

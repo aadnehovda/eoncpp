@@ -12,6 +12,71 @@ namespace eon
 	// Strings as Numbers
 	//
 
+	EON_TEST( string, numeralsOnly, no,
+		EON_FALSE( string( "1b2" ).numeralsOnly() ) );
+	EON_TEST( string, numeralsOnly, yes,
+		EON_TRUE( string( "123" ).numeralsOnly() ) );
+	EON_TEST( string, numeralsOnly, decimal_sep,
+		EON_FALSE( string( "1.3" ).numeralsOnly() ) );
+	EON_TEST( string, numeralsOnly, UTF8,
+		EON_TRUE( string( u8"1١" ).numeralsOnly() ) );
+
+	EON_TEST_2STEP( string, numeralsOnly, substr,
+		string obj( "ab12cd" ),
+		EON_TRUE( obj.numeralsOnly( obj.substr( obj.begin() + 2, obj.end() - 2 ) ) ) );
+
+
+	EON_TEST( string, isUInt, yes,
+		EON_TRUE( string( "12345" ).isUInt() ) );
+	EON_TEST( string, isUInt, no,
+		EON_FALSE( string( "-12345" ).isUInt() ) );
+
+	EON_TEST_2STEP( string, isUInt, substr,
+		string obj( "-12345.0" ),
+		EON_TRUE( obj.isUInt( obj.substr( obj.begin() + 1, obj.end() - 2 ) ) ) );
+
+
+	EON_TEST( string, isInt, basic,
+		EON_TRUE( string( "-12345" ).isInt() ) );
+
+	EON_TEST_2STEP( string, isInt, substr,
+		string obj( "-12345.0" ),
+		EON_TRUE( obj.isInt( obj.substr( obj.begin(), obj.end() - 2 ) ) ) );
+
+	EON_TEST( string, isFloat, no,
+		EON_FALSE( string( "-12345" ).isFloat() ) );
+	EON_TEST( string, isFloat, yes,
+		EON_TRUE( string( "-123.45" ).isFloat() ) );
+
+	EON_TEST_2STEP( string, isFloat, substr,
+		string obj( "a-123.45b" ),
+		EON_TRUE( obj.isFloat( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+
+
+	EON_TEST( string, isNumerical, uint,
+		EON_TRUE( string( "123" ).isNumerical() ) );
+	EON_TEST( string, isNumerical, int,
+		EON_TRUE( string( "-123" ).isNumerical() ) );
+	EON_TEST( string, isNumerical, float,
+		EON_TRUE( string( "-12.3" ).isNumerical() ) );
+
+	EON_TEST_2STEP( string, isNumerical, substr_uint,
+		string obj( "a123b" ),
+		EON_TRUE( obj.isNumerical( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+	EON_TEST_2STEP( string, isNumerical, substr_int,
+		string obj( "a-123b" ),
+		EON_TRUE( obj.isNumerical( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );;
+	EON_TEST_2STEP( string, isNumerical, substr_float,
+		string obj( "a-12.3b" ),
+		EON_TRUE( obj.isNumerical( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
+
+
+	EON_TEST( string, toIntT, proper,
+		EON_EQ( 123, string( "123" ).toIntT() ) );
+	EON_TEST( string, toIntT, invalid,
+		EON_EQ( 0, string( "12b3" ).toIntT() ) );
+
+
 	string string::separateThousands( char_t thousands_sep, const eon::locale* custom_locale ) const
 	{
 		iterator separator;
