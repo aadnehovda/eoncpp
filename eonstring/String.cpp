@@ -171,6 +171,29 @@ namespace eon
 
 	///////////////////////////////////////////////////////////////////////////
 	//
+	// Counting
+	//
+
+	EON_TEST( string, count, char_t_several,
+		EON_EQ( 3, string( "abacad" ).count( char_t( 'a' ) ) ) );
+
+	EON_TEST_2STEP( string, count, char_t_sub_several,
+		string obj( "abacadaeaf" ),
+		EON_EQ( 3, obj.count( char_t( 'a' ), obj.substr( 2, 6 ) ) ) );
+
+
+	EON_TEST( string, count, str_several,
+		EON_EQ( 4, string( "abacabadabaeabaf" ).count( string( "ab" ) ) ) );
+
+	EON_TEST_2STEP( string, count, str_sub_several,
+		string obj( "abacabadabaeabaf" ),
+		EON_EQ( 2, obj.count( string( "ab" ), obj.substr( 4, 6 ) ) ) );
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////
+	//
 	// Wide-string Support
 	//
 

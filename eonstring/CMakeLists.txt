@@ -30,6 +30,7 @@ set(STRING_SOURCES
 	StringIteration.cpp
 	StringModifying.cpp
 	StringStatic.cpp
+	StringSearching.cpp
 	StringIterator.cpp
 	Substring.cpp
 	SubstringReadOnly.cpp
