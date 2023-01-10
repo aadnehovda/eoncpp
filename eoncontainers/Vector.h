@@ -102,8 +102,8 @@ namespace eon
 			iterator() = default;
 			iterator( const iterator& other ) noexcept : const_iterator( other ) {}
 
-			inline T& operator*() { return ((vector<T>*)Owner)->at( Pos ); }
-			inline T* operator->() { return &((vector<T>*)Owner)->at( Pos ); }
+			inline T& operator*() { return ((vector<T>*)this->Owner)->at( this->Pos ); }
+			inline T* operator->() { return &((vector<T>*)this->Owner)->at( this->Pos ); }
 
 			inline iterator& operator+=( int elements ) noexcept {
 				*(const_iterator*)this += elements; return *this; }
@@ -117,7 +117,7 @@ namespace eon
 
 		private:
 			inline iterator( vector<T>* owner, size_t pos ) noexcept {
-				Owner = owner; Pos = ( Owner && pos < Owner->NumElements ) ? pos : SIZE_MAX; }
+				this->Owner = owner; this->Pos = ( this->Owner && pos < this->Owner->NumElements ) ? pos : SIZE_MAX; }
 			friend class vector<T>;
 		};
 
@@ -137,7 +137,7 @@ namespace eon
 		inline vector( const vector& other ) { *this = other; }
 
 		// Take ownership of another vector's elements
-		inline vector( vector&& other ) noexcept { *this = std::move( other ), }
+		inline vector( vector&& other ) noexcept { *this = std::move( other ); }
 
 		// Construct from a literal list of elements
 		inline vector( std::initializer_list<T> elements ) { for( auto& elm : elements ) append( std::move( elm ) ); }
@@ -365,8 +365,9 @@ namespace eon
 			}
 		}
 
-		inline size_t _pos( int64_t pos ) const noexcept { return pos >= 0 ? static_cast<size_t>( pos )
-			: static_cast<size_t>( -pos ) > Elements.size() ? 0 : Elements.size() - static_cast<size_t>( -pos ); }
+		inline size_t _pos( int64_t pos ) const noexcept {
+			return pos >= 0 ? static_cast<size_t>( pos ) : static_cast<size_t>( -pos ) > Elements.numElements() ? 0
+				: Elements.numElements() - static_cast<size_t>( -pos ); }
 
 
 
