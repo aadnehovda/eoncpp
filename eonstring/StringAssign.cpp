@@ -21,7 +21,7 @@ namespace eon
 		return *this;
 	}
 	EON_TEST_3STEP( string, assign, char_t_string_length_empty,
-		const char_t* source EON_CSC( 0 ),
+		const char_t* source( { 0 } ),
 		string obj,
 		EON_EQ( 0, obj.assign( source, 0 ).length() ) );
 	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_length,
@@ -249,7 +249,7 @@ namespace eon
 		return *this;
 	}
 	EON_TEST( string, operator_asgn, char_t_vector,
-		EON_EQ( "abc", string() = std::vector<char_t>EON_CSC( char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) ) ) );
+		EON_EQ( "abc", string() = std::vector<char_t>( { char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) } ) ) );
 
 	string& string::operator=( const std::initializer_list<char>& input )
 	{

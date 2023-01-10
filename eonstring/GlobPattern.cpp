@@ -70,7 +70,7 @@ namespace eon
 
 	EON_TEST_3STEP( globpattern, doNotMatch, basic,
 		globpattern obj( "abc" ),
-		obj.doNotMatch( EON_CSC( 'a', 'b', 'c' ) ),
+		obj.doNotMatch( { 'a', 'b', 'c' } ),
 		EON_EQ( 3, obj.charsNotMatched().size() ) );
 
 	EON_NO_TEST( globpattern, matchAll );

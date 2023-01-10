@@ -87,18 +87,18 @@ namespace eon
 		EON_EQ( 2, string( "\t\tabc" ).indentationLevel() ) );
 
 	EON_TEST_2STEP( string, characters, ASCII,
-		std::vector<char_t> exp EON_CSC( 'a', 'b', 'c' ),
+		std::vector<char_t> exp( { 'a', 'b', 'c' } ),
 		EON_EQ( exp, string( "abc" ).characters<std::vector<char_t>>() ) );
 	EON_TEST_2STEP( string, characters, UTF8,
-		std::vector<char_t> exp EON_CSC( 'a', char_t( 0xFF ), 'c' ),
+		std::vector<char_t> exp( { 'a', char_t( 0xFF ), 'c' } ),
 		EON_EQ( exp, string( u8"aÿc" ).characters<std::vector<char_t>>() ) );
 
 	EON_TEST_3STEP( string, characters, substr_ASCII,
-		std::vector<char_t> exp EON_CSC( 'b', 'c' ),
+		std::vector<char_t> exp( { 'b', 'c' } ),
 		string obj = "abcd",
 		EON_EQ( exp, obj.characters<std::vector<char_t>>( obj.substr( obj.begin() + 1, obj.end() - 1 ) ) ) );
 	EON_TEST_3STEP( string, characters, substr_HighToLow,
-		std::vector<char_t> exp EON_CSC( 'c', 'b' ),
+		std::vector<char_t> exp( { 'c', 'b' } ),
 		string obj = "abcd",
 		EON_EQ( exp, obj.characters<std::vector<char_t>>( obj.substr( obj.begin() + 1, obj.end() - 1 ).highToLow() ) ) );
 
@@ -329,26 +329,26 @@ namespace eon
 	//
 
 	EON_TEST_2STEP( string, _findDecimalSeparator, none,
-		std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
+		std::vector<char_t> digits( { char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) } ),
 		EON_EQ( 5, string()._findDecimalSeparator( digits, '.' ) ) );
 	EON_TEST_2STEP( string, _findDecimalSeparator, first,
-		std::vector<char_t> digits = EON_CSC( char_t( '.' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
+		std::vector<char_t> digits( { char_t( '.' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) } ),
 		EON_EQ( 0, string()._findDecimalSeparator( digits, '.' ) ) );
 	EON_TEST_2STEP( string, _findDecimalSeparator, last,
-		std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '.' ) ),
+		std::vector<char_t> digits( { char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '.' ) } ),
 		EON_EQ( 4, string()._findDecimalSeparator( digits, '.' ) ) );
 	EON_TEST_2STEP( string, _findDecimalSeparator, mid,
-		std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '.' ), char_t( '4' ), char_t( '5' ) ),
+		std::vector<char_t> digits( { char_t( '1' ), char_t( '2' ), char_t( '.' ), char_t( '4' ), char_t( '5' ) } ),
 		EON_EQ( 2, string()._findDecimalSeparator( digits, '.' ) ) );
 
 	//EON_TEST_2STEP( string, _zeroIndexRoundUp, non_zero_index,
-	//	std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
+	//	std::vector<char_t> digits =( { char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
 	//	EON_FALSE( _zeroIndexRoundUp( digits, 1 ) );
 	//EON_TEST_2STEP( string, _zeroIndexRoundUp, bool,
-	//	std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
+	//	std::vector<char_t> digits =( { char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
 	//	EON_TRUE( _zeroIndexRoundUp( digits, 0 ) );
 	//EON_CMPTEST_3STEP( string, _zeroIndexRoundUp, str,
-	//	std::vector<char_t> digits = EON_CSC( char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
+	//	std::vector<char_t> digits =( { char_t( '1' ), char_t( '2' ), char_t( '3' ), char_t( '4' ), char_t( '5' ) ),
 	//	_zeroIndexRoundUp( digits, 0 ),
 	//	"192345", string().join( digits ) );
 }

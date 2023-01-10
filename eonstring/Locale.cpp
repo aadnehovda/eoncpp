@@ -1,4 +1,4 @@
-#include "Locale.h"
+Ôªø#include "Locale.h"
 #include <eoninlinetest/InlineTest.h>
 
 
@@ -36,20 +36,20 @@ namespace eon
 	EON_TEST( locale, toUpper, standard_1,
 		EON_EQ( L'A', locale::get().toUpper( L'a' ) ) );
 	EON_TEST( locale, toUpper, standard_2,
-		EON_EQ( L'¡', locale::get().toUpper( L'·' ) ) );
+		EON_EQ( L'√Å', locale::get().toUpper( L'√°' ) ) );
 	EON_TEST( locale, toUpper, no_NB_1,
 		EON_EQ( L'A', locale::get().toUpper( L'a' ) ) );
 	EON_TEST( locale, toUpper, no_NB_2,
-		EON_EQ( L'≈', locale::get().toUpper( L'Â' ) ) );
+		EON_EQ( L'√Ö', locale::get().toUpper( L'√•' ) ) );
 
 	EON_TEST( locale, toLower, standard_1,
 		EON_EQ( L'a', locale::get().toLower( L'A' ) ) );
 	EON_TEST( locale, toLower, standard_2,
-		EON_EQ( L'·', locale::get().toLower( L'¡' ) ) );
+		EON_EQ( L'√°', locale::get().toLower( L'√Å' ) ) );
 	EON_TEST( locale, toLower, no_NB_1,
 		EON_EQ( L'a', locale::get().toLower( L'A' ) ) );
 	EON_TEST( locale, toLower, no_NB_2,
-		EON_EQ( L'Â', locale::get().toLower( L'≈' ) ) );
+		EON_EQ( L'√•', locale::get().toLower( L'√Ö' ) ) );
 
 
 

@@ -91,7 +91,7 @@ namespace eonitest
 			auto num = ext.toUInt32();
 			if( num == 9 )
 				return false;
-			path += "." + eon::string( num + 1 );
+			path += "." + eon::string( num + 1 ).stdstr();
 			return true;
 		}
 	}

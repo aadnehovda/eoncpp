@@ -19,10 +19,12 @@
 	// Declare multiple variables of the same type in one go.
 #	define EON_DECLARE( type, ... ) type __VA_ARGS__
 
+#define utf8( value ) u8 ## value
+
 #	define EON_TRUE( expression )\
 	Details.Log << "Testing " << eonitest::style::item_1 << "expression" << eonitest::style::normal\
 		<< " evaluates to " << eonitest::style::item_2 << "true" << "." << '\n';\
-	Details.Log << "  " << eonitest::style::key_1 << "Expression" << eonitest::style::value << u8#expression << '\n';\
+	Details.Log << "  " << eonitest::style::key_1 << "Expression" << eonitest::style::value << utf8( #expression ) << '\n';\
 	Details.Success = static_cast<bool>( expression );\
 	if( !Details.Success )\
 		Details.Log << "  " << eonitest::style::key_1 << "Value" << eonitest::style::value_1 << "false" << '\n'
@@ -30,7 +32,7 @@
 #	define EON_FALSE( expression )\
 	Details.Log << "Testing " << eonitest::style::item_1 << "expression" << eonitest::style::normal\
 		<< " evaluates to " << eonitest::style::item_2 << "false" << "." << '\n';\
-	Details.Log << "  " << eonitest::style::key_1 << "Expression" << eonitest::style::value << u8#expression << '\n';\
+	Details.Log << "  " << eonitest::style::key_1 << "Expression" << eonitest::style::value << utf8( #expression ) << '\n';\
 	Details.Success = !static_cast<bool>( expression );\
 	if( !Details.Success )\
 		Details.Log << "  " << eonitest::style::key_1 << "Value" << eonitest::style::value_1 << "true" << '\n'
@@ -39,9 +41,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " == "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -60,9 +62,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " != "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -81,9 +83,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " < "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -102,9 +104,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " <= "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -123,9 +125,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " > "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -144,9 +146,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "left" << eonitest::style::item << " >= "\
 		<< eonitest::style::item_2 << "right" << ":" << '\n';\
 	Details.Log << "  " << eonitest::style::key_1 << "left" << eonitest::style::value\
-		<< u8#left_expression << '\n';\
+		<< utf8( #left_expression ) << '\n';\
 	Details.Log << "  " << eonitest::style::key_2 << "right" << eonitest::style::value\
-		<< u8#right_expression << '\n';\
+		<< utf8( #right_expression ) << '\n';\
 	auto l = ( left_expression );\
 	auto r = ( right_expression );\
 	if( typeid( l ) == typeid( const char* ) && typeid( r ) == typeid( const char* ) )\
@@ -165,9 +167,9 @@
 	Details.Log << "Testing " << eonitest::style::item_1 << "lower" << eonitest::style::item << " <= "\
 		<< eonitest::style::item_2 << "value" << eonitest::style::item << " <= "\
 		<< eonitest::style::item_3 << "upper" << ":" << '\n';\
-	Details.Log << "  " << eonitest::style::key_1 << "lower" << eonitest::style::value << u8#lower << '\n';\
-	Details.Log << "  " << eonitest::style::key_2 << "value" << eonitest::style::value << u8#actual_value << '\n';\
-	Details.Log << "  " << eonitest::style::key_3 << "upper" << eonitest::style::value << u8#upper << '\n';\
+	Details.Log << "  " << eonitest::style::key_1 << "lower" << eonitest::style::value << utf8( #lower ) << '\n';\
+	Details.Log << "  " << eonitest::style::key_2 << "value" << eonitest::style::value << utf8( #actual_value ) << '\n';\
+	Details.Log << "  " << eonitest::style::key_3 << "upper" << eonitest::style::value << utf8( #upper ) << '\n';\
 	auto l = ( lower );\
 	auto v = ( actual_value );\
 	auto u = ( upper );\
@@ -272,10 +274,12 @@
 #	define TEST_SUPER_SANDBOX( class_name, function_name, test_name ) ::eonitest::EonTestSandbox(\
 		::eonitest::TestName( #class_name, #function_name, #test_name ) )
 #	define TEST_LINE std::to_string( __LINE__ )
+#	define REGISTRATION_DUMMY( class_name, function_name, test_name )\
+	class_name##_##function_name##_##test_name##_registration_dummy
 
 
 #define EON_REGISTER_TEST( class_name, function_name, test_name )\
-	bool TEST_NAME( class_name, function_name, test_name )_registration_dummy\
+	bool REGISTRATION_DUMMY( class_name, function_name, test_name )\
 	{\
 		::eonitest::TestBase::registerTest(\
 			eonitest::TestName( #class_name, #function_name, #test_name ),\
