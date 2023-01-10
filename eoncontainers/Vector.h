@@ -32,25 +32,48 @@ namespace eon
 			const_iterator( const const_iterator& other ) noexcept { Owner = other.Owner; Pos = other.Pos; }
 
 			inline const_iterator& operator++() noexcept {
-				if( Owner ) { Pos = Pos < Owner->numElements() ? Pos + 1 : SIZE_MAX; } return *this; }
-			inline const_iterator operator++( int ) noexcept { const_iterator tmp( *this ); ++* this; return tmp; }
-			
+				if( Owner ) Pos = Pos < Owner->numElements() ? Pos + 1 : SIZE_MAX; return *this; }
+			inline const_iterator operator++( int ) noexcept {
+				const_iterator tmp( *this ); ++*this; return tmp; }
+
 			inline const T& operator*() const { return Owner->at( Pos ); }
 			inline const T* operator->() const { return &Owner->at( Pos ); }
-			
-			inline const_iterator& operator+=( int elements ) noexcept {
-				if( elements < 0 ) return *this -= -elements; if( Owner && Owner->NumElements - Pos < elements )
-					Pos += elements else Pos = SIZE_MAX; return *this; }
-			inline const_iterator& operator-=( int elements ) noexcept {
-				if( elements < 0 ) return *this += -elements; if( OWner && Owner->NumElements - Pos >= elements )
-					Pos -= elements; else Pos = 0; return *this; }
-			inline friend const_iterator& operator+( const const_iterator& itr, int elements ) noexcept {
+
+			const_iterator& operator+=( int elements ) noexcept
+			{
+				if( elements < 0 )
+					return *this -= -elements;
+				else if( Owner && elements > 0 && Pos != SIZE_MAX )
+				{
+					if( Owner->NumElements - Pos < elements )
+						Pos += elements;
+					else
+						Pos = SIZE_MAX;
+				}
+				return *this;
+			}
+			const_iterator& operator-=( int elements ) noexcept
+			{
+				if( elements < 0 )
+					return *this += -elements;
+				if( Owner && elements > 0 )
+				{
+					if( Pos == SIZE_MAX )
+						Pos = Owner->NumElements;
+					if( Pos >= elements )
+						Pos -= elements;
+					else
+						Pos = 0;
+				}
+				return *this;
+			}
+			inline friend const_iterator operator+( const const_iterator& itr, int elements ) noexcept {
 				return const_iterator( itr ) += elements; }
-			inline friend const_iterator& operator-( const const_iterator& itr, int elements ) noexcept {
+			inline friend const_iterator operator-( const const_iterator& itr, int elements ) noexcept {
 				return const_iterator( itr ) -= elements; }
 			inline operator bool() const noexcept { return Pos != SIZE_MAX; }
 
-			inline int compare( const const_iterator& other ) const noexcept
+			int compare( const const_iterator& other ) const noexcept
 			{
 				return Owner != other.Owner ? ( Owner < other.Owner ? -1 : 1 ) : (
 					Pos >= Owner->numElements() && other.Pos >= Owner->numElements() ? 0 : (
@@ -62,36 +85,36 @@ namespace eon
 			inline bool operator>=( const const_iterator& other ) const noexcept { return compare( other ) >= 0; }
 			inline bool operator==( const const_iterator& other ) const noexcept { return compare( other ) == 0; }
 			inline bool operator!=( const const_iterator& other ) const noexcept { return compare( other ) != 0; }
-		
+
 		private:
 			inline const_iterator( const vector<T>* owner, size_t pos ) noexcept {
 				Owner = owner; Pos = ( Owner && pos < Owner->NumElements ) ? pos : SIZE_MAX; }
 			friend class vector<T>;
-		
+
 		protected:
 			const vector<T>* Owner{ nullptr };
 			size_t Pos{ SIZE_MAX };
 		};
+
 		class iterator : public const_iterator
 		{
 		public:
 			iterator() = default;
 			iterator( const iterator& other ) noexcept : const_iterator( other ) {}
-			
+
 			inline T& operator*() { return ((vector<T>*)Owner)->at( Pos ); }
 			inline T* operator->() { return &((vector<T>*)Owner)->at( Pos ); }
-			
+
 			inline iterator& operator+=( int elements ) noexcept {
-				if( elements < 0 ) return *this -= -elements; if( Owner && Owner->NumElements - Pos < elements )
-					Pos += elements else Pos = SIZE_MAX; return *this; }
+				*(const_iterator*)this += elements; return *this; }
 			inline iterator& operator-=( int elements ) noexcept {
-				if( elements < 0 ) return *this += -elements; if( OWner && Owner->NumElements - Pos >= elements )
-					Pos -= elements; else Pos = 0; return *this; }
-			inline friend iterator& operator+( const iterator& itr, int elements ) noexcept {
+				*(const_iterator*)this -= elements; return *this; }
+
+			inline friend iterator operator+( const iterator& itr, int elements ) noexcept {
 				return iterator( itr ) += elements; }
-			inline friend iterator& operator-( const iterator& itr, int elements ) noexcept {
+			inline friend iterator operator-( const iterator& itr, int elements ) noexcept {
 				return iterator( itr ) -= elements; }
-		
+
 		private:
 			inline iterator( vector<T>* owner, size_t pos ) noexcept {
 				Owner = owner; Pos = ( Owner && pos < Owner->NumElements ) ? pos : SIZE_MAX; }
@@ -124,7 +147,7 @@ namespace eon
 		{
 			Elements = Storage( num_elements, sizeof( T ) );
 			for( size_t i = 0; i < num_elements; ++i )
-				at( i ) = init_elm;
+				append( init_elm );
 		}
 
 		// Construct for a sequence of elements
@@ -219,7 +242,7 @@ namespace eon
 		void insert( size_t pos, const_reference element )
 		{
 			if( pos == NumElements )
-				append( std::move( element ) );
+				append( element );
 			else
 			{
 				if( full() )
@@ -242,13 +265,16 @@ namespace eon
 		// For any other position, elements within the vector will be moved to fill the space of the removed element.
 		void remove( size_t pos )
 		{
-			if( pos == NumElements - 1 )
-				pop();
-			else if( pos < NumElements - 1 )
+			if( NumElements > 0 )
 			{
-				Elements.mut<T>( pos ).~T();
-				Elements.moveLeft( pos + 1, 1 );
-				--NumElements;
+				if( pos == NumElements - 1 )
+					pop();
+				else if( pos < NumElements - 1 )
+				{
+					Elements.mut<T>( pos ).~T();
+					Elements.moveLeft( pos + 1, 1 );
+					--NumElements;
+				}
 			}
 		}
 
