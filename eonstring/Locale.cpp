@@ -7,12 +7,12 @@ namespace eon
 	thread_local locale locale::CurLocale;
 
 #ifdef EON_TEST_LOCALE_NO
-#	define NO_NB "nb_NO.utf8"
+#	define NO_NB "nb_NO" _UTF8
 #endif
 
 
 	EON_TEST( locale, get, basic,
-		EON_EQ( "en_US.utf8", locale::get().name() ) );
+		EON_EQ( "en_US" _UTF8, locale::get().name() ) );
 
 #ifdef EON_TEST_LOCALE_NO
 	EON_TEST_2STEP( locale, set, basic,

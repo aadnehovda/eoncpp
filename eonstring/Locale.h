@@ -9,6 +9,13 @@
 //
 namespace eon
 {
+	// The utf-8 local-spefication will vary on different platforms.
+#ifdef EON_APPLE
+#	define _UTF8 ".UTF-8"
+#else
+#	define _UTF8 ".utf8"
+#endif
+
 	///////////////////////////////////////////////////////////////////////////
 	//
 	// Eon Locale is mostly identical std::locale, only including some
@@ -29,7 +36,7 @@ namespace eon
 		//
 	public:
 
-		inline locale() { _set( "en_US.utf8" ); }
+		inline locale() { _set( "en_US" _UTF8 ); }
 		inline locale( std::string name ) { _set( name ); }
 
 
@@ -41,7 +48,7 @@ namespace eon
 		//
 		// Eon methods for which a locale can be specified will use a default
 		// locale when no specific locale is given. This locale is thread-
-		// local, meaning that it uses the default "en_US.utf8" in every new
+		// local, meaning that it uses the default '"en_US" _UTF8' in every new
 		// thread, unless explicitly set to something else.
 		//
 	public:
