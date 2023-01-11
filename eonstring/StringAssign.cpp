@@ -3,6 +3,7 @@
 #include <cctype>
 #include <regex>
 #include <unordered_map>
+#include "StringTestFunctions.cpp"
 
 
 namespace eon
@@ -11,19 +12,6 @@ namespace eon
 	//
 	// String Assignment Metods
 	//
-
-#ifdef EON_TEST_MODE
-	template<typename T>
-	std::shared_ptr<T[]> _initialize( std::initializer_list<T> values )
-	{
-		std::shared_ptr<T[]> value( new T[ values.size() ] );
-		int i = 0;
-		for( auto c : values )
-			value[ i++ ] = c;
-		return value;
-	}
-	using _uchar_t = unsigned char;
-#endif
 
 	string& string::assign( const char_t* input, index_t input_length )
 	{

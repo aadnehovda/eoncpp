@@ -155,9 +155,9 @@ namespace eon
 	EON_TEST( string, compare, string_equal,
 		EON_EQ( 0, string( "abcdef" ).compare( string( "abcdef" ) ) ) );
 	EON_TEST( string, compare, string_less_faster,
-		EON_EQ( -1, string( "abccef" ).compare( string( "abcdef" ) ) ) );
+		EON_LT( string( "abccef" ).compare( string( "abcdef" ) ), 0 ) );
 	EON_TEST( string, compare, string_greater_faster,
-		EON_EQ( 1, string( "abcdef" ).compare( string( "abccef" ) ) ) );
+		EON_GT( string( "abcdef" ).compare( string( "abccef" ) ), 0 ) );
 
 	EON_NO_TEST( string, operator_lt );
 	EON_NO_TEST( string, operator_le );

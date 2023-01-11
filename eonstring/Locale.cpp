@@ -35,10 +35,10 @@ namespace eon
 #endif
 
 	EON_TEST( locale, grouping, standard,
-		EON_EQ( "\3", locale::get().grouping() ) );
+		EON_EQ( '\3', locale::get().grouping().at( 0 ) ) );
 #ifdef EON_TEST_LOCALE_NO
 	EON_TEST( locale, grouping, no_NB,
-		EON_EQ( "\3", locale( NO_NB ).grouping() ) );
+		EON_EQ( '\3', locale( NO_NB ).grouping().at( 0 ) ) );
 #endif
 
 
@@ -84,10 +84,10 @@ namespace eon
 #endif
 
 	EON_TEST( locale, groupingMoney, standard,
-		EON_EQ( "\3", locale::get().groupingMoney() ) );
+		EON_EQ( '\3', locale::get().groupingMoney().at( 0 ) ) );
 #ifdef EON_TEST_LOCALE_NO
 	EON_TEST( locale, groupingMoney, no_NB,
-		EON_EQ( "\3", locale( NO_NB ).groupingMoney() ) );
+		EON_EQ( '\3', locale( NO_NB ).groupingMoney().at( 0 ) ) );
 #endif
 
 	EON_TEST( local, currencySymbol, standard,

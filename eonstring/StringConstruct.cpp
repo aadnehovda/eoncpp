@@ -4,6 +4,7 @@
 #include <regex>
 #include <unordered_map>
 #include <limits.h>
+#include "StringTestFunctions.cpp"
 
 
 namespace eon
@@ -47,8 +48,9 @@ namespace eon
 		substring a( "one two three" ),
 		string b( a.highToLow() ),
 		EON_EQ( "eerht owt eno", b ) );
-	EON_TEST_2STEP( string, string, substring_invalid,
-		substring a( "one twó three" ),
+	EON_TEST_3STEP( string, string, substring_invalid,
+		auto source = _initialize<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
+		substring a( &source[ 0 ] ),
 		EON_RAISE( string b( a ), InvalidUTF8 ) );
 
 	EON_TEST_3STEP( string, string, stdstring_copy_1,
