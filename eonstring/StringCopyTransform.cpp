@@ -28,11 +28,13 @@ namespace eon
 	EON_TEST_2STEP( string, upper, ASCII,
 		string obj( "aBcDeFgH" ),
 		EON_EQ( "ABCDEFGH", obj.upper( obj.substr() ) ) );
+#ifdef EON_TEST_LOCALE_NO
 	EON_TEST_3STEP( string, upper, UTF8,
-		eon::locale loc( "nb_NO.utf8" ),
+		eon::locale loc( "nb_NO" _UTF8 ),
 		string obj( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
 		EON_EQ( string( EON_CURLY( char_t( 198 ), char_t( 216 ), char_t( 197 ), char_t( 198 ), char_t( 216 ) ) ),
 			obj.upper( obj.substr(), &loc ) ) );
+#endif
 
 	EON_TEST_2STEP( string, upper, substr,
 		string obj( "aBcDeFgH" ),
@@ -44,11 +46,13 @@ namespace eon
 	EON_TEST_2STEP( string, lower, ASCII,
 		string obj( "aBcDeFgH" ),
 		EON_EQ( "abcdefgh", obj.lower( obj.substr() ) ) );
+#ifdef EON_TEST_LOCALE_NO
 	EON_TEST_3STEP( string, lower, utf8,
-		eon::locale loc( "nb_NO.utf8" ),
+		eon::locale loc( "nb_NO" _UTF8 ),
 		string obj( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
 		EON_EQ( string( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 230 ), char_t( 248 ) ) ),
 			obj.lower( obj.substr(), &loc ) ) );
+#endif
 
 	EON_TEST_2STEP( string, lower, substr,
 		string obj( "aBcDeFgH" ),
@@ -58,9 +62,11 @@ namespace eon
 		EON_EQ( "", string().ucFirst() ) );
 	EON_TEST( string, ucFirst, ASCII,
 		EON_EQ( "Abcdef", string( "abcdef" ).ucFirst() ) );
+#ifdef EON_TEST_LOCALE_NO
 	EON_TEST_2STEP( string, ucFirst, UTF8,
-		eon::locale loc( "nb_NO.utf8" ),
+		eon::locale loc( "nb_NO" _UTF8 ),
 		EON_EQ( u8"Åbcdef", string( u8"åbcdef" ).ucFirst( &loc ) ) );
+#endif
 
 	string string::ucFirst( const substring& sub, const eon::locale* custom_locale ) const
 	{

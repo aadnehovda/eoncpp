@@ -238,7 +238,7 @@ namespace eon
 		return *this;
 	}
 	EON_TEST( string, operator_asgn, char_t_initializer,
-		EON_EQ( "abc", string() = EON_CSC( char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) ) ) );
+		EON_EQ( "abc", string() = EON_CURLY( char_t( 'a' ), char_t( 'b' ), char_t( 'c' ) ) ) );
 
 	string& string::operator=( const std::vector<char_t>& input )
 	{
@@ -260,7 +260,7 @@ namespace eon
 		return *this;
 	}
 	EON_TEST( string, operator_asgn, char_initializer,
-		EON_EQ( "abc", string() = EON_CSC( 'a', 'b', 'c' ) ) );
+		EON_EQ( "abc", string() = EON_CURLY( 'a', 'b', 'c' ) ) );
 
 	string& string::operator=( const std::initializer_list<unsigned char>& input )
 	{
