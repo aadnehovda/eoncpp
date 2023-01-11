@@ -62,7 +62,7 @@ namespace eon
 		string b( a ),
 		EON_EQ( "one two three", b ) );
 	EON_TEST_2STEP( string, string, stdstring_invalid,
-		std::string a( "one twó three" ),
+		std::string a( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
 		EON_RAISE( string b( a ), InvalidUTF8 ) );
 
 	EON_TEST_3STEP( string, string, stdstring_move_1,
@@ -79,8 +79,8 @@ namespace eon
 		string b( a ),
 		EON_EQ( "one two three", b ) );
 	EON_TEST_2STEP( string, string, cstring_invalid,
-		const char* a = "one twó three",
-		EON_RAISE( string b( a ), InvalidUTF8 ) );
+		auto source = _initialize<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
+		EON_RAISE( string b( &source[ 0 ] ), InvalidUTF8 ) );
 
 	EON_TEST_3STEP( string, string, cstring_copy_length,
 		const char* a = "one two three",
@@ -133,8 +133,9 @@ namespace eon
 		}
 	}
 	EON_TEST_3STEP( string, string, non_utf8_substitution,
-		const char* a = "oné twô thrèé",
-		string b( a, 12, "X" ),
+		auto source = _initialize<char>(
+			EON_CURLY( 'o', 'n', char( 233 ), ' ', 't', 'w', char( 243 ), ' ', 't', 'h', 'r', char( 232 ), char( 233 ) ) ),
+		string b( &source[ 0 ], 12, "X" ),
 		EON_EQ( "onX twX thrX", b ) );
 
 	EON_TEST( string, string, char_t_ASCII,

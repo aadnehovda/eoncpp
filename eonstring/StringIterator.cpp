@@ -1,4 +1,4 @@
-#include "StringIterator.h"
+ï»¿#include "StringIterator.h"
 #include "String.h"
 #include <eoninlinetest/InlineTest.h>
 #include <cctype>
@@ -46,11 +46,11 @@ namespace eon
 	EON_TEST( string_iterator, string_iterator, stdstr_ASCII_end,
 		EON_EQ( "6:6", ( string_iterator( std::string( "abcdef" ) ) + 6 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_UTF8_start,
-		EON_EQ( "0:0", string_iterator( std::string( u8"Ø€Œ™©µ" ) ).encode() ) );
+		EON_EQ( "0:0", string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_UTF8_mid,
-		EON_EQ( "7:3", ( string_iterator( std::string( u8"Ø€Œ™©µ" ) ) + 3 ).encode() ) );
+		EON_EQ( "7:3", ( string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) ) + 3 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_UTF8_end,
-		EON_EQ( "14:6", ( string_iterator( std::string( u8"Ø€Œ™©µ" ) ) + 6 ).encode() ) );
+		EON_EQ( "14:6", ( string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) ) + 6 ).encode() ) );
 
 	EON_TEST( string_iterator, string_iterator, stdstr_set_ASCII_start,
 		EON_EQ( "0:0", string_iterator( std::string( "abcdef" ), 0 ).encode() ) );
@@ -59,11 +59,11 @@ namespace eon
 	EON_TEST( string_iterator, string_iterator, stdstr_set_ASCII_end,
 		EON_EQ( "6:6", string_iterator( std::string( "abcdef" ), 6 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_set_UTF8_start,
-		EON_EQ( "0:0", string_iterator( std::string( u8"Ø€Œ™©µ" ), 0 ).encode() ) );
+		EON_EQ( "0:0", string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ), 0 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_set_UTF8_mid,
-		EON_EQ( "7:3", ( string_iterator( std::string( u8"Ø€Œ™©µ" ), 3 ) ).encode() ) );
+		EON_EQ( "7:3", ( string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ), 3 ) ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, stdstr_set_UTF8_end,
-		EON_EQ( "14:6", ( string_iterator( std::string( u8"Ø€Œ™©µ" ), 6 ) ).encode() ) );
+		EON_EQ( "14:6", ( string_iterator( std::string( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ), 6 ) ).encode() ) );
 
 	EON_TEST( string_iterator, string_iterator, cstr_empty,
 		EON_EQ( "0:0", string_iterator( "" ).encode() ) );
@@ -74,11 +74,11 @@ namespace eon
 	EON_TEST( string_iterator, string_iterator, cstr_ASCII_end,
 		EON_EQ( "6:6", ( string_iterator( "abcdef" ) + 6 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, cstr_UTF8_start,
-		EON_EQ( "0:0", string_iterator( u8"Ø€Œ™©µ" ).encode() ) );
+		EON_EQ( "0:0", string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, cstr_UTF8_mid,
-		EON_EQ( "7:3", ( string_iterator( u8"Ø€Œ™©µ" ) + 3 ).encode() ) );
+		EON_EQ( "7:3", ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 3 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, cstr_UTF8_end,
-		EON_EQ( "14:6", ( string_iterator( u8"Ø€Œ™©µ" ) + 6 ).encode() ) );
+		EON_EQ( "14:6", ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 6 ).encode() ) );
 
 	EON_TEST( string_iterator, string_iterator, ucstr_ASCII_mid,
 		EON_EQ( "3:3", ( string_iterator( (const unsigned char*)"abcdef" ) + 3 ).encode() ) );
@@ -89,18 +89,18 @@ namespace eon
 	EON_TEST( string_iterator, string_iterator, cstr_ASCII_details1,
 		EON_EQ( "6:6", ( string_iterator( "abcdef", 6, 6 ) + 6 ).encode() ) );
 	EON_TEST( string_iterator, string_iterator, cstr_UTF8_details1,
-		EON_EQ( "12:5", ( string_iterator( u8"Ø€Œ™©µ", 14, 6 ) + 5 ).encode() ) );
+		EON_EQ( "12:5", ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ", 14, 6 ) + 5 ).encode() ) );
 
 	EON_TEST_2STEP( string_iterator, string_iterator, cstr_UTF8_details2,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_EQ(  "12:5", string_iterator( source, 14, source + 12 ).encode() ) );
 
 	EON_TEST_2STEP( string_iterator, string_iterator, cstr_UTF8_details3,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_EQ( "12:5", string_iterator( source, 14, 6, source + 12 ).encode() ) );
 
 	EON_TEST_2STEP( string_iterator, string_iterator, cstr_UTF8_details4,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_EQ( "12:5", string_iterator( source, 14, 6, source + 12, 5 ).encode() ) );
 
 
@@ -117,7 +117,7 @@ namespace eon
 		_translateCodepoint();
 	}
 	EON_TEST_3STEP( string_iterator, string_iterator, cstr_UTF8_copy_set,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		string_iterator obj( source ),
 		EON_EQ( "12:5", string_iterator( obj, source + 12, 5 ).encode() ) );
 
@@ -172,7 +172,7 @@ namespace eon
 		string_iterator obj,
 		EON_RAISE( obj.decode( "7:7", source ), WrongSource ) );
 	EON_TEST_3STEP( string_iterator, decode, UTF8_char_overstep,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		string_iterator obj,
 		EON_RAISE( obj.decode( "15:6", source ), WrongSource ) );
 
@@ -185,11 +185,11 @@ namespace eon
 		string_iterator obj,
 		EON_EQ( "3:3", obj.decode( "3:3", source ).encode() ) );
 	EON_TEST_3STEP( string_iterator, decode, UTF8_mid,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		string_iterator obj,
 		EON_EQ( "7:3", obj.decode( "7:3", source ).encode() ) );
 	EON_TEST_3STEP( string_iterator, decode, UTF8_end,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		string_iterator obj,
 		EON_EQ( "14:6", obj.decode( "14:6", source ).encode() ) );
 
@@ -323,9 +323,9 @@ namespace eon
 	EON_TEST( string_iterator, operator_call, ASCII_mid,
 		EON_EQ( char_t( 'd' ), *( string_iterator( "abcdef" ) + 3 ) ) );
 	EON_TEST( string_iterator, operator_call, UTF8_start,
-		EON_EQ( char_t( 216 ), *string_iterator( u8"Ø€Œ™©µ" ) ) );
+		EON_EQ( char_t( 216 ), *string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) ) );
 	EON_TEST( string_iterator, operator_call, UTF8_mid,
-		EON_EQ( char_t( 8482 ), *( string_iterator( u8"Ø€Œ™©µ" ) + 3 ) ) );
+		EON_EQ( char_t( 8482 ), *( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 3 ) ) );
 
 	EON_TEST( string_iterator, numChar, empty,
 		EON_EQ( 0, string_iterator( "" ).numChar() ) );
@@ -336,11 +336,11 @@ namespace eon
 	EON_TEST( string_iterator, numChar, ASCII_end,
 		EON_EQ( 6, ( string_iterator( "abcdef" ) + 6 ).numChar() ) );
 	EON_TEST( string_iterator, numChar, UTF8_start,
-		EON_EQ( 0, string_iterator( u8"Ø€Œ™©µ" ).numChar() ) );
+		EON_EQ( 0, string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ).numChar() ) );
 	EON_TEST( string_iterator, numChar, UTF8_mid,
-		EON_EQ( 3, ( string_iterator( u8"Ø€Œ™©µ" ) + 3 ).numChar() ) );
+		EON_EQ( 3, ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 3 ).numChar() ) );
 	EON_TEST( string_iterator, numChar, UTF8_end,
-		EON_EQ( 6, ( string_iterator( u8"Ø€Œ™©µ" ) + 6 ).numChar() ) );
+		EON_EQ( 6, ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 6 ).numChar() ) );
 
 	EON_TEST( string_iterator, numByte, empty,
 		EON_EQ( 0, string_iterator( "" ).numByte() ) );
@@ -351,20 +351,20 @@ namespace eon
 	EON_TEST( string_iterator, numByte, ASCII_end,
 		EON_EQ( 6, ( string_iterator( "abcdef" ) + 6 ).numByte() ) );
 	EON_TEST( string_iterator, numByte, UTF8_start,
-		EON_EQ( 0, string_iterator( u8"Ø€Œ™©µ" ).numByte() ) );
+		EON_EQ( 0, string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ).numByte() ) );
 	EON_TEST( string_iterator, numByte, UTF8_mid,
-		EON_EQ( 7, ( string_iterator( u8"Ø€Œ™©µ" ) + 3 ).numByte() ) );
+		EON_EQ( 7, ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 3 ).numByte() ) );
 	EON_TEST( string_iterator, numByte, UTF8_end,
-		EON_EQ( 14, ( string_iterator( u8"Ø€Œ™©µ" ) + 6 ).numByte() ) );
+		EON_EQ( 14, ( string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ) + 6 ).numByte() ) );
 
 	EON_TEST( string_iterator, codepointSize, empty,
 		EON_EQ( 0, string_iterator().codepointSize() ) );
 	EON_TEST( string_iterator, codepointSize, byte,
 		EON_EQ( 1, string_iterator( "a" ).codepointSize() ) );
 	EON_TEST( string_iterator, codepointSize, UTF8_double,
-		EON_EQ( 2, string_iterator( u8"Ø" ).codepointSize() ) );
+		EON_EQ( 2, string_iterator( u8"Ã˜" ).codepointSize() ) );
 	EON_TEST( string_iterator, codepointSize, UTF8_triple,
-		EON_EQ( 3, string_iterator( u8"€" ).codepointSize() ) );
+		EON_EQ( 3, string_iterator( u8"â‚¬" ).codepointSize() ) );
 	EON_TEST_2STEP( string_iterator, codepointSize, UTF8_quadruple,
 		eon::string input( char_t( 129989 ) ),
 		EON_EQ( 4, string_iterator( input.c_str() ).codepointSize() ) );
@@ -372,12 +372,12 @@ namespace eon
 	EON_TEST( string_iterator, bytesOnly, true,
 		EON_TRUE( string_iterator( "abcdef" ).bytesOnly() ) );
 	EON_TEST( string_iterator, bytesOnly, false,
-		EON_FALSE( string_iterator( u8"abc€def" ).bytesOnly() ) );
+		EON_FALSE( string_iterator( u8"abcâ‚¬def" ).bytesOnly() ) );
 
 	EON_TEST( string_iterator, validUTF8, true,
 		EON_TRUE( string_iterator( "abcdef" ).validUTF8() ) );
 	EON_TEST( string_iterator, validUTF8, false,
-		EON_FALSE( string_iterator( "abcdefø" ).validUTF8() ) );
+		EON_FALSE( string_iterator( "abcdefÃ¸" ).validUTF8() ) );
 
 	EON_TEST_2STEP( string_iterator, byteData, start,
 		const char* source = "abcdef",
@@ -394,14 +394,14 @@ namespace eon
 	EON_TEST( string_iterator, numSourceBytes, ASCII,
 		EON_EQ( 6, string_iterator( "abcdef" ).numSourceBytes() ) );
 	EON_TEST( string_iterator, numSourceBytes, UTF8,
-		EON_EQ( 14, string_iterator( u8"Ø€Œ™©µ" ).numSourceBytes() ) );
+		EON_EQ( 14, string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ).numSourceBytes() ) );
 
 	EON_TEST( string_iterator, numSourceChars, empty,
 		EON_EQ( 0, string_iterator( "" ).numSourceChars() ) );
 	EON_TEST( string_iterator, numSourceChars, ASCII,
 		EON_EQ( 6, string_iterator( "abcdef" ).numSourceChars() ) );
 	EON_TEST( string_iterator, numSourceChars, UTF8,
-		EON_EQ( 6, string_iterator( u8"Ø€Œ™©µ" ).numSourceChars() ) );
+		EON_EQ( 6, string_iterator( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ).numSourceChars() ) );
 
 	EON_TEST_2STEP( string_iterator, getEnd, empty,
 		const char* source = "",
@@ -410,7 +410,7 @@ namespace eon
 		const char* source = "abcdef",
 		EON_TRUE( string_iterator( source ) + 6 == string_iterator( source ).getEnd() ) );
 	EON_TEST_2STEP( string_iterator, getEnd, UTF8,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_TRUE( string_iterator( source ) + 6 == string_iterator( source ).getEnd() ) );
 
 	EON_TEST_2STEP( string_iterator, getBegin, empty,
@@ -420,7 +420,7 @@ namespace eon
 		const char* source = "abcdef",
 		EON_TRUE( string_iterator( source ) == ( string_iterator( source ) + 3 ).getBegin() ) );
 	EON_TEST_2STEP( string_iterator, getBegin, UTF8,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_TRUE( string_iterator( source ) == ( string_iterator( source ) + 3 ).getBegin() ) );
 
 
@@ -503,7 +503,7 @@ namespace eon
 		string_iterator obj( "abcdef" ),
 		EON_EQ( char_t( 'c' ), *( obj += static_cast<index_t>( 2 ) ) ) );
 	EON_TEST_2STEP( string_iterator, operator_plusasgn, UTF8_three,
-		string_iterator obj( u8"Ø€Œ™©µ" ),
+		string_iterator obj( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ),
 		EON_EQ( char_t( 8482 ), *( obj += static_cast<index_t>( 3 ) ) ) );
 
 	string_iterator& string_iterator::operator-=( index_t num_chars ) noexcept
@@ -525,7 +525,7 @@ namespace eon
 		obj.resetToEnd(),
 		EON_EQ( char_t( 'e' ), *( obj -= static_cast<index_t>( 2 ) ) ) );
 	EON_TEST_3STEP( string_iterator, operator_decasgn, UTF8_three,
-		string_iterator obj( u8"Ø€Œ™©µ" ),
+		string_iterator obj( u8"Ã˜â‚¬Å’â„¢Â©Âµ" ),
 		obj.resetToEnd(),
 		EON_EQ( char_t( 8482 ), *( obj -= static_cast<index_t>( 3 ) ) ) );
 
@@ -590,7 +590,7 @@ namespace eon
 		const char* source = "abcdef",
 		EON_EQ( 2, ( string_iterator( source ) += 5 ) - ( string_iterator( source ) += 3 ) ) );
 	EON_TEST_2STEP( string_iterator, operator_minus, iterator_UTF8,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		EON_EQ( 2, ( string_iterator( source ) += 5 ) - ( string_iterator( source ) += 3 ) ) );
 
 	EON_TEST_2STEP( string_iterator, operator_minus, index,
@@ -722,11 +722,11 @@ namespace eon
 		char_t codepoint = 0,
 		EON_TRUE( string_iterator::bytesToUnicode( source + 3, source + 6, codepoint ) == 1 && codepoint == 'd' ) );
 	EON_TEST_3STEP( string_iterator, bytesToUnicode, UTF8,
-		const char* source = u8"Ø€Œ™©µ",
+		const char* source = u8"Ã˜â‚¬Å’â„¢Â©Âµ",
 		char_t codepoint = 0,
 		EON_TRUE( string_iterator::bytesToUnicode( source + 7, source + 14, codepoint ) == 3 && codepoint == 8482 ) );
 	EON_TEST_3STEP( string_iterator, bytesToUnicode, invalid,
-		const char* source = "abcÅef",
+		const char* source = "abcÃ…ef",
 		char_t codepoint = 0,
 		EON_TRUE( string_iterator::bytesToUnicode( source + 3, source + 6, codepoint ) == 0 ) );
 
@@ -797,11 +797,11 @@ namespace eon
 		return num;
 	}
 	EON_TEST( string_iterator, countUtf8Chars, invalid,
-		EON_RAISE( string_iterator::countUtf8Chars( "abÆ", 3 ), InvalidUTF8 ) );
+		EON_RAISE( string_iterator::countUtf8Chars( "abÃ†", 3 ), InvalidUTF8 ) );
 	EON_TEST( string_iterator, countUtf8Chars, ASCII,
 		EON_EQ( 6, string_iterator::countUtf8Chars( "abcdef", 6 ) ) );
 	EON_TEST( string_iterator, countUtf8Chars, UTF8,
-		EON_EQ( 6, string_iterator::countUtf8Chars( u8"Ø€Œ™©µ", 14 ) ) );
+		EON_EQ( 6, string_iterator::countUtf8Chars( u8"Ã˜â‚¬Å’â„¢Â©Âµ", 14 ) ) );
 
 
 
