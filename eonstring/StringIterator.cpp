@@ -3,7 +3,6 @@
 #include <eoninlinetest/InlineTest.h>
 #include <cctype>
 #include <regex>
-#include "StringTestFunctions.cpp"
 
 
 namespace eon
@@ -727,9 +726,9 @@ namespace eon
 		char_t codepoint = 0,
 		EON_TRUE( string_iterator::bytesToUnicode( source + 7, source + 14, codepoint ) == 3 && codepoint == 8482 ) );
 	EON_TEST_3STEP( string_iterator, bytesToUnicode, invalid,
-		auto source = _initialize<char>( EON_CURLY( 'a', 'b', 'c', char( 197 ) , 'e', 'f' ) ),
+		auto source = eonitest::PrimitiveArray<char>( EON_CURLY( 'a', 'b', 'c', char( 197 ) , 'e', 'f' ) ),
 		char_t codepoint = 0,
-		EON_EQ( 0, string_iterator::bytesToUnicode( &source[ 0 ] + 3, &source[ 0 ] + 6, codepoint ) ) );
+		EON_EQ( 0, string_iterator::bytesToUnicode( source.value() + 3, source.value() + 6, codepoint ) ) );
 
 	index_t string_iterator::unicodeToBytes( char_t cp, uint32_t& bytes )
 	{

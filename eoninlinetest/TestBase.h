@@ -86,4 +86,39 @@ namespace eonitest
 		std::filesystem::path SandboxDir;
 		eon::string SandboxDirStr;
 	};
+
+
+
+
+	// Class for constructing self-deleting non-copyable arrays of primitive type values.
+	// (Constructing e.g., a "const unsigned char[4] = { 'a', 'b', 'c', 'd' }"
+	// does not work well in macros.)
+	template<typename primitive_T>
+	class PrimitiveArray
+	{
+	public:
+		inline PrimitiveArray() { Array = new primitive_T[ 1 ]; Array[ 0 ] = 0; }
+		inline PrimitiveArray( std::initializer_list<primitive_T> elements )
+		{
+			Array = new primitive_T[ elements.size() + 1 ];
+			size_t i = 0;
+			for( auto element : elements )
+				Array[ i++ ] = element;
+		}
+		PrimitiveArray( const PrimitiveArray& other ) = delete;
+		inline PrimitiveArray( PrimitiveArray&& other ) noexcept { Array = other.Array; other.Array = nullptr; }
+		~PrimitiveArray() { if( Array != nullptr ) delete[] Array; }
+
+		PrimitiveArray& operator=( const PrimitiveArray& ) = delete;
+		PrimitiveArray& operator=( PrimitiveArray&& other ) = delete;
+
+		inline const primitive_T* value() const noexcept { return Array; }
+
+	private:
+		primitive_T* Array{ nullptr };
+	};
+
+
+	// Work-around for when "unsigned char" is not working in test macros.
+	using uchar_t = unsigned char;
 }

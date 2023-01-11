@@ -1,4 +1,7 @@
 #pragma once
 
 #include "TestMacros.h"
-#include "TestBase.h"
+
+#ifdef EON_TEST_MODE
+#	include "TestBase.h"
+#endif

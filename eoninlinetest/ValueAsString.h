@@ -36,7 +36,7 @@ namespace eonitest
 		static eon::string toString( char value )
 		{
 			eon::string v{ "@char=" };
-			if( ( value >= 32 && value <= 126 ) || ( value >= 161 && value <= 255 ) )
+			if( ( value >= 32 && value <= 126 ) || ( value >= char( 161 ) && value <= char( 255 ) ) )
 				v += eon::string( value );
 			v += "::" + eon::string( static_cast<eon::int_t>( value ) );
 			v += "::" + eon::byteToHex( value );

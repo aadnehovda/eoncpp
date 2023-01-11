@@ -4,7 +4,6 @@
 #include <regex>
 #include <unordered_map>
 #include <limits.h>
-#include "StringTestFunctions.cpp"
 
 
 namespace eon
@@ -49,8 +48,8 @@ namespace eon
 		string b( a.highToLow() ),
 		EON_EQ( "eerht owt eno", b ) );
 	EON_TEST_3STEP( string, string, substring_invalid,
-		auto source = _initialize<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
-		substring a( &source[ 0 ] ),
+		auto source = eonitest::PrimitiveArray<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
+		substring a( source.value() ),
 		EON_RAISE( string b( a ), InvalidUTF8 ) );
 
 	EON_TEST_3STEP( string, string, stdstring_copy_1,
@@ -79,8 +78,8 @@ namespace eon
 		string b( a ),
 		EON_EQ( "one two three", b ) );
 	EON_TEST_2STEP( string, string, cstring_invalid,
-		auto source = _initialize<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
-		EON_RAISE( string b( &source[ 0 ] ), InvalidUTF8 ) );
+		auto source = eonitest::PrimitiveArray<char>( EON_CURLY( 'o', 'O', char( 243 ), '0' ) ),
+		EON_RAISE( string b( source.value() ), InvalidUTF8 ) );
 
 	EON_TEST_3STEP( string, string, cstring_copy_length,
 		const char* a = "one two three",
@@ -133,9 +132,9 @@ namespace eon
 		}
 	}
 	EON_TEST_3STEP( string, string, non_utf8_substitution,
-		auto source = _initialize<char>(
+		auto source = eonitest::PrimitiveArray<char>(
 			EON_CURLY( 'o', 'n', char( 233 ), ' ', 't', 'w', char( 243 ), ' ', 't', 'h', 'r', char( 232 ), char( 233 ) ) ),
-		string b( &source[ 0 ], 12, "X" ),
+		string b( source.value(), 12, "X" ),
 		EON_EQ( "onX twX thrX", b ) );
 
 	EON_TEST( string, string, char_t_ASCII,

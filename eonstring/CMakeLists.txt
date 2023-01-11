@@ -31,7 +31,6 @@ set(STRING_SOURCES
 	StringModifying.cpp
 	StringStatic.cpp
 	StringSearching.cpp
-	StringTestFunctions.cpp
 	StringIterator.cpp
 	Substring.cpp
 	SubstringReadOnly.cpp

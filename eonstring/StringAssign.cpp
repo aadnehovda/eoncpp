@@ -3,7 +3,6 @@
 #include <cctype>
 #include <regex>
 #include <unordered_map>
-#include "StringTestFunctions.cpp"
 
 
 namespace eon
@@ -22,17 +21,17 @@ namespace eon
 		return *this;
 	}
 	EON_TEST_3STEP( string, assign, char_t_string_length_empty,
-		auto source = _initialize<char_t>( EON_CURLY( 0 ) ),
+		auto source = eonitest::PrimitiveArray<char_t>(),
 		string obj,
-		EON_EQ( 0, obj.assign( &source[ 0 ], 0 ).length() ) );
+		EON_EQ( 0, obj.assign( source.value(), 0 ).length() ) );
 	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_length,
-		auto source = _initialize<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
+		auto source = eonitest::PrimitiveArray<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
 		string obj,
-		EON_EQ( 3, obj.assign( &source[ 0 ], 3 ).length() ) );
+		EON_EQ( 3, obj.assign( source.value(), 3 ).length() ) );
 	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_value,
-		auto source = _initialize<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
+		auto source = eonitest::PrimitiveArray<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
 		string obj,
-		EON_EQ( "ABc", obj.assign( &source[ 0 ], 3 ) ) );
+		EON_EQ( "ABc", obj.assign( source.value(), 3 ) ) );
 
 	string& string::assign( const char* input, index_t input_length )
 	{
@@ -55,8 +54,8 @@ namespace eon
 		string obj,
 		EON_EQ( "abcd", obj.assign( "abcdef", 4 ) ) );
 	EON_TEST_2STEP( string, assign, cstr_string_invalid_utf8,
-		auto source = _initialize<char>( EON_CURLY( 0x41, -28, 0x63, 0 ) ),
-		EON_RAISE( string().assign( &source[ 0 ], 3 ), InvalidUTF8 ) );
+		auto source = eonitest::PrimitiveArray<char>( EON_CURLY( 0x41, -28, 0x63, 0 ) ),
+		EON_RAISE( string().assign( source.value(), 3 ), InvalidUTF8 ) );
 
 	string& string::assign( index_t copies, char_t input )
 	{
@@ -272,7 +271,8 @@ namespace eon
 		return *this;
 	}
 	EON_TEST( string, operator_asgn, unsigned_char_initializer,
-		EON_EQ( "abc", string() = EON_CURLY( _uchar_t( 'a' ), _uchar_t( 'b' ), _uchar_t( 'c' ) ) ) );
+		EON_EQ( "abc", string() = EON_CURLY(
+			eonitest::uchar_t( 'a' ), eonitest::uchar_t( 'b' ), eonitest::uchar_t( 'c' ) ) ) );
 
 	EON_TEST( string, operator_asgn, bool_true,
 		EON_EQ( "true", string() = true ) );
