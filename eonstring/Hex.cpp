@@ -12,8 +12,9 @@ namespace eon
 
 
 
-	EON_TEST( hex, operator_assign, copy,
-		EON_EQ( "4139", ( hex() = *(const hex*)&hex( "A9" ) ).Value ) );
+	EON_TEST_2STEP( hex, operator_assign, copy,
+		hex obj( "A9" ),
+		EON_EQ( "4139", ( hex() = *(const hex*)&obj ).Value ) );
 	EON_TEST( hex, operator_assign, move,
 		EON_EQ( "4139", ( hex() = hex( "A9" ) ).Value ) );
 

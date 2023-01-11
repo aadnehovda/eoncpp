@@ -3,6 +3,7 @@
 #include <cctype>
 #include <regex>
 #include <unordered_map>
+#include <limits.h>
 
 
 namespace eon
@@ -88,7 +89,8 @@ namespace eon
 	{
 	public:
 		inline _ByteParser( const char* input, index_t input_length ) noexcept {
-			Beg = input; End = input + input_length; }
+			Beg = input; End = input + input_length;
+		}
 
 		inline operator bool() const noexcept { return Beg < End; }
 		inline bool fillBytes() noexcept
@@ -145,19 +147,19 @@ namespace eon
 		EON_EQ( "y", string( (unsigned char)'y' ) ) );
 
 	EON_TEST_2STEP( string, string, init_list_char_t,
-		string obj EON_CSC( char_t( 'a' ), char_t( 'b' ), char_t( 'C' ) ),
+		string obj( EON_CURLY( char_t( 'a' ), char_t( 'b' ), char_t( 'C' ) ) ),
 		EON_EQ( "abC", obj ) );
 
 	EON_TEST_2STEP( string, string, vector_char_t,
-		string obj = std::vector<char_t> EON_CSC( char_t( 'A' ), char_t( 'B' ), char_t( 'c' ) ),
+		string obj( std::vector<char_t>( EON_CURLY( char_t( 'A' ), char_t( 'B' ), char_t( 'c' ) ) ) ),
 		EON_EQ( "ABc", obj ) );
 
 	EON_TEST_2STEP( string, string, init_list_char,
-		string obj EON_CSC( 'a', 'b', 'C' ),
+		string obj( EON_CURLY( 'a', 'b', 'C' ) ),
 		EON_EQ( "abC", obj ) );
 
 	EON_TEST_2STEP( string, string, vector_char,
-		string obj = std::vector<char_t> EON_CSC( 'A', 'B', 'c' ),
+		string obj( std::vector<char_t>( EON_CURLY( 'A', 'B', 'c' ) ) ),
 		EON_EQ( "ABc", obj ) );
 
 	EON_TEST( string, string, char_t_copies,

@@ -42,7 +42,7 @@ namespace eon
 		string obj( "abcdef" ),
 		EON_EQ( string( "d" ), *obj.bytePos( 3 ) ) );
 	EON_TEST_2STEP( string, bytePos, UTF8,
-		string obj EON_CSC( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ),
+		string obj( EON_CURLY( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ) ),
 		EON_EQ( 915, static_cast<int>( *obj.bytePos( 3 ) ) ) );
 
 	inline string::iterator string::_ensureValidStart( iterator& start ) const
@@ -62,7 +62,7 @@ namespace eon
 		string obj( "abc" ),
 		EON_RAISE( string( "abc" )._ensureValidStart( ++obj.begin() ), WrongSource ) );
 
-	inline string::iterator string::_optimizedAsciiBytePos( index_t pos, iterator& start ) const
+	inline string::iterator string::_optimizedAsciiBytePos( index_t pos, const iterator& start ) const
 	{
 		if( start.numByte() > pos || pos >= Bytes.size() )
 			return end();
@@ -87,12 +87,14 @@ namespace eon
 		}
 		return end();
 	}
-	EON_TEST_2STEP( string, _count, default_start,
-		string obj EON_CSC( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ),
-		EON_EQ( 915, static_cast<int>( *obj._count( 3, obj.begin() ) ) ) );
-	EON_TEST_2STEP( string, _count, later_start,
-		string obj EON_CSC( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ),
-		EON_EQ( 915, static_cast<int>( *obj._count( 3, ++obj.begin() ) ) ) );
+	EON_TEST_3STEP( string, _count, default_start,
+		string obj( EON_CURLY( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ) ),
+		string_iterator obj_begin = obj.begin(),
+		EON_EQ( 915, static_cast<int>( *obj._count( 3, obj_begin ) ) ) );
+	EON_TEST_3STEP( string, _count, later_start,
+		string obj( EON_CURLY( char_t( 913 ), char_t( 914 ), char_t( 915 ), char_t( 916 ) ) ),
+		string_iterator obj_begin = obj.begin(),
+		EON_EQ( 915, static_cast<int>( *obj._count( 3, ++obj_begin ) ) ) );
 
 
 	string::iterator string::rebase( const iterator& pos_from_other_string ) const noexcept
@@ -162,7 +164,7 @@ namespace eon
 		string obj( "abcde" ),
 		EON_EQ( obj.end(), obj.decodeIterator( "6:6" ) ) );
 	EON_TEST_2STEP( string, decodeIterator, inside_UTF8,
-		string obj EON_CSC( char_t( 915 ), char_t( 916 ), char_t( 917 ), char_t( 918 ) ),
+		string obj( EON_CURLY( char_t( 915 ), char_t( 916 ), char_t( 917 ), char_t( 918 ) ) ),
 		EON_EQ( 917, static_cast<int>( *obj.decodeIterator( "4:2" ) ) ) );
 
 	substring string::decodeSubstring( const string& encode_substring )
@@ -183,8 +185,8 @@ namespace eon
 		string obj( "abcde" ),
 		EON_EQ( string(), string( obj.decodeSubstring( "6:6-8:8" ) ) ) );
 	EON_TEST_2STEP( string, decodeSubstring, inside_UTF8,
-		string obj EON_CSC( char_t( 915 ), char_t( 916 ), char_t( 917 ), char_t( 918 ) ),
-		EON_EQ( string EON_CSC( char_t( 916 ), char_t( 917 ) ),
+		string obj( EON_CURLY( char_t( 915 ), char_t( 916 ), char_t( 917 ), char_t( 918 ) ) ),
+		EON_EQ( string EON_CURLY( char_t( 916 ), char_t( 917 ) ),
 			string( obj.decodeSubstring( "2:1-6:4" ) ) ) );
 
 	EON_TEST_2STEP( string, encode, iterator_ASCII,

@@ -2320,7 +2320,7 @@ namespace eon
 		string& _assignLowToHigh( const substring& input );
 		string& _assignHighToLow( const substring& input );
 
-		string::iterator _optimizedAsciiBytePos( index_t pos, iterator& start ) const;
+		string::iterator _optimizedAsciiBytePos( index_t pos, const iterator& start ) const;
 		string::iterator _ensureValidStart( iterator& start ) const;
 		string::iterator _count( index_t pos, iterator& start ) const;
 

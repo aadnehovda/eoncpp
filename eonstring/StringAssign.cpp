@@ -12,6 +12,19 @@ namespace eon
 	// String Assignment Metods
 	//
 
+#ifdef EON_TEST_MODE
+	template<typename T>
+	std::shared_ptr<T[]> _initialize( std::initializer_list<T> values )
+	{
+		std::shared_ptr<T[]> value( new T[ values.size() ] );
+		int i = 0;
+		for( auto c : values )
+			value[ i++ ] = c;
+		return value;
+	}
+	using _uchar_t = unsigned char;
+#endif
+
 	string& string::assign( const char_t* input, index_t input_length )
 	{
 		clear();
@@ -21,17 +34,17 @@ namespace eon
 		return *this;
 	}
 	EON_TEST_3STEP( string, assign, char_t_string_length_empty,
-		const char_t* source( { 0 } ),
+		auto source = _initialize<char_t>( EON_CURLY( 0 ) ),
 		string obj,
-		EON_EQ( 0, obj.assign( source, 0 ).length() ) );
+		EON_EQ( 0, obj.assign( &source[ 0 ], 0 ).length() ) );
 	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_length,
-		const char_t source[ 4 ] EON_CSC( 0x41, 0x42, 0x63, 0 ),
+		auto source = _initialize<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
 		string obj,
-		EON_EQ( 3, obj.assign( source, 3 ).length() ) );
+		EON_EQ( 3, obj.assign( &source[ 0 ], 3 ).length() ) );
 	EON_TEST_3STEP( string, assign, char_t_string_length_nonempty_value,
-		const char_t source[ 4 ] EON_CSC( 0x41, 0x42, 0x63, 0 ),
+		auto source = _initialize<char_t>( EON_CURLY( 0x41, 0x42, 0x63, 0 ) ),
 		string obj,
-		EON_EQ( "ABc", obj.assign( source, 3 ) ) );
+		EON_EQ( "ABc", obj.assign( &source[ 0 ], 3 ) ) );
 
 	string& string::assign( const char* input, index_t input_length )
 	{
@@ -54,8 +67,8 @@ namespace eon
 		string obj,
 		EON_EQ( "abcd", obj.assign( "abcdef", 4 ) ) );
 	EON_TEST_2STEP( string, assign, cstr_string_invalid_utf8,
-		const char source[ 4 ] EON_CSC( 0x41, -28, 0x63, 0 ),
-		EON_RAISE( string().assign( source, 3 ), InvalidUTF8 ) );
+		auto source = _initialize<char>( EON_CURLY( 0x41, -28, 0x63, 0 ) ),
+		EON_RAISE( string().assign( &source[ 0 ], 3 ), InvalidUTF8 ) );
 
 	string& string::assign( index_t copies, char_t input )
 	{
@@ -271,7 +284,7 @@ namespace eon
 		return *this;
 	}
 	EON_TEST( string, operator_asgn, unsigned_char_initializer,
-		EON_EQ( "abc", string() = EON_CSC( unsigned char( 'a' ), unsigned char( 'b' ), unsigned char( 'c' ) ) ) );
+		EON_EQ( "abc", string() = EON_CURLY( _uchar_t( 'a' ), _uchar_t( 'b' ), _uchar_t( 'c' ) ) ) );
 
 	EON_TEST( string, operator_asgn, bool_true,
 		EON_EQ( "true", string() = true ) );

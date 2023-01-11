@@ -30,8 +30,8 @@ namespace eon
 		EON_EQ( "ABCDEFGH", obj.upper( obj.substr() ) ) );
 	EON_TEST_3STEP( string, upper, UTF8,
 		eon::locale loc( "nb_NO.utf8" ),
-		string obj( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
-		EON_EQ( string( EON_CSC( char_t( 198 ), char_t( 216 ), char_t( 197 ), char_t( 198 ), char_t( 216 ) ) ),
+		string obj( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
+		EON_EQ( string( EON_CURLY( char_t( 198 ), char_t( 216 ), char_t( 197 ), char_t( 198 ), char_t( 216 ) ) ),
 			obj.upper( obj.substr(), &loc ) ) );
 
 	EON_TEST_2STEP( string, upper, substr,
@@ -46,8 +46,8 @@ namespace eon
 		EON_EQ( "abcdefgh", obj.lower( obj.substr() ) ) );
 	EON_TEST_3STEP( string, lower, utf8,
 		eon::locale loc( "nb_NO.utf8" ),
-		string obj( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
-		EON_EQ( string( EON_CSC( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 230 ), char_t( 248 ) ) ),
+		string obj( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 198 ), char_t( 216 ) ) ),
+		EON_EQ( string( EON_CURLY( char_t( 230 ), char_t( 248 ), char_t( 229 ), char_t( 230 ), char_t( 248 ) ) ),
 			obj.lower( obj.substr(), &loc ) ) );
 
 	EON_TEST_2STEP( string, lower, substr,
@@ -249,20 +249,20 @@ namespace eon
 	EON_TEST( string, replace, str_map_empty,
 		EON_EQ( "", string().replace( std::map<string, string>() ) ) );
 	EON_TEST( string, replace, str_map_nothing,
-		EON_EQ( "abcdabefabgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CSC(
-			EON_CSC( "ac", "dc" ), EON_CSC( "r2", "d2" ) ) ) ) );
+		EON_EQ( "abcdabefabgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CURLY(
+			EON_CURLY( "ac", "dc" ), EON_CURLY( "r2", "d2" ) ) ) ) );
 	EON_TEST( string, replace, str_map_single,
-		EON_EQ( "abcdagoodfabgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CSC(
-			EON_CSC( "ac", "dc" ), EON_CSC( "be", "good" ) ) ) ) );
+		EON_EQ( "abcdagoodfabgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CURLY(
+			EON_CURLY( "ac", "dc" ), EON_CURLY( "be", "good" ) ) ) ) );
 	EON_TEST( string, replace, str_map_multiple,
-		EON_EQ( "dccddctadcgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CSC(
-			EON_CSC( "ab", "dc" ), EON_CSC( "ef", "ta" ) ) ) ) );
+		EON_EQ( "dccddctadcgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CURLY(
+			EON_CURLY( "ab", "dc" ), EON_CURLY( "ef", "ta" ) ) ) ) );
 	EON_TEST( string, replace, str_map_blank,
-		EON_EQ( "cdefgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CSC(
-			EON_CSC( "ab", "" ), EON_CSC( "r2", "d2" ) ) ) ) );
+		EON_EQ( "cdefgh", string( "abcdabefabgh" ).replace( std::map<string, string>EON_CURLY(
+			EON_CURLY( "ab", "" ), EON_CURLY( "r2", "d2" ) ) ) ) );
 	EON_TEST_2STEP( string, replace, str_map_sub,
 		string obj( "abcdabefabgh" ),
-		EON_EQ( "abcddcefabgh", obj.replace( std::map<string, string>EON_CSC( EON_CSC( "ab", "dc" ) ), obj.substr(
+		EON_EQ( "abcddcefabgh", obj.replace( std::map<string, string>EON_CURLY( EON_CURLY( "ab", "dc" ) ), obj.substr(
 			obj.begin() + 3, obj.end() - 3 ) ) ) );
 
 	string string::replace( const std::map<char_t, char_t>& find_replace, const substring& sub ) const
@@ -286,17 +286,17 @@ namespace eon
 	EON_TEST( string, replace, chr_map_empty,
 		EON_EQ( "", string().replace( std::map<char_t, char_t>() ) ) );
 	EON_TEST( string, replace, chr_map_nothing,
-		EON_EQ( "abcdaefagh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CSC(
-			EON_CSC( 'r', 's' ), EON_CSC( 'x', 'y' ) ) ) ) );
+		EON_EQ( "abcdaefagh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CURLY(
+			EON_CURLY( 'r', 's' ), EON_CURLY( 'x', 'y' ) ) ) ) );
 	EON_TEST( string, replace, chr_map_single,
-		EON_EQ( "xbcdxefxgh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CSC(
-			EON_CSC( 'a', 'x' ), EON_CSC( 'x', 'y' ) ) ) ) );
+		EON_EQ( "xbcdxefxgh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CURLY(
+			EON_CURLY( 'a', 'x' ), EON_CURLY( 'x', 'y' ) ) ) ) );
 	EON_TEST( string, replace, chr_map_multiple,
-		EON_EQ( "xbcdxyfxgh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CSC(
-			EON_CSC( 'a', 'x' ), EON_CSC( 'e', 'y' ) ) ) ) );
+		EON_EQ( "xbcdxyfxgh", string( "abcdaefagh" ).replace( std::map<char_t, char_t>EON_CURLY(
+			EON_CURLY( 'a', 'x' ), EON_CURLY( 'e', 'y' ) ) ) ) );
 	EON_TEST_2STEP( string, replace, chr_map_sub,
 		string obj( "abcdaefagh" ),
-		EON_EQ( "abcdxefagh", obj.replace( std::map<char_t, char_t>EON_CSC( EON_CSC( 'a', 'x' ) ), obj.substr(
+		EON_EQ( "abcdxefagh", obj.replace( std::map<char_t, char_t>EON_CURLY( EON_CURLY( 'a', 'x' ) ), obj.substr(
 			obj.begin() + 3, obj.end() - 3 ) ) ) );
 
 	EON_TEST( string, remove, str_empty,
@@ -352,11 +352,11 @@ namespace eon
 	}
 	EON_TEST_3STEP( string, _escape, lowToHigh,
 		string input( "abac" ),
-		string output = input._escape( input.substr(), EON_CSC( EON_CSC( char_t( 'a' ), char_t( 'x' ) ) ) ),
+		string output = input._escape( input.substr(), EON_CURLY( EON_CURLY( char_t( 'a' ), char_t( 'x' ) ) ) ),
 		EON_EQ( "\\xb\\xc", output ) );
 	EON_TEST_3STEP( string, _escape, highToLow,
 		string input( "abac" ),
-		string output = input._escape( input.substr().highToLow(), EON_CSC( EON_CSC( char_t( 'a' ), char_t( 'x' ) ) ) ),
+		string output = input._escape( input.substr().highToLow(), EON_CURLY( EON_CURLY( char_t( 'a' ), char_t( 'x' ) ) ) ),
 		EON_EQ( "\\xb\\xc", output ) );
 
 	inline void _escapeFound( string& output, char_t in, char_t out )
@@ -399,17 +399,30 @@ namespace eon
 				output << ";";
 		}
 	}
+#ifdef EON_TEST_MODE
+	struct _io
+	{
+		_io() = default;
+		_io( string input ) { Input = input; InputBegin = Input.begin(); }
+		string Input;
+		string_iterator InputBegin;
+		string Output;
+	};
+#endif
 	EON_TEST_3STEP( string, _escapeNonprintable, single_byte,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_escapeNonprintable( output, input.begin(), input.substr() ),
-		EON_EQ( "\\u61", output ) );
+		_io io( "a" ),
+		_escapeNonprintable( io.Output, io.InputBegin, io.Input.substr() ),
+		EON_EQ( "\\u61", io.Output ) );
 	EON_TEST_3STEP( string, _escapeNonprintable, four_bytes,
-		EON_DECLARE( string, output, input( char_t( 0xE007F ) ) ),
-		_escapeNonprintable( output, input.begin(), input.substr() ),
-		EON_EQ( "\\u0E007F", output ) );
+		_io io( string( char_t( 0xE007F ) ) ),
+		_escapeNonprintable( io.Output, io.InputBegin, io.Input.substr() ),
+		EON_EQ( "\\u0E007F", io.Output ) );
 
 	inline void _escapeChar(
-		string::iterator& c, const substring& area, string& output, const std::unordered_map<char_t, char_t>& singletons )
+		const string::iterator& c,
+		const substring& area,
+		string& output,
+		const std::unordered_map<char_t, char_t>& singletons )
 	{
 		auto& chars = Characters::get();
 		auto found = singletons.find( *c );
@@ -422,17 +435,17 @@ namespace eon
 			output += *c;
 	}
 	EON_TEST_3STEP( string, _escapeChar, basic,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_escapeChar( input.begin(), input.substr(), output, EON_CSC( EON_CSC( 'a', 'x' ) ) ),
-		EON_EQ( "\\x", output ) );
+		_io io( "a" ),
+		_escapeChar( io.InputBegin, io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
+		EON_EQ( "\\x", io.Output ) );
 	EON_TEST_3STEP( string, _escapeChar, non_printable,
-		EON_DECLARE( string, output, input( u8"\u0600" ) ),
-		_escapeChar( input.begin(), input.substr(), output, EON_CSC( EON_CSC( 'a', 'x' ) ) ),
-		EON_EQ( "\\u0600", output ) );
+		_io io( u8"\u0600" ),
+		_escapeChar( io.InputBegin, io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
+		EON_EQ( "\\u0600", io.Output ) );
 	EON_TEST_3STEP( string, _escapeChar, no_escape,
-		EON_DECLARE( string, output, input( "b" ) ),
-		_escapeChar( input.begin(), input.substr(), output, EON_CSC( EON_CSC( 'a', 'x' ) ) ),
-		EON_EQ( "b", output ) );
+		_io io( "b" ),
+		_escapeChar( io.InputBegin, io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
+		EON_EQ( "b", io.Output ) );
 
 	string string::_escape(
 		const substring& area, string output, const std::unordered_map<char_t, char_t>& singletons ) const
@@ -445,19 +458,19 @@ namespace eon
 	}
 	EON_TEST_3STEP( string, _escape, empty,
 		string input,
-		auto output = input._escape( input.substr(), "", EON_CSC( EON_CSC( 'a', 'x' ) ) ),
+		auto output = input._escape( input.substr(), "", EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
 		EON_EQ( "", output ) );
 	EON_TEST_3STEP( string, _escape, single_plain,
 		string input( "b" ),
-		auto output = input._escape( input.substr(), "", EON_CSC( EON_CSC( 'a', 'x' ) ) ),
+		auto output = input._escape( input.substr(), "", EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
 		EON_EQ( "b", output ) );
 	EON_TEST_3STEP( string, _escape, single_escape,
 		string input( "a" ),
-		auto output = input._escape( input.substr(), "", EON_CSC( EON_CSC( 'a', 'x' ) ) ),
+		auto output = input._escape( input.substr(), "", EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
 		EON_EQ( "\\x", output ) );
 	EON_TEST_3STEP( string, _escape, multiple_mix,
 		string input( "abacad" ),
-		auto output = input._escape( input.substr(), "", EON_CSC( EON_CSC( 'a', 'x' ) ) ),
+		auto output = input._escape( input.substr(), "", EON_CURLY( EON_CURLY( 'a', 'x' ) ) ),
 		EON_EQ( "\\xb\\xc\\xd", output ) );
 
 
@@ -512,7 +525,7 @@ namespace eon
 	}
 
 	inline bool _unescapeSingleton(
-		string::iterator& c, string& output, const std::unordered_map<char_t, char_t>& singletons )
+		const string::iterator& c, string& output, const std::unordered_map<char_t, char_t>& singletons )
 	{
 		auto found = singletons.find( *c );
 		if( found == singletons.end() )
@@ -521,19 +534,19 @@ namespace eon
 		return true;
 	}
 	EON_TEST_2STEP( string, _unescapeSingleton, nfound_bool,
-		EON_DECLARE( string, output, input( "a" ) ),
-		EON_FALSE( _unescapeSingleton( input.begin(), output, EON_CSC( EON_CSC( 'x', 'a' ) ) ) ) );
+		_io io( "a" ),
+		EON_FALSE( _unescapeSingleton( io.InputBegin, io.Output, EON_CURLY( EON_CURLY( 'x', 'a' ) ) ) ) );
 	EON_TEST_3STEP( string, _unescapeSingleton, nfound_output,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_unescapeSingleton( input.begin(), output, EON_CSC( EON_CSC( 'x', 'a' ) ) ),
-		EON_EQ( "", output ) );
+		_io io( "a" ),
+		_unescapeSingleton( io.InputBegin, io.Output, EON_CURLY( EON_CURLY( 'x', 'a' ) ) ),
+		EON_EQ( "", io.Output ) );
 	EON_TEST_2STEP( string, _unescapeSingleton, found_bool,
-		EON_DECLARE( string, output, input( "x" ) ),
-		EON_TRUE( _unescapeSingleton( input.begin(), output, EON_CSC( EON_CSC( 'x', 'a' ) ) ) ) );
+		_io io( "x" ),
+		EON_TRUE( _unescapeSingleton( io.InputBegin, io.Output, EON_CURLY( EON_CURLY( 'x', 'a' ) ) ) ) );
 	EON_TEST_3STEP( string, _unescapeSingleton, found_output,
-		EON_DECLARE( string, output, input( "x" ) ),
-		_unescapeSingleton( input.begin(), output, EON_CSC( EON_CSC( 'x', 'a' ) ) ),
-		EON_EQ( "a", output ) );
+		_io io( "x" ),
+		_unescapeSingleton( io.InputBegin, io.Output, EON_CURLY( EON_CURLY( 'x', 'a' ) ) ),
+		EON_EQ( "a", io.Output ) );
 
 	inline bool _unescapeUnicode( string::iterator& c, string& output )
 	{
@@ -561,26 +574,26 @@ namespace eon
 		return true;
 	}
 	EON_TEST_2STEP( string, _unescapeUnicode, not_unicode_bool,
-		EON_DECLARE( string, output, input( "a" ) ),
-		EON_FALSE( _unescapeUnicode( input.begin(), output ) ) );
+		_io io( "a" ),
+		EON_FALSE( _unescapeUnicode( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeUnicode, not_unicode_str,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_unescapeUnicode( input.begin(), output ),
-		EON_EQ( "", output ) );
+		_io io( "a" ),
+		_unescapeUnicode( io.InputBegin, io.Output ),
+		EON_EQ( "", io.Output ) );
 	EON_TEST_2STEP( string, _unescapeUnicode, unicode_bool,
-		EON_DECLARE( string, output, input( "u0600" ) ),
-		EON_TRUE( _unescapeUnicode( input.begin(), output ) ) );
+		_io io( "u0600" ),
+		EON_TRUE( _unescapeUnicode( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeUnicode, unicode_str,
-		EON_DECLARE( string, output, input( "u0600" ) ),
-		_unescapeUnicode( input.begin(), output ),
-		EON_EQ( string( u8"\u0600" ), output ) );
+		_io io( "u0600" ),
+		_unescapeUnicode( io.InputBegin, io.Output ),
+		EON_EQ( string( u8"\u0600" ), io.Output ) );
 	EON_TEST_2STEP( string, _unescapeUnicode, largeunicode_bool,
-		EON_DECLARE( string, output, input( "u01D78D" ) ),
-		EON_TRUE( _unescapeUnicode( input.begin(), output ) ) );
+		_io io( "u01D78D" ),
+		EON_TRUE( _unescapeUnicode( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeUnicode, largeunicode_str,
-		EON_DECLARE( string, output, input( "u01D78D" ) ),
-		_unescapeUnicode( input.begin(), output ),
-		EON_EQ( string( char_t( 120717 ) ), output ) );
+		_io io( "u01D78D" ),
+		_unescapeUnicode( io.InputBegin, io.Output ),
+		EON_EQ( string( char_t( 120717 ) ), io.Output ) );
 
 	inline int _parseUnescapeHex( string::iterator& c, char_t& parsed )
 	{
@@ -626,33 +639,33 @@ namespace eon
 		return true;
 	}
 	EON_TEST_2STEP( string, _unescapeHex, not_hex_bool,
-		EON_DECLARE( string, output, input( "a" ) ),
-		EON_FALSE( _unescapeHex( input.begin(), output ) ) );
+		_io io( "a" ),
+		EON_FALSE( _unescapeHex( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeHex, not_hex_str,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_unescapeHex( input.begin(), output ),
-		EON_EQ( "", output ) );
+		_io io( "a" ),
+		_unescapeHex( io.InputBegin, io.Output ),
+		EON_EQ( "", io.Output ) );
 	EON_TEST_2STEP( string, _unescapeHex, hex_bool,
-		EON_DECLARE( string, output, input( "x6B" ) ),
-		EON_TRUE( _unescapeHex( input.begin(), output ) ) );
+		_io io( "x6B" ),
+		EON_TRUE( _unescapeHex( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeHex, hex_str,
-		EON_DECLARE( string, output, input( "x6B" ) ),
-		_unescapeHex( input.begin(), output ),
-		EON_EQ( "k", output ) );
+		_io io( "x6B" ),
+		_unescapeHex( io.InputBegin, io.Output ),
+		EON_EQ( "k", io.Output ) );
 	EON_TEST_2STEP( string, _unescapeHex, unicode_bool,
-		EON_DECLARE( string, output, input( "xD880" ) ),
-		EON_TRUE( _unescapeHex( input.begin(), output ) ) );
+		_io io( "xD880" ),
+		EON_TRUE( _unescapeHex( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeHex, unicode_str,
-		EON_DECLARE( string, output, input( "xD880" ) ),
-		_unescapeHex( input.begin(), output ),
-		EON_EQ( string( u8"\u0600" ), output ) );
+		_io io( "xD880" ),
+		_unescapeHex( io.InputBegin, io.Output ),
+		EON_EQ( string( u8"\u0600" ), io.Output ) );
 	EON_TEST_2STEP( string, _unescapeHex, largehex_bool,
-		EON_DECLARE( string, output, input( "xF09D9E8D" ) ),
-		EON_TRUE( _unescapeHex( input.begin(), output ) ) );
+		_io io( "xF09D9E8D" ),
+		EON_TRUE( _unescapeHex( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeHex, largehex_str,
-		EON_DECLARE( string, output, input( "xF09D9E8D" ) ),
-		_unescapeHex( input.begin(), output ),
-		EON_EQ( string( char_t( 120717 ) ), output ) );
+		_io io( "xF09D9E8D" ),
+		_unescapeHex( io.InputBegin, io.Output ),
+		EON_EQ( string( char_t( 120717 ) ), io.Output ) );
 
 	inline bool _unescapeOctal( string::iterator& c, string& output )
 	{
@@ -679,21 +692,22 @@ namespace eon
 		return true;
 	}
 	EON_TEST_2STEP( string, _unescapeOctal, not_octal_bool,
-		EON_DECLARE( string, output, input( "a" ) ),
-		EON_FALSE( _unescapeOctal( input.begin(), output ) ) );
+		_io io( "a" ),
+		EON_FALSE( _unescapeOctal( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeOctal, not_octal_str,
-		EON_DECLARE( string, output, input( "a" ) ),
-		_unescapeOctal( input.begin(), output ),
-		EON_EQ( "", output ) );
+		_io io( "a" ),
+		_unescapeOctal( io.InputBegin, io.Output ),
+		EON_EQ( "", io.Output ) );
 	EON_TEST_2STEP( string, _unescapeOctal, octal_bool,
-		EON_DECLARE( string, output, input( "141" ) ),
-		EON_TRUE( _unescapeOctal( input.begin(), output ) ) );
+		_io io( "141" ),
+		EON_TRUE( _unescapeOctal( io.InputBegin, io.Output ) ) );
 	EON_TEST_3STEP( string, _unescapeOctal, octal_str,
-		EON_DECLARE( string, output, input( "141" ) ),
-		_unescapeOctal( input.begin(), output ),
-		EON_EQ( "a", output ) );
+		_io io( "141" ),
+		_unescapeOctal( io.InputBegin, io.Output ),
+		EON_EQ( "a", io.Output ) );
 
-	inline void _unescapeChar( string::iterator& c, string& output, const std::unordered_map<char_t, char_t>& singletons )
+	inline void _unescapeChar(
+		string::iterator& c, string& output, const std::unordered_map<char_t, char_t>& singletons )
 	{
 		auto c1 = c + 1;
 		if( *c == BackSlashChr && c1 != c.getEnd() )
@@ -720,29 +734,29 @@ namespace eon
 		return output;
 	}
 	EON_TEST_3STEP( string, _unescape, empty,
-		EON_DECLARE( string, output, input ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "", output ) );
+		_io io,
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "", io.Output ) );
 	EON_TEST_3STEP( string, _unescape, not_escaped,
-		EON_DECLARE( string, output, input( "abcdef" ) ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "abcdef", output ) );
+		_io io( "abcdef" ),
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "abcdef", io.Output ) );
 	EON_TEST_3STEP( string, _unescape, singleton,
-		EON_DECLARE( string, output, input( "\\zbcdef" ) ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "abcdef", output ) );
+		_io io( "\\zbcdef" ),
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "abcdef", io.Output ) );
 	EON_TEST_3STEP( string, _unescape, unicode,
-		EON_DECLARE( string, output, input( "\\u61;bcdef" ) ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "abcdef", output ) );
+		_io io( "\\u61;bcdef" ),
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "abcdef", io.Output ) );
 	EON_TEST_3STEP( string, _unescape, hex,
-		EON_DECLARE( string, output, input( "\\x61;bcdef" ) ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "abcdef", output ) );
+		_io io( "\\x61;bcdef" ),
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "abcdef", io.Output ) );
 	EON_TEST_3STEP( string, _unescape, octal,
-		EON_DECLARE( string, output, input( "\\141bcdef" ) ),
-		output = input._unescape( input.substr(), output, EON_CSC( EON_CSC( 'z', 'a' ) ) ),
-		EON_EQ( "abcdef", output ) );
+		_io io( "\\141bcdef" ),
+		io.Output = io.Input._unescape( io.Input.substr(), io.Output, EON_CURLY( EON_CURLY( 'z', 'a' ) ) ),
+		EON_EQ( "abcdef", io.Output ) );
 
 
 	EON_TEST_2STEP( string, toHtml, ASCII,
@@ -1053,23 +1067,23 @@ namespace eon
 
 
 	EON_TEST_2STEP( string, join, iterator,
-		std::vector<string> input EON_CSC( "a", "b", "c", "d", "e", "f" ),
+		std::vector<string> input( EON_CURLY( "a", "b", "c", "d", "e", "f" ) ),
 		EON_EQ( "b;;c;;d;;e", string( ";;" ).join( input.begin() + 1, input.end() - 1 ) ) );
 
 	EON_TEST( string, join, empty,
 		EON_EQ( "", string( "" ).join( std::vector<string>() ) ) );
 	EON_TEST( string, join, singleton,
-		EON_EQ( "a", string( ";" ).join( std::vector<string>EON_CSC( "a" ) ) ) );
+		EON_EQ( "a", string( ";" ).join( std::vector<string>EON_CURLY( "a" ) ) ) );
 	EON_TEST( string, join, duo,
-		EON_EQ( "a;b", string( ";" ).join( std::vector<string>EON_CSC( "a", "b" ) ) ) );
+		EON_EQ( "a;b", string( ";" ).join( std::vector<string>EON_CURLY( "a", "b" ) ) ) );
 	EON_TEST( string, join, many,
-		EON_EQ( "a;b;c;d;e;f", string( ";" ).join( std::vector<string>EON_CSC( "a", "b", "c", "d", "e", "f" ) ) ) );
+		EON_EQ( "a;b;c;d;e;f", string( ";" ).join( std::vector<string>EON_CURLY( "a", "b", "c", "d", "e", "f" ) ) ) );
 	EON_TEST( string, join, empty_first,
-		EON_EQ( ";b;c", string( ";" ).join( std::vector<string>EON_CSC( "", "b", "c" ) ) ) );
+		EON_EQ( ";b;c", string( ";" ).join( std::vector<string>EON_CURLY( "", "b", "c" ) ) ) );
 	EON_TEST( string, join, empty_last,
-		EON_EQ( "a;b;", string( ";" ).join( std::vector<string>EON_CSC( "a", "b", "" ) ) ) );
+		EON_EQ( "a;b;", string( ";" ).join( std::vector<string>EON_CURLY( "a", "b", "" ) ) ) );
 	EON_TEST( string, join, no_delimiter,
-		EON_EQ( "abc", string().join( std::vector<string>EON_CSC( "a", "b", "c" ) ) ) );
+		EON_EQ( "abc", string().join( std::vector<string>EON_CURLY( "a", "b", "c" ) ) ) );
 
 
 	EON_TEST( string, trim, basic,

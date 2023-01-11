@@ -7,6 +7,10 @@
 
 #if defined(EON_INLINE_TEST) && defined(EON_INLINE_TEST_PROJECT)
 
+	// To include test-only code outside of macros, use this in an #ifdef test.
+#	define EON_TEST_MODE
+
+
 	// Private declaration in inline test context.
 #	define PRIVATE public
 
@@ -14,10 +18,10 @@
 #	define PROTECTED public
 
 	// Specify a comma-separated list enclosed in curly braces (Comma-Separated Curly-braced).
-#	define EON_CSC( first, ... ) { first, __VA_ARGS__ }
+#	define EON_CURLY( ... ) { __VA_ARGS__ }
 
-	// Declare multiple variables of the same type in one go.
-#	define EON_DECLARE( type, ... ) type __VA_ARGS__
+	// Specify a comma-separated list enclosed in curly braces (Comma-Separated Curly-braced).
+#	define EON_CSC( first, ... ) { first, __VA_ARGS__ }
 
 #define utf8( value ) u8 ## value
 

@@ -19,6 +19,7 @@ namespace eonitest
 			return "\"" + eon::string( value ).escapeAll() + "\""; }
 		static eon::string toString( const eon::string_iterator& value ) { return  value.encode(); }
 		static eon::string toString( const std::string& value ) { return "\"" + eon::string( value ).escapeAll() + "\""; }
+		static eon::string toString( const std::wstring& value ) { return "\"" + eon::string( value ).escapeAll() + "\""; }
 		static eon::string toString( const char* value ) { return "\"" + eon::string( value ).escapeAll() + "\""; }
 		static eon::string toString( eon::char_t value )
 		{

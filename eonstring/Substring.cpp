@@ -12,7 +12,7 @@ namespace eon
 
 	EON_TEST_3STEP( substring, substring, iterators,
 		const char* source = "abcdef",
-		substring obj( string_iterator( source ), string_iterator( source ) + 6 ),
+		substring obj( string_iterator( source ), ( string_iterator( source ) + 6 ) ),
 		EON_TRUE( obj == substring( source ) ) );
 
 	EON_TEST_3STEP( substring, substring, iterator,
