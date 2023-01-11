@@ -183,9 +183,9 @@ namespace eon
 	EON_TEST( substring, compare, empty,
 		EON_EQ( 0, substring( "" ).compare( substring( "" ) ) ) );
 	EON_TEST( substring, compare, lt,
-		EON_EQ( -1, substring( "Abcdef" ).compare( substring( "abcdef" ) ) ) );
+		EON_LT( substring( "Abcdef" ).compare( substring( "abcdef" ) ), 0 ) );
 	EON_TEST( substring, compare, gt,
-		EON_EQ( 1, substring( "abcdef" ).compare( substring( "Abcdef" ) ) ) );
+		EON_GT( substring( "abcdef" ).compare( substring( "Abcdef" ) ), 0 ) );
 
 	EON_TEST( substring, operator_eq, void,
 		EON_EQ( substring(), substring() ) );

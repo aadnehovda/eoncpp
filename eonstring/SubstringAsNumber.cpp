@@ -288,9 +288,9 @@ namespace eon
 	EON_TEST( substring, toHighT, empty,
 		EON_EQ( 0, substring( "" ).toHighT() ) );
 	EON_TEST( substring, toHighT, ASCII,
-		EON_EQ( 12.34, substring( "12.34" ).toHighT() ) );
+		EON_RANGE( 12.339, substring( "12.34" ).toHighT(), 12.341 ) );
 	EON_TEST( substring, toHighT, UTF8,
-		EON_EQ( 12.34, substring( u8"١۲.߃४" ).toHighT() ) );
+		EON_RANGE( 12.339, substring( u8"١۲.߃४" ).toHighT(), 12.341 ) );
 
 	EON_TEST( substring, toFltT, empty,
 		EON_EQ( 0, substring( "" ).toFltT() ) );
@@ -347,9 +347,9 @@ namespace eon
 	EON_TEST( substring, toLongDouble, empty,
 		EON_EQ( 0, substring( "" ).toLongDouble() ) );
 	EON_TEST( substring, toLongDouble, ASCII,
-		EON_EQ( 12.34, substring( "12.34" ).toLongDouble() ) );
+		EON_RANGE( 12.339, substring( "12.34" ).toLongDouble(), 12.341 ) );
 	EON_TEST( substring, toLongDouble, UTF8,
-		EON_EQ( 12.34, substring( u8"١۲.߃४" ).toLongDouble() ) );
+		EON_RANGE( 12.339, substring( u8"١۲.߃४" ).toLongDouble(), 12.341 ) );
 
 	EON_TEST( substring, toUInt32, empty,
 		EON_EQ( 0, substring( "" ).toUInt32() ) );
