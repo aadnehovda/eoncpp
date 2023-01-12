@@ -201,7 +201,7 @@ namespace eon
 					throw type::WrongType( "Trying to get \"" + eon::str( type::mapCppType( CPPTYPE( T ), type_hint ) )
 						+ "\" value from attribute when it actually is a syntax element!" );
 			}
-			
+
 			TypeTuple type( type::mapCppType( CPPTYPE( T ), type_hint ) );
 			if( type.nameValue() == name_typetuple )
 				return *(T*)Value;
@@ -214,7 +214,7 @@ namespace eon
 		}
 		template<typename T, type::hint type_hint = type::hint::none>
 		inline const T& value() const { return *(const T*)&( (Attribute*)this )->value<T, type_hint>(); }
-		
+
 		// Get source (if any).
 		const source::Ref& source() const noexcept { return Source; }
 		source::Ref& source() noexcept { return Source; }
@@ -294,10 +294,12 @@ namespace eon
 			if( type_name == no_name )
 				throw type::AccessDenied();
 			if( type_name == name_tuple )
-				Type = ( (Tuple*)&value )->type();
+				Type = _tupleType( (void*)&value );
 			else
 				Type = type_name;
 		}
+
+		TypeTuple _tupleType( void* value ) const noexcept;
 
 
 

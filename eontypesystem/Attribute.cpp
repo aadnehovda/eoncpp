@@ -17,7 +17,7 @@ namespace eon
 		a.Type = value.type(); a.Type.qualifier( qualifier );
 		a.Value = new Tuple( std::move( value ) );
 		a.Source = source;
-		return a;		
+		return a;
 	}
 
 	Attribute Attribute::newName( name_t value, type::Qualifier qualifier, source::Ref source )
@@ -141,5 +141,10 @@ namespace eon
 			}
 			Value = nullptr;
 		}
+	}
+
+	TypeTuple Attribute::_tupleType( void* value ) const noexcept
+	{
+		return ((Tuple*)value )->type();
 	}
 }
