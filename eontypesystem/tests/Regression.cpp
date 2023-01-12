@@ -1,4 +1,4 @@
-#include "Regression.h"
+Ôªø#include "Regression.h"
 
 
 
@@ -49,7 +49,7 @@ namespace eon
 
 	TEST( TupleTest, static_unnamed )
 	{
-		string chars{ u8"b∆" };
+		string chars{ u8"b√Ü" };
 		auto tup = tuple::statc( {
 			{ false }, { 'b' }, { *chars.begin() }, { *chars.last() },
 			{ static_cast<int_t>( -54 ) }, { static_cast<short_t>( 11 ) }, { static_cast<long_t>( 987654321 ) },
@@ -87,7 +87,7 @@ namespace eon
 	}
 	TEST( TupleTest, static_named )
 	{
-		string chars{ u8"b∆" };
+		string chars{ u8"b√Ü" };
 		auto tup = tuple::statc( {
 			{ name_bool, false }, { name_byte, 'b' }, { name_char, *chars.begin() },
 			{ name_int, static_cast<int_t>( -54 ) },
